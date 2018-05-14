@@ -21,6 +21,7 @@ public:
     llong n_row;
     llong n_col;
 
+
     SparseMatrix(llong n_row, llong n_col);
 
     ~SparseMatrix();

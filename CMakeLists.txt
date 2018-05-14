@@ -24,7 +24,7 @@ set(INTEL_OMP_LIBS "-liomp5 -lpthread")
 set(OTHER_LIBS "-lm -ldl")
 
 # add -fopenmp
-set(CMAKE_CXX_FLAGS "-DMKL_ILP64 -m64 -Wall -Wformat")
+set(CMAKE_CXX_FLAGS "-DMKL_ILP64 -m64 -Wall -Wformat -Wno-deprecated-declarations")
 
 file(GLOB SOURCES "src/*.cpp")
 

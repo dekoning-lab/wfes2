@@ -5,15 +5,16 @@
 template <typename T>
 class DenseMatrix {
 public:
-	T* _values;
 	
 	llong rows;
 	llong cols;
 
-	explicit DenseMatrix(llong rows, llong cols, T init = 0): 
-		_values((T*)calloc(rows * cols, sizeof(T))),
-		rows(rows), cols(cols) {
+	T* _values;
 
+	explicit DenseMatrix(llong rows, llong cols, T init = 0): rows(rows), cols(cols), _values(nullptr) {
+		
+		_values = (T*)calloc(rows * cols, sizeof(T));
+		assert(_values != NULL);
 		if (init != 0) {
 			for(llong i = 0; i < (rows * cols); i ++ ) {
 				_values[i] = init;

@@ -12,9 +12,8 @@
 //     _row_index = alloc_vector_copy(row_index);
 // }
 
-SparseMatrix::SparseMatrix(llong n_row, llong n_col):
-    _current_row(0), _full(false),
-    non_zeros(0), n_row(n_row), n_col(n_col) {
+SparseMatrix::SparseMatrix(llong n_row, llong n_col): _current_row(0), _full(false), non_zeros(0), n_row(n_row), n_col(n_col) {
+
     _values = (double*)malloc(sizeof(double));
     _columns = (llong*)malloc(sizeof(llong));
     _row_index = (llong*)malloc((n_row + 1) * sizeof(llong));
@@ -35,6 +34,7 @@ Vector<llong> closed_range(llong start, llong stop) {
 }
 
 void SparseMatrix::append_data(Vector<double>& row, llong m0, llong m1, llong r0, llong r1, bool new_row) {
+    
     assert((m1 - m0) == (r1 - r0));
 
     llong size = r1 - r0 + 1;
@@ -44,7 +44,10 @@ void SparseMatrix::append_data(Vector<double>& row, llong m0, llong m1, llong r0
     if(new_row) _row_index[_current_row + 1] = nnz;
 
     // columns
-    _columns = (llong*)realloc(_columns, nnz * sizeof(llong));
+    llong* _columns_new = (llong*)realloc(_columns, nnz * sizeof(llong));
+    if (_columns_new != NULL) _columns = _columns_new;
+    else throw runtime_error("SparseMatrix::append_data(): Reallocation failed - columns");
+
     Vector<llong> range = closed_range(m0, m1);
     cout << "range: "; print_buffer(range._values, range.size);
     cout << m0 << ":" << m1 << "; " << r0 << ":" << r1 << endl;
@@ -52,7 +55,10 @@ void SparseMatrix::append_data(Vector<double>& row, llong m0, llong m1, llong r0
     print_buffer(_columns, nnz);
 
     // values
-    _values = (double*)realloc(_values, nnz * sizeof(double));
+    double* _values_new = (double*)realloc(_values, nnz * sizeof(double));
+    if (_values_new != NULL) _values = _values_new;
+    else throw runtime_error("SparseMatrix::append_data(): Reallocation failed - values");
+
     memcpy(&(_values[non_zeros]), &(row._values[r0]), size * sizeof(double));
 
     non_zeros += size;

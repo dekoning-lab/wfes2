@@ -13,53 +13,61 @@ double WrightFisher::psi_diploid(llong i, llong N, double s, double h, double u,
     return (((a + b) * (1 - u)) + ((b + c) * v)) / w_bar;
 } //}}}
 
-WrightFisher::Row WrightFisher::binom_row(llong i, llong Nx, llong Ny, double s, double h, double u, double v, double alpha)
+WrightFisher::Row(llong i, llong Nx, llong Ny, double s, double h, double u, double v, double alpha)
 { //{{{
     llong Ny2 = 2 * Ny;
-    double a = alpha / 2.0;
 
     // binomial sampling probability
     double p = psi_diploid(i, Nx, s, h, u, v);
 
     // start and end quantiles for covering 1 - alpha weight of the probability mass
-    llong start = (llong)binom_tail_cover(a, Ny2, p, true);
-    llong end = (llong)binom_tail_cover(a, Ny2, p, false);
+    llong start = (llong)binom_tail_cover(alpha / 2, Ny2, p, true);
+    llong end = (llong)binom_tail_cover(alpha / 2, Ny2, p, false);
 
     // make sure we didn't mess up
     assert(start < end);
 
     // Create row container
     llong row_size = end - start + 1;
-    Row r(start, end, row_size);
+
+    // Initialize row
+    Q = dvec(row_size);
+    this->start = start;
+    this->end = end;
+    this->size = row_size;
+
+    // Row r(start, end, row_size);
 
     // Start iterative binomial calculation (WFES supplementary, eq 18,19)
     double d = ld_binom(start, Ny2, p);
     double lc = log(p) - log(1 - p);
-    r.Q(0) = d;
+    Q(0) = d;
 
     // Iterative binomial (in log)
     for(llong j = start + 1; j <= end; j++) {
         d += log(Ny2 - j + 1) - log(j) + lc;
-        r.Q(j - start) = d;
+        Q(j - start) = d;
     }
 
     // Exponentiate
-    r.Q.exp();
+    Q.exp();
     // Re-weigh to sum to 1
-    r.weight = r.Q.normalize();
+    this->weight = Q.normalize();
 
-    return r;
 } //}}}
 
 WrightFisher::Matrix WrightFisher::Single(llong N, absorption_type mt, double s, double h, double u, double v, double alpha, llong block_size)
 { //{{{
 
     if(mt == NEITHER) {
+        cout << "Starting building" << endl;
         WrightFisher::Matrix W((2 * N) + 1, 0, mt);
         for(llong i = 0; i <= 2 * N; i++) {
             WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
+            cout << "appending" << endl;
             W.Q.append_data(r.Q, r.start, r.end, r.start, r.end);
         }
+        cout << "about to return" << endl;
         return W;
     }
     else if (mt == EXTINCTION) {

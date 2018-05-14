@@ -10,13 +10,13 @@ public:
 
 	llong size;
 
+	explicit VectorBase(): _stride(0), _values(nullptr) {}
 	explicit VectorBase(llong size, llong stride, T* values): _stride(stride), _values(values), size(size) {}
 	
-	explicit VectorBase(llong size, T init = 0, llong stride = 1): 
-		_stride(stride), 
-		_values((T*)calloc(size * _stride, sizeof(T))),
-		size(size) {
+	explicit VectorBase(llong size, T init = 0, llong stride = 1): _stride(stride), _values(nullptr), size(size) {
 
+		_values = (T*)calloc(size * _stride, sizeof(T));
+		assert(_values != NULL);
 		if (init != 0) {
 			for(llong i = 0; i < (size * _stride); i += _stride) {
 				_values[i] = init;

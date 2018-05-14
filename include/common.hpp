@@ -4,8 +4,10 @@
 #include <cstdlib> 
 #include <cmath>
 #include <cfloat>
+#include <cstring>
 
 #include <iostream>
+#include <limits>
 
 #include <mkl.h>
 

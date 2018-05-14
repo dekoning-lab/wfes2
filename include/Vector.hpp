@@ -7,9 +7,11 @@ template <typename T>
 class Vector : public VectorBase<T>
 {
 public:
+	explicit Vector(): VectorBase<T>() {}
 	explicit Vector(llong size, T init = 0, llong stride = 1): VectorBase<T>(size, init, stride) {}
 
 	~Vector() {
+		std::cout << "Destroying Vector" << std::endl;
 		free(this->_values);
 	}
 
