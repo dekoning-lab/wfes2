@@ -1,47 +1,47 @@
 #pragma once
 
-#include "Vector.hpp"
+#include "NumericVector.hpp"
 
 template <typename T>
 class DenseMatrix {
 public:
-	
+
 	llong rows;
 	llong cols;
 
-	T* _values;
+	T* values;
 
-	explicit DenseMatrix(llong rows, llong cols, T init = 0): rows(rows), cols(cols), _values(nullptr) {
+	explicit DenseMatrix(llong rows, llong cols, T init = 0): rows(rows), cols(cols), values(nullptr) {
 		
-		_values = (T*)calloc(rows * cols, sizeof(T));
-		assert(_values != NULL);
+		values = (T*)calloc(rows * cols, sizeof(T));
+		assert(values != NULL);
 		if (init != 0) {
 			for(llong i = 0; i < (rows * cols); i ++ ) {
-				_values[i] = init;
+				values[i] = init;
 			}
 		}
 	}
 
-	T& operator()(llong i, llong j) { return _values[(i * rows) + j]; }
-	const T& operator()(llong i, llong j) const { return _values[(i * rows) + j]; }
+	T& operator()(llong i, llong j) { return values[(i * rows) + j]; }
+	const T& operator()(llong i, llong j) const { return values[(i * rows) + j]; }
 
-	VectorView<T> row(llong i) {
-		return VectorView<T>(cols, 1, _values);
+	NumericVectorView<T> row(llong i) {
+		return NumericVectorView<T>(cols, 1, values);
 	}
 
-	VectorView<T> col(llong j) {
-		return VectorView<T>(rows, cols, _values + j);
+	NumericVectorView<T> col(llong j) {
+		return NumericVectorView<T>(rows, cols, values + j);
 	}
 
 	void print_debug() {
 		for(llong i = 0; i < rows * cols; i++) {
-			std::cout << _values[i] << "\t";
+			std::cout << values[i] << "\t";
 		}
 		std::cout << std::endl;
 	}
 
 	~DenseMatrix() {
-		free(_values);
+		free(values);
 	}
 };
 
@@ -61,3 +61,4 @@ std::ostream& operator<<(std::ostream& os, const DenseMatrix<T>& x) {
 }
 
 typedef DenseMatrix<double> dmat;
+typedef DenseMatrix<llong> lmat;

@@ -13,7 +13,7 @@ double WrightFisher::psi_diploid(llong i, llong N, double s, double h, double u,
     return (((a + b) * (1 - u)) + ((b + c) * v)) / w_bar;
 } //}}}
 
-WrightFisher::Row(llong i, llong Nx, llong Ny, double s, double h, double u, double v, double alpha)
+WrightFisher::Row WrightFisher::binom_row(llong i, llong Nx, llong Ny, double s, double h, double u, double v, double alpha)
 { //{{{
     llong Ny2 = 2 * Ny;
 
@@ -27,32 +27,26 @@ WrightFisher::Row(llong i, llong Nx, llong Ny, double s, double h, double u, dou
     // make sure we didn't mess up
     assert(start < end);
 
-    // Create row container
-    llong row_size = end - start + 1;
-
     // Initialize row
-    Q = dvec(row_size);
-    this->start = start;
-    this->end = end;
-    this->size = row_size;
-
-    // Row r(start, end, row_size);
+    Row r(start, end);
 
     // Start iterative binomial calculation (WFES supplementary, eq 18,19)
     double d = ld_binom(start, Ny2, p);
     double lc = log(p) - log(1 - p);
-    Q(0) = d;
+    r.Q(0) = d;
 
     // Iterative binomial (in log)
     for(llong j = start + 1; j <= end; j++) {
         d += log(Ny2 - j + 1) - log(j) + lc;
-        Q(j - start) = d;
+        r.Q(j - start) = d;
     }
 
     // Exponentiate
-    Q.exp();
+    r.Q.exp();
     // Re-weigh to sum to 1
-    this->weight = Q.normalize();
+    r.weight = r.Q.normalize();
+
+    return r;
 
 } //}}}
 
