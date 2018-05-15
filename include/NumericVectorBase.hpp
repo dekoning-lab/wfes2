@@ -41,7 +41,7 @@ public:
 		return s;
 	}
 
-	T normalize() {
+	T normalize_inplace() {
 		T s = sum();	
 		for(long i = 0; i < size; i++) {
 			(*this)(i) /= s;
@@ -49,17 +49,17 @@ public:
 		return s;
 	}
 
-	void negate() {
+	void negate_inplace() {
 		for(long i = 0; i < size; i++) {
 			T x = (*this)(i);
 			(*this)(i) = -x;
 		}
 	}
 
-	void abs() {
+	void abs_inplace() {
 		for(long i = 0; i < size; i++) {
 			T x = (*this)(i);
-			(*this)(i) = ::abs(x);
+			(*this)(i) = fabs(x);
 		}
 	}
 };

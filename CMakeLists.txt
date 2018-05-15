@@ -4,7 +4,7 @@ project(WFAFLE)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(INTEL_ROOT "/opt/intel/")
+set(INTEL_ROOT "$ENV{HOME}/intel/")
 
 if(UNIX AND NOT APPLE) #linux
     set(LIB_SUFFIX "/intel64")

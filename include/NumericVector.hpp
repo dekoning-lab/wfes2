@@ -48,7 +48,7 @@ public:
 		return r;
 	}
 
-	void exp() {
+	void exp_inplace() {
 		vdExp(this->size, this->values, this->values);
 	}
 

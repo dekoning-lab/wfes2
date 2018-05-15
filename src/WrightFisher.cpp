@@ -42,9 +42,9 @@ WrightFisher::Row WrightFisher::binom_row(llong i, llong Nx, llong Ny, double s,
     }
 
     // Exponentiate
-    r.Q.exp();
+    r.Q.exp_inplace();
     // Re-weigh to sum to 1
-    r.weight = r.Q.normalize();
+    r.weight = r.Q.normalize_inplace();
 
     return r;
 
@@ -56,7 +56,7 @@ WrightFisher::Matrix WrightFisher::Equilibrium(llong N, double s, double h, doub
     for(llong i = 0; i <= N2; i++) {
         WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
         // I - Q
-        r.Q.negate();
+        r.Q.negate_inplace();
         r.Q(i - r.start) += 1;
         if (r.end == N2) {
             r.Q(r.size - 1) += 1;

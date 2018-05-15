@@ -18,7 +18,7 @@ dvec equilibrium(llong N, double s, double h, double u, double v, double alpha, 
     dvec id = dvec::identity(wf_eq.Q.n_row, wf_eq.Q.n_row - 1);
 
     dvec eq = solver.solve(id, true);
-    eq.abs();
+    eq.abs_inplace();
 
     return eq;
 }
