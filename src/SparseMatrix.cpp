@@ -21,6 +21,7 @@ SparseMatrix::SparseMatrix(llong n_row, llong n_col): current_row(0), full(false
 }
 
 SparseMatrix::~SparseMatrix() {
+    std::cout << "Deconstructing Sparse Matrix" << std::endl;
     if (this->valid) {
         free(values);
         free(columns);

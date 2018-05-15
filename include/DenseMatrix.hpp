@@ -31,8 +31,8 @@ public:
 		r.valid = false;
 	}
 
-	T& operator()(llong i, llong j) { return values[(i * rows) + j]; }
-	const T& operator()(llong i, llong j) const { return values[(i * rows) + j]; }
+	T& operator()(llong i, llong j) { return values[(i * cols) + j]; }
+	const T& operator()(llong i, llong j) const { return values[(i * cols) + j]; }
 
 	NumericVectorView<T> row(llong i) {
 		return NumericVectorView<T>(cols, 1, values);

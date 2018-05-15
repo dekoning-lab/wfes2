@@ -68,10 +68,13 @@ WrightFisher::Matrix WrightFisher::Single(llong N, absorption_type mt, double s,
 
         WrightFisher::Matrix W(2 * N, 1, mt);
         for(llong i = 1; i <= 2 * N; i++) {
+            cout << "Row " << i << endl;
             WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
+            cout << "appending" << endl;
             if (r.start == 0) {
                 //                   m0       m1         r0 r1
                 W.Q.append_data(r.Q, r.start, r.end - 1, 1, r.size - 1);
+                
                 W.R(i - 1, 0) = r.Q(0);
             } else {
                 W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);

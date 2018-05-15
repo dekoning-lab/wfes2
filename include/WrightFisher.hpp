@@ -42,13 +42,13 @@ namespace WrightFisher {
 
     struct Matrix : public MoveOnly {
         llong size;
-        absorption_type a_t;
         llong n_abs;
+        absorption_type a_t;
         smat Q;
         dmat R;
 
         Matrix(llong size, llong n_abs, absorption_type a_t): 
-        	size(size), a_t(a_t), n_abs(n_abs), Q(size, size), R(size, n_abs) {
+        	size(size), n_abs(n_abs), a_t(a_t), Q(size, size), R(size, n_abs) {
 
         	std::cout << "Creating WF matrix " << this << std::endl;
         }
@@ -58,7 +58,7 @@ namespace WrightFisher {
         }
 
         Matrix(Matrix&& m): 
-        	size(m.size), a_t(m.a_t), n_abs(m.n_abs), Q(std::move(m.Q)), R(std::move(m.R)) {}
+        	size(m.size), n_abs(m.n_abs), a_t(m.a_t), Q(std::move(m.Q)), R(std::move(m.R)) {}
 
     };
 
