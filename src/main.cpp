@@ -69,15 +69,22 @@ int main(int argc, char const *argv[])
 
     deque<dvec> d;
     d.push_back(equilibrium(pop_sizes(0), s, h, mu, mu, alpha));
+    cout << d[0].size << endl;
+    iterate_generations(d[0], pop_sizes(0), epoch_gens(0), s, h, mu, mu, alpha);
+    cout << d[0].size << endl;
+    d.push_back(switch_population_size(d[0], pop_sizes(0), pop_sizes(1), s, h, mu, mu, alpha));
+    cout << d[1].size << endl;
+    iterate_generations(d[1], pop_sizes(1), epoch_gens(1), s, h, mu, mu, alpha);
+    cout << d[1].size << endl;
 
-    for(llong i = 0; i < k - 1; i++) {
-        iterate_generations(d[i], pop_sizes(i), epoch_gens(i), s, h, mu, mu, alpha);
-        d.push_back(switch_population_size(d[i], pop_sizes(i), pop_sizes(i + 1), s, h, mu, mu, alpha));
-    }
+    // for(llong i = 0; i < k - 1; i++) {
+    //     iterate_generations(d[i], pop_sizes(i), epoch_gens(i), s, h, mu, mu, alpha);
+    //     d.push_back(switch_population_size(d[i], pop_sizes(i), pop_sizes(i + 1), s, h, mu, mu, alpha));
+    // }
 
-    iterate_generations(d[k - 1], pop_sizes(k - 1), epoch_gens(k - 1), s, h, mu, mu, alpha);
+    // iterate_generations(d[k - 1], pop_sizes(k - 1), epoch_gens(k - 1), s, h, mu, mu, alpha);
 
-    cout << d[k - 1] << endl;
+    cout << d[1] << endl;
 
 
     // int Ny = atoi(argv[2]);

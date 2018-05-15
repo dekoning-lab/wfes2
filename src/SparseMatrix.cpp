@@ -85,16 +85,33 @@ DenseMatrix<double> SparseMatrix::dense() {
 }
 
 dvec SparseMatrix::multiply(dvec& x, bool transpose) {
-    dvec y(x.size);
-    const char* tr = transpose ? "T" : "N";
-    mkl_cspblas_dcsrgemv(tr, &n_row, values, row_index, columns, x.values, y.values);
+    llong v_size = transpose ? n_col : n_row;
+    transpose ? assert(x.size == n_row) : assert(x.size == n_col);
+    dvec y(v_size);
+
+    sparse_matrix_t A;
+    mkl_sparse_d_create_csr(&A, SPARSE_INDEX_BASE_ZERO, n_row, n_col, row_index, row_index + 1, columns, values);
+    struct matrix_descr A_descr = {.type = SPARSE_MATRIX_TYPE_GENERAL};
+    sparse_operation_t op = transpose ? SPARSE_OPERATION_TRANSPOSE : SPARSE_OPERATION_NON_TRANSPOSE;
+
+    mkl_sparse_d_mv(op, 1, A, A_descr, x.values, 0, y.values);
+    
     return y;
 }
 
 void SparseMatrix::multiply_inplace(dvec& x, bool transpose) {
-    const char* tr = transpose ? "T" : "N";
+    assert(x.size == n_row); 
+    assert(x.size == n_col);
+    transpose ? assert(x.size == n_row) : assert(x.size == n_col);
     dvec workspace(x.size);
-    mkl_cspblas_dcsrgemv(tr, &n_row, values, row_index, columns, x.values, workspace.values);
+
+    sparse_matrix_t A;
+    mkl_sparse_d_create_csr(&A, SPARSE_INDEX_BASE_ZERO, n_row, n_col, row_index, row_index + 1, columns, values);
+    struct matrix_descr A_descr = {.type = SPARSE_MATRIX_TYPE_GENERAL};
+    sparse_operation_t op = transpose ? SPARSE_OPERATION_TRANSPOSE : SPARSE_OPERATION_NON_TRANSPOSE;
+
+    mkl_sparse_d_mv(op, 1, A, A_descr, x.values, 0, workspace.values);
+
     for(llong i = 0; i < x.size; i++) x(i) = workspace(i);
 }
 
