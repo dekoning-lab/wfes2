@@ -58,7 +58,7 @@ int main(int argc, char const *argv[])
     lvec epoch_gens(args::get(epoch_lengths_f));
 
     if(pop_sizes.size != epoch_gens.size) throw runtime_error("Population size vector should be the same length as epoch lengths");
-    if(pop_sizes.size >= 2) throw runtime_error("Population size vector should be longer than 2");
+    if(pop_sizes.size < 2) throw runtime_error("Population size vector should be longer than 2");
 
     double s = 0;
     double h = 0.5;
