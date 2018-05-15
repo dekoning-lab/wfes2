@@ -6,9 +6,12 @@
 template <typename T>
 class NumericVector : public NumericVectorBase<T> {
 public:
-	explicit NumericVector(llong size, T init = 0): NumericVectorBase<T>(size, init, 1) {}
+	NumericVector(llong size, T init = 0): 
+		NumericVectorBase<T>(size, init, 1) {}
 
-	NumericVector(NumericVector&& rhs): NumericVectorBase<T>(rhs.size, rhs.stride, rhs.values) {
+	NumericVector(NumericVector&& rhs): 
+		NumericVectorBase<T>(rhs.size, rhs.stride, rhs.values) {
+			
 		rhs.valid = false;
 	}
 
@@ -55,8 +58,8 @@ private:
 
 public:
 
-	explicit NumericVectorView(llong size, llong stride, T* values): NumericVectorBase<T>(size, stride, values) {}
-	explicit NumericVectorView(NumericVector<T>& d): NumericVectorView(d.size, d.stride, d.values) {}
+	NumericVectorView(llong size, llong stride, T* values): NumericVectorBase<T>(size, stride, values) {}
+	NumericVectorView(NumericVector<T>& d): NumericVectorView(d.size, d.stride, d.values) {}
 
 	~NumericVectorView() {}
 };

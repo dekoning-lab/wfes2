@@ -6,25 +6,39 @@
 
 using namespace std;
 
-class SparseMatrix
+class SparseMatrix : public MoveOnly
 {
+protected:
     llong current_row;
     bool full;
+
+    // TODO: make interface consistent with DenseMatrix
+    SparseMatrix(llong current_row, bool full, llong non_zeros, llong n_row, llong n_col, double* values, llong* columns, llong* row_index):
+        current_row(current_row), full(full), non_zeros(non_zeros), n_row(n_row), n_col(n_col), values(values), columns(columns), row_index(row_index) {}
+
 public:
 
-    double* values;
-    llong* columns;
-    llong* row_index;
 
 
     llong non_zeros;
     llong n_row;
     llong n_col;
 
+    double* values;
+    llong* columns;
+    llong* row_index;
 
+
+    // SparseMatrix(llong current_row, )
     SparseMatrix(llong n_row, llong n_col);
 
     ~SparseMatrix();
+
+    SparseMatrix(SparseMatrix&& r): 
+        SparseMatrix(r.current_row, r.full, r.non_zeros, r.n_row, r.n_col, r.values, r.columns, r.row_index) {
+
+        r.valid = false;
+    }
 
     //       r0 = 1;   r1 = 4;
     // r: a  b  c  d  e  f  g  h 

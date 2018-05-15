@@ -4,15 +4,17 @@
 
 template <typename T>
 class NumericVectorBase : public MoveOnly {
+protected:	
+	NumericVectorBase(llong size, llong stride, T* values): 
+		stride(stride), size(size), values(values) {}
+
 public:
 	llong stride;
+	llong size;
 	T* values;
 
-	llong size;
-
-	explicit NumericVectorBase(llong size, llong stride, T* values): stride(stride), values(values), size(size) {}
-	
-	explicit NumericVectorBase(llong size, T init = 0, llong stride = 1): stride(stride), values(nullptr), size(size) {
+	NumericVectorBase(llong size, T init = 0, llong stride = 1): 
+		stride(stride), size(size), values(nullptr) {
 
 		values = (T*)calloc(size * stride, sizeof(T));
 		assert(values != NULL);

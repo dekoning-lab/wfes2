@@ -20,37 +20,45 @@ namespace WrightFisher {
 		SWITCHING
 	};
 
-	class Row {
+	class Row : public MoveOnly {
 	public:
-		dvec Q;
+		
 		llong start;
 		llong end;
 		llong size;
 		double weight;
+		dvec Q;
 
-		explicit Row(llong start, llong end): Q(end - start + 1), start(start), end(end), size(end - start + 1), weight(1) {}
+		Row(llong start, llong end): 
+			start(start), end(end), size(end - start + 1), weight(1), Q(end - start + 1) {}
+
 		~Row() {
 			std::cout << "Destroying WF row" << std::endl;
 		}
 
-		Row(Row&& r): Q(std::move(r.Q)), start(r.start), end(r.end), size(r.size), weight(r.weight) {}
+		Row(Row&& r): 
+			start(r.start), end(r.end), size(r.size), weight(r.weight), Q(std::move(r.Q)) {}
 	};
 
-    struct Matrix {
+    struct Matrix : public MoveOnly {
         llong size;
-        absorption_type at;
+        absorption_type a_t;
         llong n_abs;
         smat Q;
         dmat R;
 
-        explicit Matrix(llong size, llong n_abs, absorption_type at): size(size), at(at), n_abs(n_abs), Q(size, size), R(size, n_abs) {
+        Matrix(llong size, llong n_abs, absorption_type a_t): 
+        	size(size), a_t(a_t), n_abs(n_abs), Q(size, size), R(size, n_abs) {
+
         	std::cout << "Creating WF matrix " << this << std::endl;
         }
+
         ~Matrix() {
         	std::cout << "Destroying WF matrix " << this << std::endl;
         }
 
-        Matrix(Matrix&& m): size(m.size), at(m.at), n_abs(m.n_abs), Q(std::move(m.Q)), R(std::move(m.R)) {}
+        Matrix(Matrix&& m): 
+        	size(m.size), a_t(m.a_t), n_abs(m.n_abs), Q(std::move(m.Q)), R(std::move(m.R)) {}
 
     };
 

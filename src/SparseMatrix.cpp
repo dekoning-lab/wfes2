@@ -21,9 +21,11 @@ SparseMatrix::SparseMatrix(llong n_row, llong n_col): current_row(0), full(false
 }
 
 SparseMatrix::~SparseMatrix() {
-    free(values);
-    free(columns);
-    free(row_index);
+    if (this->valid) {
+        free(values);
+        free(columns);
+        free(row_index);
+    }
 }
 
 // // closed range [start, stop]

@@ -4,6 +4,9 @@
 
 template <typename T>
 class DenseMatrix: public MoveOnly {
+protected:
+		DenseMatrix(llong rows, llong cols, T* values): 
+			rows(rows), cols(cols), values(values) {}
 public:
 
 	llong rows;
@@ -11,8 +14,8 @@ public:
 
 	T* values;
 
-	explicit DenseMatrix(llong rows, llong cols, T* values): rows(rows), cols(cols), values(values) {}
-	explicit DenseMatrix(llong rows, llong cols, T init = 0): rows(rows), cols(cols), values(nullptr) {
+	DenseMatrix(llong rows, llong cols, T init = 0): 
+		rows(rows), cols(cols), values(nullptr) {
 		
 		values = (T*)calloc(rows * cols, sizeof(T));
 		assert(values != NULL);
@@ -23,7 +26,8 @@ public:
 		}
 	}
 
-	DenseMatrix(DenseMatrix&& r): DenseMatrix<T>(r.rows, r.cols, r.values) {
+	DenseMatrix(DenseMatrix&& r): 
+		DenseMatrix<T>(r.rows, r.cols, r.values) {
 		r.valid = false;
 	}
 
