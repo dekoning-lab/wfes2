@@ -55,6 +55,9 @@ WrightFisher::Matrix WrightFisher::Equilibrium(llong N, double s, double h, doub
     WrightFisher::Matrix W(N2 + 1, N2 + 1, 0, WrightFisher::NEITHER);
     for(llong i = 0; i <= N2; i++) {
         WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
+        // I - Q
+        r.Q.negate();
+        r.Q(i - r.start) += 1;
         if (r.end == N2) {
             r.Q(r.size - 1) += 1;
             W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
