@@ -39,19 +39,20 @@ namespace WrightFisher {
     };
 
     struct Matrix : public MoveOnly {
-        llong size;
+        llong n_row;
+        llong n_col;
         llong n_abs;
         absorption_type a_t;
         smat Q;
         dmat R;
 
-        Matrix(llong size, llong n_abs, absorption_type a_t): 
-            size(size), n_abs(n_abs), a_t(a_t), Q(size, size), R(size, n_abs) {}
+        Matrix(llong n_row, llong n_col, llong n_abs, absorption_type a_t): 
+            n_row(n_row), n_col(n_col), n_abs(n_abs), a_t(a_t), Q(n_row, n_col), R(n_row, n_abs) {}
 
         ~Matrix() {}
 
         Matrix(Matrix&& m): 
-            size(m.size), n_abs(m.n_abs), a_t(m.a_t), Q(std::move(m.Q)), R(std::move(m.R)) {}
+            n_row(m.n_row), n_col(m.n_col), n_abs(m.n_abs), a_t(m.a_t), Q(std::move(m.Q)), R(std::move(m.R)) {}
 
     };
 

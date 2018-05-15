@@ -56,7 +56,7 @@ WrightFisher::Matrix WrightFisher::Single(llong N, absorption_type abs_t, double
 
     if(abs_t == NEITHER) {
 
-        WrightFisher::Matrix W(N2 + 1, 0, abs_t);
+        WrightFisher::Matrix W(N2 + 1, N2 + 1, 0, abs_t);
         for(llong i = 0; i <= N2; i++) {
             WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
             W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
@@ -66,7 +66,7 @@ WrightFisher::Matrix WrightFisher::Single(llong N, absorption_type abs_t, double
 
     else if (abs_t == EXTINCTION) {
 
-        WrightFisher::Matrix W(N2, 1, abs_t);
+        WrightFisher::Matrix W(N2, N2, 1, abs_t);
         for(llong i = 1; i <= N2; i++) {
             WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
             if (r.start == 0) {
@@ -83,7 +83,7 @@ WrightFisher::Matrix WrightFisher::Single(llong N, absorption_type abs_t, double
 
     else if (abs_t == FIXATION) {
 
-        WrightFisher::Matrix W(N2, 1, abs_t);
+        WrightFisher::Matrix W(N2, N2, 1, abs_t);
         for(llong i = 0; i <= N2 - 1; i++) {
             WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
             if (r.end == N2) {
@@ -100,7 +100,7 @@ WrightFisher::Matrix WrightFisher::Single(llong N, absorption_type abs_t, double
 
     else if (abs_t == BOTH) {
 
-        WrightFisher::Matrix W(N2 - 1, 2, abs_t);
+        WrightFisher::Matrix W(N2 - 1, N2 - 1, 2, abs_t);
         for(llong i = 1; i <= N2 - 1; i++) {
             WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
 
