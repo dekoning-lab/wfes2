@@ -3,7 +3,7 @@
 #include "NumericVector.hpp"
 
 template <typename T>
-class DenseMatrix {
+class DenseMatrix: public MoveOnly {
 public:
 
 	llong rows;
@@ -11,6 +11,7 @@ public:
 
 	T* values;
 
+	explicit DenseMatrix(llong rows, llong cols, T* values): rows(rows), cols(cols), values(values) {}
 	explicit DenseMatrix(llong rows, llong cols, T init = 0): rows(rows), cols(cols), values(nullptr) {
 		
 		values = (T*)calloc(rows * cols, sizeof(T));
@@ -20,6 +21,10 @@ public:
 				values[i] = init;
 			}
 		}
+	}
+
+	DenseMatrix(DenseMatrix&& r): DenseMatrix<T>(r.rows, r.cols, r.values) {
+		r.valid = false;
 	}
 
 	T& operator()(llong i, llong j) { return values[(i * rows) + j]; }
@@ -41,7 +46,10 @@ public:
 	}
 
 	~DenseMatrix() {
-		free(values);
+		if (this->valid) {
+			free(values);	
+		}
+		
 	}
 };
 

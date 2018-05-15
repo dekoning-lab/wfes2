@@ -3,9 +3,7 @@
 #include "common.hpp"
 
 template <typename T>
-class NumericVectorBase {
-protected:
-	bool valid = true;
+class NumericVectorBase : public MoveOnly {
 public:
 	llong stride;
 	T* values;
@@ -25,19 +23,13 @@ public:
 		}
 	}
 
-	NumericVectorBase(NumericVectorBase&) = delete;
-	NumericVectorBase(const NumericVectorBase&) = delete;
-
-	NumericVectorBase(NumericVectorBase&&) = delete;
-	NumericVectorBase(const NumericVectorBase&&) = delete;
-
 	T& operator()(llong i) { return values[i * stride]; }
 	const T& operator()(llong i) const { return values[i * stride]; }
 
 	T sum() const {
 		T s = 0;
 		for(llong i = 0; i < size; i++) {
-			s += values[i * stride];
+			s += (*this)(i);
 		}
 		return s;
 	}
@@ -45,18 +37,11 @@ public:
 	T normalize() {
 		T s = sum();	
 		for(long i = 0; i < size; i++) {
-			values[i * stride] /= s;
+			(*this)(i) /= s;
 		}
 		return s;
 	}
-
-	virtual ~NumericVectorBase() = 0;
-
 };
-
-template <typename T>
-NumericVectorBase<T>::~NumericVectorBase() {
-}
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const NumericVectorBase<T>& x) {

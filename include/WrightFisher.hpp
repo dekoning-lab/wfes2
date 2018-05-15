@@ -34,9 +34,6 @@ namespace WrightFisher {
 		}
 
 		Row(Row&& r): Q(std::move(r.Q)), start(r.start), end(r.end), size(r.size), weight(r.weight) {}
-
-		// static binom_row(llong i, llong Nx, llong Ny, double s = 0, double h = 0.5, double u = 1e-9, double v = 1e-9, double alpha = 1e-20);
-
 	};
 
     struct Matrix {
