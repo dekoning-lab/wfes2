@@ -12,7 +12,6 @@ protected:
     llong current_row;
     bool full;
 
-    // TODO: make interface consistent with DenseMatrix
     SparseMatrix(llong current_row, bool full, llong non_zeros, llong n_row, llong n_col, double* values, llong* columns, llong* row_index):
         current_row(current_row), full(full), non_zeros(non_zeros), n_row(n_row), n_col(n_col), values(values), columns(columns), row_index(row_index) {}
 
