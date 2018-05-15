@@ -69,70 +69,15 @@ int main(int argc, char const *argv[])
 
     deque<dvec> d;
     d.push_back(equilibrium(pop_sizes(0), s, h, mu, mu, alpha));
-    cout << d[0].size << endl;
-    iterate_generations(d[0], pop_sizes(0), epoch_gens(0), s, h, mu, mu, alpha);
-    cout << d[0].size << endl;
-    d.push_back(switch_population_size(d[0], pop_sizes(0), pop_sizes(1), s, h, mu, mu, alpha));
-    cout << d[1].size << endl;
-    iterate_generations(d[1], pop_sizes(1), epoch_gens(1), s, h, mu, mu, alpha);
-    cout << d[1].size << endl;
 
-    // for(llong i = 0; i < k - 1; i++) {
-    //     iterate_generations(d[i], pop_sizes(i), epoch_gens(i), s, h, mu, mu, alpha);
-    //     d.push_back(switch_population_size(d[i], pop_sizes(i), pop_sizes(i + 1), s, h, mu, mu, alpha));
-    // }
+    for(llong i = 0; i < k - 1; i++) {
+        iterate_generations(d[i], pop_sizes(i), epoch_gens(i), s, h, mu, mu, alpha);
+        d.push_back(switch_population_size(d[i], pop_sizes(i), pop_sizes(i + 1), s, h, mu, mu, alpha));
+    }
 
-    // iterate_generations(d[k - 1], pop_sizes(k - 1), epoch_gens(k - 1), s, h, mu, mu, alpha);
+    iterate_generations(d[k - 1], pop_sizes(k - 1), epoch_gens(k - 1), s, h, mu, mu, alpha);
 
-    cout << d[1] << endl;
-
-
-    // int Ny = atoi(argv[2]);
-
-    // WF::Matrix wf_ref = WF::Single(Nx, Ny, WF::NEITHER, 0, 0.5, 1e-9, 1e-9, 0);
-    // cout << wf_ref.Q.n_row << "x" << wf_ref.Q.n_col << endl;
-    // wf_ref.Q.save_market("ref.mtx");
-    // cout << wf_ref.Q.dense() << endl << endl;
-
-    // dvec c = dvec::identity(wf_ref.Q.n_row);
-    // dvec x = wf_ref.Q.multiply(c, true);
-
-    // cout << x << endl;
-    // cout << x.sum() << endl;
-
-
-    // dvec eq = equilibrium(N, 0, 0.5, 1e-5, 1e-5);
-    // cout << eq << endl;
-
-    // WF::Matrix wf = WF::Single(N, N, WF::NEITHER, 0, 0.5, 1e-5, 1e-5, 1e-20);
-
-
-    // cout << "Iterating generations" << endl;
-    // for(llong i = 0; i < 10000; i ++) {
-    //     wf.Q.multiply_inplace(eq, true);
-    // }
-    // cout << eq << endl;
-
-
-
-
-    // WF::Matrix wf_ext = WF::Single(Nx, Ny, WF::EXTINCTION, 0, 0.5, 1e-9, 1e-9, 0);
-    // cout << wf_ext.Q.n_row << "x" << wf_ext.Q.n_col << endl;
-    // wf_ext.Q.save_market("ext.mtx");
-    // cout << wf_ext.Q.dense() << endl << endl;
-    // cout << wf_ext.R << endl << endl;
-
-    // WF::Matrix wf_fix = WF::Single(Nx, Ny, WF::FIXATION, 0, 0.5, 1e-9, 1e-9, 0);
-    // cout << wf_fix.Q.n_row << "x" << wf_fix.Q.n_col << endl;
-    // wf_fix.Q.save_market("fix.mtx");
-    // cout << wf_fix.Q.dense() << endl << endl;
-    // cout << wf_fix.R << endl << endl;
-
-    // WF::Matrix wf_abs = WF::Single(Nx, Ny, WF::BOTH, 0, 0.5, 1e-9, 1e-9, 0);
-    // cout << wf_abs.Q.n_row << "x" << wf_abs.Q.n_col << endl;
-    // wf_abs.Q.save_market("abs.mtx");
-    // cout << wf_abs.Q.dense() << endl << endl;
-    // cout << wf_abs.R << endl << endl;
+    cout << d[k - 1] << endl;
 
     return EXIT_SUCCESS;
 }
