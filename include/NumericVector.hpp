@@ -6,6 +6,7 @@
 template <typename T>
 class NumericVector : public NumericVectorBase<T> {
 public:
+
 	NumericVector(llong size, T init = 0): 
 		NumericVectorBase<T>(size, init, 1) {}
 
@@ -13,6 +14,12 @@ public:
 		NumericVectorBase<T>(rhs.size, rhs.stride, rhs.values) {
 			
 		rhs.valid = false;
+	}
+
+	NumericVector(const std::vector<T>& r): NumericVector<T>(r.size()) {
+		for(llong i = 0; i < this->size; i++) {
+			(*this)(i) = r[i];
+		}
 	}
 
 	~NumericVector() {

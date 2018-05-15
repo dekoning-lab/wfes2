@@ -9,6 +9,11 @@
 #include <iostream>
 #include <limits>
 
+// Fot arg parsing:
+#include <deque>
+#include <vector>
+#include <sstream>
+
 #include <mkl.h>
 
 #include "MoveOnly.hpp"
