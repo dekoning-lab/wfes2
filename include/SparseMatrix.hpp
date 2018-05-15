@@ -46,7 +46,8 @@ public:
     // m: b  c  d  e
     //    m0 = 0;  m1 = 3;  
     // insert row from r0 to r1 (row index) into matrix from m0 to m1 (matrix index)
-    void append_data(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row = true);
+    void append_data(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row = true, llong slack = 0);
+    void finalize_row();
 
     void debug_print();
     dmat dense();

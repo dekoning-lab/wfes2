@@ -50,6 +50,25 @@ WrightFisher::Row WrightFisher::binom_row(llong i, llong Nx, llong Ny, double s,
 
 }
 
+WrightFisher::Matrix WrightFisher::Equilibrium(llong N, double s, double h, double u, double v, double alpha, llong block_size) {
+    llong N2 = 2 * N;
+    WrightFisher::Matrix W(N2 + 1, N2 + 1, 0, WrightFisher::NEITHER);
+    for(llong i = 0; i <= N2; i++) {
+        WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
+        if (r.end == N2) {
+            r.Q(r.size - 1) += 1;
+            W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
+        } else {
+            // allocate one additional cell (slack = 1)
+            W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1, false, 1);
+            W.Q.values[W.Q.non_zeros - 1] = 1;
+            W.Q.columns[W.Q.non_zeros - 1] = N2;
+            W.Q.finalize_row();
+        }
+    }
+    return W;
+}
+
 WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type abs_t, double s, double h, double u, double v, double alpha, llong block_size) {
 
    llong Nx2 = 2 * Nx; 

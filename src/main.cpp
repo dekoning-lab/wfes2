@@ -20,6 +20,10 @@ int main(int argc, char const *argv[])
     cout << x << endl;
     cout << x.sum() << endl;
 
+    WF::Matrix wf_eq = WF::Equilibrium(Nx, 0, 0.5, 1e-9, 1e-9, 0);
+    wf_eq.Q.subtract_identity();
+    wf_eq.Q.save_market("eq.mtx");
+
 
     // WF::Matrix wf_ext = WF::Single(Nx, Ny, WF::EXTINCTION, 0, 0.5, 1e-9, 1e-9, 0);
     // cout << wf_ext.Q.n_row << "x" << wf_ext.Q.n_col << endl;

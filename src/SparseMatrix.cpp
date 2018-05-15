@@ -16,15 +16,15 @@ SparseMatrix::~SparseMatrix() {
     }
 }
 
-void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row) {
+void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row, llong slack) {
     
     assert((m1 - m0) == (r1 - r0));
 
     llong size = r1 - r0 + 1;
-    llong nnz = non_zeros + size;
+    llong nnz = non_zeros + size + slack;
 
     // row index
-    if(new_row) row_index[current_row + 1] = nnz;
+    // if(new_row) row_index[current_row + 1] = nnz;
 
     // columns
     llong* columns_new = (llong*)realloc(columns, nnz * sizeof(llong));
@@ -41,16 +41,19 @@ void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1
 
     memcpy(&(values[non_zeros]), &(row.values[r0]), size * sizeof(double));
 
-    non_zeros += size;
+    non_zeros += (size + slack);
 
-    if(new_row) {
-        current_row ++;
+    if (new_row) finalize_row();
+}
 
-        // last row
-        if(current_row == n_row) {
-            full = true;
-            row_index[n_row] = non_zeros;
-        }
+void SparseMatrix::finalize_row() {
+    row_index[current_row + 1] = non_zeros;
+    current_row ++;
+
+    // last row
+    if (current_row == n_row) {
+        full = true;
+        row_index[n_row] = non_zeros;
     }
 }
 
