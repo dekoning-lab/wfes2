@@ -5,10 +5,27 @@
 namespace WF = WrightFisher;
 using namespace std;
 
+dvec equilibrium(llong N, double s, double h, double u, double v) {
+    WF::Matrix wf_eq = WF::Equilibrium(N, 0, 0.5, 1e-4, 1e-4, 1e-20);
+
+    // llong msg_level = verbose_f ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
+    llong msg_level = MKL_PARDISO_MSG_QUIET;
+
+    PardisoSolver solver(wf_eq.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+    solver.analyze();
+
+    dvec id = dvec::identity(wf_eq.Q.n_row, wf_eq.Q.n_row - 1);
+
+    dvec eq = solver.solve(id, true);
+    eq.abs();
+
+    return eq;
+}
+
 int main(int argc, char const *argv[])
 {
-    int Nx = atoi(argv[1]);
-    int Ny = atoi(argv[2]);
+    int N = atoi(argv[1]);
+    // int Ny = atoi(argv[2]);
 
     // WF::Matrix wf_ref = WF::Single(Nx, Ny, WF::NEITHER, 0, 0.5, 1e-9, 1e-9, 0);
     // cout << wf_ref.Q.n_row << "x" << wf_ref.Q.n_col << endl;
@@ -21,19 +38,20 @@ int main(int argc, char const *argv[])
     // cout << x << endl;
     // cout << x.sum() << endl;
 
-    WF::Matrix wf_eq = WF::Equilibrium(Nx, 0, 0.5, 1e-3, 1e-3, 1e-20);
 
-    // llong msg_level = verbose_f ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
-    llong msg_level = MKL_PARDISO_MSG_VERBOSE;
-
-    PardisoSolver solver(wf_eq.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
-    solver.analyze();
-
-    dvec id = dvec::identity(wf_eq.Q.n_row, wf_eq.Q.n_row - 1);
-
-    dvec eq = solver.solve(id, true);
-
+    dvec eq = equilibrium(N, 0, 0.5, 1e-5, 1e-5);
     cout << eq << endl;
+
+    WF::Matrix wf = WF::Single(N, N, WF::NEITHER, 0, 0.5, 1e-5, 1e-5, 1e-20);
+
+
+    cout << "Iterating generations" << endl;
+    for(llong i = 0; i < 10000; i ++) {
+        wf.Q.multiply_inplace(eq, true);
+    }
+    cout << eq << endl;
+
+
 
 
     // WF::Matrix wf_ext = WF::Single(Nx, Ny, WF::EXTINCTION, 0, 0.5, 1e-9, 1e-9, 0);

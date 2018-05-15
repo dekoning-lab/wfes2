@@ -59,7 +59,7 @@ public:
 	void abs() {
 		for(long i = 0; i < size; i++) {
 			T x = (*this)(i);
-			(*this)(i) = abs(x);
+			(*this)(i) = ::abs(x);
 		}
 	}
 };

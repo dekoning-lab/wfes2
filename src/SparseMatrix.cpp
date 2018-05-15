@@ -93,7 +93,9 @@ dvec SparseMatrix::multiply(dvec& x, bool transpose) {
 
 void SparseMatrix::multiply_inplace(dvec& x, bool transpose) {
     const char* tr = transpose ? "T" : "N";
-    mkl_cspblas_dcsrgemv(tr, &n_row, values, row_index, columns, x.values, x.values);
+    dvec workspace(x.size);
+    mkl_cspblas_dcsrgemv(tr, &n_row, values, row_index, columns, x.values, workspace.values);
+    for(llong i = 0; i < x.size; i++) x(i) = workspace(i);
 }
 
 ostream& operator<< (ostream& os, const SparseMatrix& M) {
