@@ -25,8 +25,13 @@ public:
 		}
 	}
 
-	T& operator()(llong i) { return values[i * stride]; }
-	const T& operator()(llong i) const { return values[i * stride]; }
+	T& operator()(llong i) { 
+		return values[i * stride]; 
+	}
+
+	const T& operator()(llong i) const { 
+		return values[i * stride]; 
+	}
 
 	T sum() const {
 		T s = 0;

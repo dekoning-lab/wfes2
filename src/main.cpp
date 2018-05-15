@@ -6,20 +6,26 @@ using namespace std;
 
 int main(int argc, char const *argv[])
 {
-	WF::Row r = WF::binom_row(0, 10, 10);
+    int N = atoi(argv[1]);
 
-	cout << r.Q << endl;
+    WF::Matrix wf_ref = WF::Single(N, WF::NEITHER, 0, 0.5, 1e-9, 1e-9, 0);
+    wf_ref.Q.save_market("ref.mtx");
+    // cout << wf_ref.Q.dense() << endl << endl;
 
-	// WF::Matrix wf_ref = WF::Single(2, WF::NEITHER);
-	// cout << "about to print" << endl;
-	// wf_ref.Q.debug_print();
-	// cout << wf_ref.Q.dense() << endl;
+    WF::Matrix wf_ext = WF::Single(N, WF::EXTINCTION, 0, 0.5, 1e-9, 1e-9, 0);
+    wf_ext.Q.save_market("ext.mtx");
+    // cout << wf_ext.Q.dense() << endl << endl;
+    // cout << wf_ext.R << endl << endl;
 
-	WF::Matrix wf_ext = WF::Single(2, WF::EXTINCTION);
-	cout << "about to print" << endl;
-	wf_ext.Q.debug_print();
-	cout << wf_ext.Q.dense() << endl;
+    WF::Matrix wf_fix = WF::Single(N, WF::FIXATION, 0, 0.5, 1e-9, 1e-9, 0);
+    wf_fix.Q.save_market("fix.mtx");
+    // cout << wf_fix.Q.dense() << endl << endl;
+    // cout << wf_fix.R << endl << endl;
 
+    WF::Matrix wf_abs = WF::Single(N, WF::BOTH, 0, 0.5, 1e-9, 1e-9, 0);
+    wf_abs.Q.save_market("abs.mtx");
+    // cout << wf_abs.Q.dense() << endl << endl;
+    // cout << wf_abs.R << endl << endl;
 
-	return 0;
+    return 0;
 }

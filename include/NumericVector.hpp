@@ -16,10 +16,7 @@ public:
 	}
 
 	~NumericVector() {
-		std::cout << "Destroying NumericVector" << std::endl;
-		if (this->valid) {
-			free(this->values);
-		}
+		if (this->valid) free(this->values);
 	}
 
 	static NumericVector zeros(llong size) {

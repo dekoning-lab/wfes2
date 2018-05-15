@@ -21,7 +21,6 @@ SparseMatrix::SparseMatrix(llong n_row, llong n_col): current_row(0), full(false
 }
 
 SparseMatrix::~SparseMatrix() {
-    std::cout << "Deconstructing Sparse Matrix" << std::endl;
     if (this->valid) {
         free(values);
         free(columns);
@@ -52,10 +51,7 @@ void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1
     else throw runtime_error("SparseMatrix::append_data(): Reallocation failed - columns");
 
     lvec range = NumericVector<llong>::closed_range(m0, m1);
-    cout << "range: "; print_buffer(range.values, range.size);
-    cout << m0 << ":" << m1 << "; " << r0 << ":" << r1 << endl;
     memcpy(&columns[non_zeros], range.values, size * sizeof(llong));
-    print_buffer(columns, nnz);
 
     // values
     double* values_new = (double*)realloc(values, nnz * sizeof(double));
@@ -99,7 +95,7 @@ DenseMatrix<double> SparseMatrix::dense() {
 
     free(j);
 
-    if(info != 0) throw runtime_error("SparseMatrix::dense(): Error processing line " + to_string(info));
+    if(info != 0) throw runtime_error("SparseMatrix::dense(): Error processing row " + to_string(info));
 
     return dns;
 }
@@ -115,7 +111,7 @@ ostream& operator<< (ostream& os, const SparseMatrix& M) {
     os << "%%MatrixMarket matrix coordinate real general" << endl;
     os << M.n_row << "\t" << M.n_col << "\t" << M.non_zeros << endl;
 
-    cout.precision(numeric_limits<double>::max_digits10 + 2);
+    os.precision(numeric_limits<double>::max_digits10 + 2);
     for (llong i = 0; i < M.n_row; ++i) {
         for (llong j = M.row_index[i]; j < M.row_index[i + 1]; ++j) {
             os << i + 1 << "\t" << M.columns[j] + 1 << "\t" << scientific << M.values[j] << endl;

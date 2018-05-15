@@ -50,15 +50,14 @@ public:
 	}
 
 	~DenseMatrix() {
-		if (this->valid) {
-			free(values);	
-		}
-		
+		if (this->valid) free(values);	
 	}
 };
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const DenseMatrix<T>& x) {
+    // os.precision(std::numeric_limits<double>::max_digits10 + 2);
+    os.precision(3);
 	for(llong j = 0; j < x.cols; j++) {
 		os << x(0, j) << "\t";
 	}

@@ -1,7 +1,7 @@
 #include "WrightFisher.hpp"
 
-double WrightFisher::psi_diploid(llong i, llong N, double s, double h, double u, double v)
-{ //{{{
+double WrightFisher::psi_diploid(llong i, llong N, double s, double h, double u, double v) {
+
     llong j = (2 * N) - i;
     double w_11 = 1 + s;
     double w_12 = 1 + (s * h);
@@ -11,10 +11,10 @@ double WrightFisher::psi_diploid(llong i, llong N, double s, double h, double u,
     double c = w_22 * j * j;
     double w_bar = a + (2 * b) + c;
     return (((a + b) * (1 - u)) + ((b + c) * v)) / w_bar;
-} //}}}
+}
 
-WrightFisher::Row WrightFisher::binom_row(llong i, llong Nx, llong Ny, double s, double h, double u, double v, double alpha)
-{ //{{{
+WrightFisher::Row WrightFisher::binom_row(llong i, llong Nx, llong Ny, double s, double h, double u, double v, double alpha) {
+
     llong Ny2 = 2 * Ny;
 
     // binomial sampling probability
@@ -48,34 +48,48 @@ WrightFisher::Row WrightFisher::binom_row(llong i, llong Nx, llong Ny, double s,
 
     return r;
 
-} //}}}
+}
 
-WrightFisher::Matrix WrightFisher::Single(llong N, absorption_type mt, double s, double h, double u, double v, double alpha, llong block_size)
-{ //{{{
+WrightFisher::Matrix WrightFisher::Single(llong N, absorption_type abs_t, double s, double h, double u, double v, double alpha, llong block_size) {
 
-    if(mt == NEITHER) {
-        cout << "Starting building" << endl;
-        WrightFisher::Matrix W((2 * N) + 1, 0, mt);
-        for(llong i = 0; i <= 2 * N; i++) {
+   llong N2 = 2 * N; 
+
+    if(abs_t == NEITHER) {
+
+        WrightFisher::Matrix W(N2 + 1, 0, abs_t);
+        for(llong i = 0; i <= N2; i++) {
             WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
-            cout << "appending" << endl;
-            W.Q.append_data(r.Q, r.start, r.end, r.start, r.end);
+            W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
         }
-        cout << "about to return" << endl;
         return W;
     }
-    else if (mt == EXTINCTION) {
 
-        WrightFisher::Matrix W(2 * N, 1, mt);
-        for(llong i = 1; i <= 2 * N; i++) {
-            cout << "Row " << i << endl;
+    else if (abs_t == EXTINCTION) {
+
+        WrightFisher::Matrix W(N2, 1, abs_t);
+        for(llong i = 1; i <= N2; i++) {
             WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
-            cout << "appending" << endl;
             if (r.start == 0) {
                 //                   m0       m1         r0 r1
                 W.Q.append_data(r.Q, r.start, r.end - 1, 1, r.size - 1);
-                
                 W.R(i - 1, 0) = r.Q(0);
+            } else {
+                W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r.size - 1);
+            }
+            
+        }
+        return W;
+    }
+
+    else if (abs_t == FIXATION) {
+
+        WrightFisher::Matrix W(N2, 1, abs_t);
+        for(llong i = 0; i <= N2 - 1; i++) {
+            WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
+            if (r.end == N2) {
+                //                   m0       m1         r0 r1
+                W.Q.append_data(r.Q, r.start, r.end - 1, 0, r.size - 2);
+                W.R(i, 0) = r.Q(r.size - 1);
             } else {
                 W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
             }
@@ -83,15 +97,32 @@ WrightFisher::Matrix WrightFisher::Single(llong N, absorption_type mt, double s,
         }
         return W;
     }
-    else if (mt == FIXATION) {
 
-        WrightFisher::Matrix W(2 * N, 1, mt);
+    else if (abs_t == BOTH) {
+
+        WrightFisher::Matrix W(N2 - 1, 2, abs_t);
+        for(llong i = 1; i <= N2 - 1; i++) {
+            WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
+
+            if (r.start == 0 && r.end == N2) {
+                W.Q.append_data(r.Q, r.start, r.end - 2, 1, r.end - 1);
+                W.R(i - 1, 0) = r.Q(0);
+                W.R(i - 1, 1) = r.Q(r.size - 1);
+            } else if (r.start == 0) {
+                W.Q.append_data(r.Q, r.start, r.end - 1, 1, r.size - 1);
+                W.R(i - 1, 0) = r.Q(0);
+            } else if (r.end == N2) {
+                W.Q.append_data(r.Q, r.start - 1, r.end - 2, 0, r.size - 2);
+                W.R(i - 1, 0) = r.Q(r.size - 1);
+            } else {
+                W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r.size - 1);
+            }
+        }
         return W;
     }
-    else { // BOTH
 
-        WrightFisher::Matrix W((2 * N) - 1, 2, mt);
-        return W;
+    else {
+        throw runtime_error("WrightFisher::Single() unknown absorption_type");
     }
 
 
@@ -118,4 +149,4 @@ WrightFisher::Matrix WrightFisher::Single(llong N, absorption_type mt, double s,
     //     }
     // }
 
-} //}}}
+}
