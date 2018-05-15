@@ -1,17 +1,5 @@
 #include "SparseMatrix.hpp"
 
-// SparseMatrix::SparseMatrix(
-//         llong n_row, llong n_col,
-//         vector<double> values, vector<llong> columns, vector<llong> row_index):
-//     _current_row(n_row), _full(true),
-//     non_zeros((llong)values.size()), n_row(n_row), n_col(n_col)
-// {
-//     if(n_col + 1 != (llong)row_index.size()) throw runtime_error("SparseMatrix::SparseMatrix(): Size of row_index vector should be n_rows+1");
-//     _values = alloc_vector_copy(values);
-//     _columns = alloc_vector_copy(columns);
-//     _row_index = alloc_vector_copy(row_index);
-// }
-
 SparseMatrix::SparseMatrix(llong n_row, llong n_col): current_row(0), full(false), non_zeros(0), n_row(n_row), n_col(n_col) {
 
     values = (double*)malloc(sizeof(double));
@@ -27,13 +15,6 @@ SparseMatrix::~SparseMatrix() {
         free(row_index);
     }
 }
-
-// // closed range [start, stop]
-// NumericVector<llong> closed_range(llong start, llong stop) {
-//     NumericVector<llong> r(stop - start + 1);
-//     for(llong i = start; i <= stop; i++) r(i - start) = i;
-//     return r;
-// }
 
 void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row) {
     
@@ -100,11 +81,16 @@ DenseMatrix<double> SparseMatrix::dense() {
     return dns;
 }
 
-//TODO: would this be destroyed early?
-dvec SparseMatrix::multiply(dvec x) {
+dvec SparseMatrix::multiply(dvec& x, bool transpose) {
     dvec y(x.size);
-    mkl_cspblas_dcsrgemv("N", &n_row, values, row_index, columns, x.values, y.values);
+    const char* tr = transpose ? "T" : "N";
+    mkl_cspblas_dcsrgemv(tr, &n_row, values, row_index, columns, x.values, y.values);
     return y;
+}
+
+void SparseMatrix::multiply_inplace(dvec& x, bool transpose) {
+    const char* tr = transpose ? "T" : "N";
+    mkl_cspblas_dcsrgemv(tr, &n_row, values, row_index, columns, x.values, x.values);
 }
 
 ostream& operator<< (ostream& os, const SparseMatrix& M) {
