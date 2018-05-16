@@ -179,21 +179,21 @@ WrightFisher::Matrix WrightFisher::SingleAlt(const llong Nx, const llong Ny, con
 
     for(llong row = 0; row <= Nx2; row++) {
         Row r = binom_row(row, Nx, Ny, s, h, u, v, alpha);
-        llong last = r.size - 1;
+        llong r_last = r.size - 1;
 
         switch(abs_t) {
             case NON_ABSORBING:
-                W.Q.append_data(r.Q, r.start, r.end, 0, last);
+                W.Q.append_data(r.Q, r.start, r.end, 0, r_last);
             break;
 
             case EXTINCTION_ONLY:
                 if (row == 0) continue;
                 else {
                     if (r.start == 0) {
-                        W.Q.append_data(r.Q, r.start, r.end - 1, 1, last);
+                        W.Q.append_data(r.Q, r.start, r.end - 1, 1, r_last);
                         W.R(row - 1, 0) = r.Q(0);
                     } else {
-                        W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, last);
+                        W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r_last);
                     }
                 }
             break;
@@ -202,10 +202,10 @@ WrightFisher::Matrix WrightFisher::SingleAlt(const llong Nx, const llong Ny, con
                 if (row == Nx2) continue;
                 else {
                     if (r.end == Ny2) {
-                        W.Q.append_data(r.Q, r.start, r.end - 1, 0, last - 1);
-                        W.R(row, 0) = r.Q(last);
+                        W.Q.append_data(r.Q, r.start, r.end - 1, 0, r_last - 1);
+                        W.R(row, 0) = r.Q(r_last);
                     } else {
-                        W.Q.append_data(r.Q, r.start, r.end, 0, last);
+                        W.Q.append_data(r.Q, r.start, r.end, 0, r_last);
                     }
                 }
             break;
@@ -214,20 +214,19 @@ WrightFisher::Matrix WrightFisher::SingleAlt(const llong Nx, const llong Ny, con
                 if (row == 0 || row == Nx2) continue;
                 else {
                     if (r.start == 0 && r.end == Ny2) {
-                        W.Q.append_data(r.Q, r.start, r.end - 2, 1, r.end - 1);
+                        W.Q.append_data(r.Q, r.start, r.end - 2, 1, r_last - 1);
                         W.R(row - 1, 0) = r.Q(0);
-                        W.R(row - 1, 1) = r.Q(last);
+                        W.R(row - 1, 1) = r.Q(r_last);
                     } else if (r.start == 0) {
-                        W.Q.append_data(r.Q, r.start, r.end - 1, 1, last);
+                        W.Q.append_data(r.Q, r.start, r.end - 1, 1, r_last);
                         W.R(row - 1, 0) = r.Q(0);
                     } else if (r.end == Ny2) {
-                        W.Q.append_data(r.Q, r.start - 1, r.end - 2, 0, last - 1);
-                        W.R(row - 1, 0) = r.Q(last);
+                        W.Q.append_data(r.Q, r.start - 1, r.end - 2, 0, r_last - 1);
+                        W.R(row - 1, 1) = r.Q(r_last);
                     } else {
-                        W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, last);
+                        W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r_last);
                     }
                 }
-
             break;
         }
     }
@@ -249,6 +248,7 @@ std::vector<std::pair<llong, llong>> submatrix_indeces(const lvec& sizes) {
         }
         idx[r].first = i;
         idx[r].second = j;
+        j++;
     }
     return idx;
 }
@@ -271,17 +271,15 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
     llong n_abs_total = n_absorbing(abs_t) * k;
 
     lvec sizes(k);
-    for(llong i = 0; i < k; i++) {
-        sizes(i) = 2 * N(i) + 1 - n_absorbing(abs_t);
-    }
+    for(llong i = 0; i < k; i++) sizes(i) = 2 * N(i) + 1;
     llong size = sizes.sum();
 
-    Matrix W(size, size, n_abs_total);
+    Matrix W(size - n_abs_total, size - n_abs_total, n_abs_total);
     std::vector<std::pair<llong, llong>> index = submatrix_indeces(sizes);
 
     for(llong row = 0; row < size; row++) {
         llong i = index[row].first; // model index
-        llong im = index[i].second; // current index within model i
+        llong im = index[row].second; // current index within model i
 
         // coordinate of the submodel start
         llong offset = 0;
@@ -290,12 +288,62 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
             Row r = binom_row(im, N(i), N(j), s(i), h(i), u(i), v(i), alpha);
             r.Q *= switching(i, j);
 
-            if(abs_t == NON_ABSORBING) {
+            bool row_complete = (j == (k - 1));
+            llong m_start = r.start + offset;
+            llong m_end = r.end + offset;
+            llong r_last = r.size - 1;
 
+            // W.Q.append_data(r.Q, r.start + offset, r.end + offset, 0, r_last, j == (k - 1));
+            switch(abs_t) {
+                case NON_ABSORBING:
+                    W.Q.append_data(r.Q, m_start, m_end, 0, r_last, row_complete);
+                break;
 
-            } 
+                case EXTINCTION_ONLY:
+                    if (im == 0) continue;
+                    else {
+                        if (r.start == 0) {
+                            W.Q.append_data(r.Q, m_start, m_end - 1, 1, r_last, row_complete);
+                            W.R(row - 1, j) = r.Q(0);
+                        } else {
+                            W.Q.append_data(r.Q, m_start - 1, m_end - 1, 0, r_last, row_complete);
+                        }
+                    }
+                break;
 
+                case FIXATION_ONLY:
+                    if (im == N(i) * 2) continue;
+                    else {
+                        if (r.end == N(j) * 2) {
+                            W.Q.append_data(r.Q, m_start, m_end - 1, 0, r_last - 1, row_complete);
+                            W.R(row, j) = r.Q(r_last);
+                        } else {
+                            W.Q.append_data(r.Q, m_start, m_end, 0, r_last, row_complete);
+                        }
+                    }
+                break;
 
+                case BOTH_ABSORBING:
+                    if (im == 0 || im == N(i) * 2) continue;
+                    else {
+                        if (r.start == 0 && r.end == N(j) * 2) {
+                            W.Q.append_data(r.Q, m_start, m_end - 2, 1, r_last - 1, row_complete);
+                            W.R(row - 1, 2 * j) = r.Q(0);
+                            W.R(row - 1, (2 * j) + 1) = r.Q(r_last);
+                        } else if (r.start == 0) {
+                            W.Q.append_data(r.Q, m_start, m_end - 1, 1, r_last, row_complete);
+                            W.R(row - 1, 2 * j) = r.Q(0);
+                        } else if (r.end == N(j) * 2) {
+                            W.Q.append_data(r.Q, m_start - 1, m_end - 2, 0, r_last - 1, row_complete);
+                            W.R(row - 1, (2 * j) + 1) = r.Q(r_last);
+                        } else {
+                            W.Q.append_data(r.Q, m_start - 1, m_end - 1, 0, r_last, row_complete);
+                        }
+                    }
+                break;
+            }
+
+            offset += (sizes(j) - n_absorbing(abs_t));
         }
     }
 
