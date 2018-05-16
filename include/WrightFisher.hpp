@@ -9,29 +9,24 @@
 namespace WrightFisher {
 
     enum absorption_type {
-        NEITHER = 0,
-        EXTINCTION,
-        FIXATION,
-        BOTH
+        NON_ABSORBING = 0,
+        EXTINCTION_ONLY,
+        FIXATION_ONLY,
+        BOTH_ABSORBING
     };
 
     static llong n_abs(absorption_type a_t) {
         switch(a_t) {
-            case NEITHER:
+            case NON_ABSORBING:
                 return 0;
-            case EXTINCTION:
+            case EXTINCTION_ONLY:
                 return 1;
-            case FIXATION:
+            case FIXATION_ONLY:
                 return 1;
-            case BOTH:
+            case BOTH_ABSORBING:
                 return 2;
         }
     }
-
-    enum model_type {
-        SINGLE = 0,
-        SWITCHING
-    };
 
     class Row : public MoveOnly {
     public:
@@ -70,8 +65,15 @@ namespace WrightFisher {
 
     double psi_diploid(llong i, llong N, double s = 0, double h = 0.5, double u = 1e-9, double v = 1e-9);
     Row binom_row(llong i, llong Nx, llong Ny, double s = 0, double h = 0.5, double u = 1e-9, double v = 1e-9, double alpha = 1e-20);
+
     Matrix Equilibrium(llong N, double s = 0, double h = 0.5, double u = 1e-9, double v = 1e-9, double alpha = 1e-20, llong block_size = 100);
-    Matrix Single(llong Nx, llong Ny, absorption_type mt, double s = 0, double h = 0.5, double u = 1e-9, double v = 1e-9, double alpha = 1e-20, llong block_size = 100);
-    // Matrix Switching(lvec Nx, lvec Ny, std::vector<absorption_type>& mt, dvec s, dvec h, dvec u, dvec v, double alpha = 1e-20, llong block_size = 100);
+
+    Matrix Single(llong Nx, llong Ny, absorption_type a_t, double s = 0, double h = 0.5, double u = 1e-9, double v = 1e-9, double alpha = 1e-20, llong block_size = 100);
+    Matrix Switching(lvec Nx, lvec Ny, absorption_type a_t, dvec s, dvec h, dvec u, dvec v, double alpha = 1e-20, llong block_size = 100);
+
+    // Two-model Switching: A is of type `NON_ABSORBING`, B is of type `FIXATION_ONLY`
+    Matrix NonAbsorbingToFixationOnly(lvec Nx, lvec Ny, dvec s, dvec h, dvec u, dvec v, double alpha = 1e-20, llong block_size = 100);
+    // Two-model Switching: A is of type `NON_ABSORBING`, B is of type `BOTH_ABSORBING`
+    Matrix NonAbsorbingToBothAbsorbing(lvec Nx, lvec Ny, dvec s, dvec h, dvec u, dvec v, double alpha = 1e-20, llong block_size = 100);
 
 };

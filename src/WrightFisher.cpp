@@ -52,7 +52,7 @@ WrightFisher::Row WrightFisher::binom_row(llong i, llong Nx, llong Ny, double s,
 
 WrightFisher::Matrix WrightFisher::Equilibrium(llong N, double s, double h, double u, double v, double alpha, llong block_size) {
     llong N2 = 2 * N;
-    WrightFisher::Matrix W(N2 + 1, N2 + 1, WrightFisher::NEITHER);
+    WrightFisher::Matrix W(N2 + 1, N2 + 1, WrightFisher::NON_ABSORBING);
     for(llong i = 0; i <= N2; i++) {
         WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
         // I - Q
@@ -77,7 +77,7 @@ WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type ab
    llong Nx2 = 2 * Nx; 
    llong Ny2 = 2 * Ny; 
 
-    if(abs_t == NEITHER) {
+    if(abs_t == NON_ABSORBING) {
 
         WrightFisher::Matrix W(Nx2 + 1, Ny2 + 1, abs_t);
         for(llong i = 0; i <= Nx2; i++) {
@@ -87,7 +87,7 @@ WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type ab
         return W;
     }
 
-    else if (abs_t == EXTINCTION) {
+    else if (abs_t == EXTINCTION_ONLY) {
 
         WrightFisher::Matrix W(Nx2, Ny2, abs_t);
         for(llong i = 1; i <= Nx2; i++) {
@@ -104,7 +104,7 @@ WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type ab
         return W;
     }
 
-    else if (abs_t == FIXATION) {
+    else if (abs_t == FIXATION_ONLY) {
 
         WrightFisher::Matrix W(Nx2, Ny2, abs_t);
         for(llong i = 0; i <= Nx2 - 1; i++) {
@@ -121,7 +121,7 @@ WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type ab
         return W;
     }
 
-    else if (abs_t == BOTH) {
+    else if (abs_t == BOTH_ABSORBING) {
 
         WrightFisher::Matrix W(Nx2 - 1, Ny2 - 1, abs_t);
         for(llong i = 1; i <= Nx2 - 1; i++) {
