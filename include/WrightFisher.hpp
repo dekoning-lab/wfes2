@@ -15,7 +15,7 @@ namespace WrightFisher {
         BOTH_ABSORBING
     };
 
-    static llong n_abs(absorption_type a_t) {
+    inline llong n_absorbing(absorption_type a_t) {
         switch(a_t) {
             case NON_ABSORBING:
                 return 0;
@@ -49,31 +49,36 @@ namespace WrightFisher {
     struct Matrix : public MoveOnly {
         llong n_row;
         llong n_col;
-        absorption_type a_t;
+        llong n_abs;
         smat Q;
         dmat R;
 
-        Matrix(llong n_row, llong n_col, absorption_type a_t): 
-            n_row(n_row), n_col(n_col), a_t(a_t), Q(n_row, n_col), R(n_row, n_abs(a_t)) {}
+        Matrix(llong n_row, llong n_col, llong n_abs): 
+            n_row(n_row), n_col(n_col), n_abs(n_abs), Q(n_row, n_col), R(n_row, n_abs) {}
 
         ~Matrix() {}
 
         Matrix(Matrix&& m): 
-            n_row(m.n_row), n_col(m.n_col), a_t(m.a_t), Q(std::move(m.Q)), R(std::move(m.R)) {}
+            n_row(m.n_row), n_col(m.n_col), n_abs(m.n_abs), Q(std::move(m.Q)), R(std::move(m.R)) {}
 
     };
 
-    double psi_diploid(llong i, llong N, double s = 0, double h = 0.5, double u = 1e-9, double v = 1e-9);
-    Row binom_row(llong i, llong Nx, llong Ny, double s = 0, double h = 0.5, double u = 1e-9, double v = 1e-9, double alpha = 1e-20);
+    double psi_diploid(const llong i, const llong N, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9);
+    Row binom_row(const llong i, const llong Nx, const llong Ny, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, const double alpha = 1e-20);
 
-    Matrix Equilibrium(llong N, double s = 0, double h = 0.5, double u = 1e-9, double v = 1e-9, double alpha = 1e-20, llong block_size = 100);
+    // Harrod matrix to solve for equilibrium distribution
+    Matrix Equilibrium(const llong N, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, const double alpha = 1e-20, const llong block_size = 100);
 
-    Matrix Single(llong Nx, llong Ny, absorption_type a_t, double s = 0, double h = 0.5, double u = 1e-9, double v = 1e-9, double alpha = 1e-20, llong block_size = 100);
-    Matrix Switching(lvec Nx, lvec Ny, absorption_type a_t, dvec s, dvec h, dvec u, dvec v, double alpha = 1e-20, llong block_size = 100);
+    // Single - one matrix of a given absorption type
+    Matrix Single(const llong Nx, const llong Ny, const absorption_type a_t, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, const double alpha = 1e-20, const llong block_size = 100);
+
+    // Switching - each sub-model is of the same absorbing type
+    Matrix Switching(const lvec& N, const absorption_type a_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha = 1e-20, const llong block_size = 100);
 
     // Two-model Switching: A is of type `NON_ABSORBING`, B is of type `FIXATION_ONLY`
-    Matrix NonAbsorbingToFixationOnly(lvec Nx, lvec Ny, dvec s, dvec h, dvec u, dvec v, double alpha = 1e-20, llong block_size = 100);
+    Matrix NonAbsorbingToFixationOnly(const lvec& N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha = 1e-20, const llong block_size = 100);
+
     // Two-model Switching: A is of type `NON_ABSORBING`, B is of type `BOTH_ABSORBING`
-    Matrix NonAbsorbingToBothAbsorbing(lvec Nx, lvec Ny, dvec s, dvec h, dvec u, dvec v, double alpha = 1e-20, llong block_size = 100);
+    Matrix NonAbsorbingToBothAbsorbing(const lvec& N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha = 1e-20, const llong block_size = 100);
 
 };

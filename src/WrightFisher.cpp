@@ -1,6 +1,6 @@
 #include "WrightFisher.hpp"
 
-double WrightFisher::psi_diploid(llong i, llong N, double s, double h, double u, double v) {
+double WrightFisher::psi_diploid(const llong i, const llong N, const double s, const double h, const double u, const double v) {
 
     llong j = (2 * N) - i;
     double w_11 = 1 + s;
@@ -13,7 +13,7 @@ double WrightFisher::psi_diploid(llong i, llong N, double s, double h, double u,
     return (((a + b) * (1 - u)) + ((b + c) * v)) / w_bar;
 }
 
-WrightFisher::Row WrightFisher::binom_row(llong i, llong Nx, llong Ny, double s, double h, double u, double v, double alpha) {
+WrightFisher::Row WrightFisher::binom_row(const llong i, const llong Nx, const llong Ny, const double s, const double h, const double u, const double v, const double alpha) {
 
     llong Ny2 = 2 * Ny;
 
@@ -50,9 +50,9 @@ WrightFisher::Row WrightFisher::binom_row(llong i, llong Nx, llong Ny, double s,
 
 }
 
-WrightFisher::Matrix WrightFisher::Equilibrium(llong N, double s, double h, double u, double v, double alpha, llong block_size) {
+WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, const double h, const double u, const double v, const double alpha, const llong block_size) {
     llong N2 = 2 * N;
-    WrightFisher::Matrix W(N2 + 1, N2 + 1, WrightFisher::NON_ABSORBING);
+    WrightFisher::Matrix W(N2 + 1, N2 + 1, n_absorbing(WrightFisher::NON_ABSORBING));
     for(llong i = 0; i <= N2; i++) {
         WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
         // I - Q
@@ -72,16 +72,16 @@ WrightFisher::Matrix WrightFisher::Equilibrium(llong N, double s, double h, doub
     return W;
 }
 
-WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type abs_t, double s, double h, double u, double v, double alpha, llong block_size) {
+WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const absorption_type abs_t, const double s, const double h, const double u, const double v, const double alpha, const llong block_size) {
 
    llong Nx2 = 2 * Nx; 
    llong Ny2 = 2 * Ny; 
 
     if(abs_t == NON_ABSORBING) {
 
-        WrightFisher::Matrix W(Nx2 + 1, Ny2 + 1, abs_t);
+        Matrix W(Nx2 + 1, Ny2 + 1, n_absorbing(abs_t));
         for(llong i = 0; i <= Nx2; i++) {
-            WrightFisher::Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
+            Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
             W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
         }
         return W;
@@ -89,9 +89,9 @@ WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type ab
 
     else if (abs_t == EXTINCTION_ONLY) {
 
-        WrightFisher::Matrix W(Nx2, Ny2, abs_t);
+        Matrix W(Nx2, Ny2, n_absorbing(abs_t));
         for(llong i = 1; i <= Nx2; i++) {
-            WrightFisher::Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
+            Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
             if (r.start == 0) {
                 //                   m0       m1         r0 r1
                 W.Q.append_data(r.Q, r.start, r.end - 1, 1, r.size - 1);
@@ -106,9 +106,9 @@ WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type ab
 
     else if (abs_t == FIXATION_ONLY) {
 
-        WrightFisher::Matrix W(Nx2, Ny2, abs_t);
+        Matrix W(Nx2, Ny2, n_absorbing(abs_t));
         for(llong i = 0; i <= Nx2 - 1; i++) {
-            WrightFisher::Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
+            Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
             if (r.end == Ny2) {
                 //                   m0       m1         r0 r1
                 W.Q.append_data(r.Q, r.start, r.end - 1, 0, r.size - 2);
@@ -123,9 +123,9 @@ WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type ab
 
     else if (abs_t == BOTH_ABSORBING) {
 
-        WrightFisher::Matrix W(Nx2 - 1, Ny2 - 1, abs_t);
+        Matrix W(Nx2 - 1, Ny2 - 1, n_absorbing(abs_t));
         for(llong i = 1; i <= Nx2 - 1; i++) {
-            WrightFisher::Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
+            Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
 
             if (r.start == 0 && r.end == Ny2) {
                 W.Q.append_data(r.Q, r.start, r.end - 2, 1, r.end - 1);
@@ -174,6 +174,31 @@ WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type ab
 
 }
 
-// Matrix Switching(lvec Nx, lvec Ny, std::vector<absorption_type>& mt, dvec s, dvec h, dvec u, dvec v, double alpha = 1e-20, llong block_size = 100) {
-//    llong k = N.size;
-// }
+WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_type abs_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, double alpha, llong block_size) {
+    llong k = N.size;
+
+    if (abs_t == EXTINCTION_ONLY) {
+        // backward mutation rate should be above 0
+        for(llong i = 0; i < k; i++) {
+            assert(u(i) > 0);
+        }
+    } else if (abs_t == FIXATION_ONLY) {
+        // forward mutation rate should be above 0
+        for(llong i = 0; i < k; i++) {
+            assert(v(i) > 0);
+        }
+    }
+
+    llong n_abs_total = n_absorbing(abs_t) * k;
+
+    lvec sizes(k);
+    for(llong i = 0; i < k; i++) {
+        sizes(i) = 2 * N(i) + 1 - n_absorbing(abs_t);
+    }
+    llong size = sizes.sum();
+
+    Matrix W(size, size, n_abs_total);
+
+    return W;
+
+}
