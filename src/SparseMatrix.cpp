@@ -29,7 +29,7 @@ void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1
     // columns
     llong* columns_new = (llong*)realloc(columns, nnz * sizeof(llong));
     if (columns_new != NULL) columns = columns_new;
-    else throw runtime_error("SparseMatrix::append_data(): Reallocation failed - columns");
+    else throw std::runtime_error("SparseMatrix::append_data(): Reallocation failed - columns");
 
     lvec range = NumericVector<llong>::closed_range(m0, m1);
     memcpy(&columns[non_zeros], range.values, size * sizeof(llong));
@@ -37,7 +37,7 @@ void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1
     // values
     double* values_new = (double*)realloc(values, nnz * sizeof(double));
     if (values_new != NULL) values = values_new;
-    else throw runtime_error("SparseMatrix::append_data(): Reallocation failed - values");
+    else throw std::runtime_error("SparseMatrix::append_data(): Reallocation failed - values");
 
     memcpy(&(values[non_zeros]), &(row.values[r0]), size * sizeof(double));
 
@@ -59,11 +59,11 @@ void SparseMatrix::finalize_row() {
 
 void SparseMatrix::debug_print()
 {
-    cout << "values:    " << endl;
+    std::cout << "values:    " << std::endl;
     print_buffer(values, (size_t)non_zeros);
-    cout << "columns:   " << endl;
+    std::cout << "columns:   " << std::endl;
     print_buffer(columns, (size_t)non_zeros);
-    cout << "row_index:  " << endl;
+    std::cout << "row_index:  " << std::endl;
     print_buffer(row_index, (size_t)(n_row + 1));
 }
 
@@ -79,7 +79,7 @@ DenseMatrix<double> SparseMatrix::dense() {
 
     free(j);
 
-    if(info != 0) throw runtime_error("SparseMatrix::dense(): Error processing row " + to_string(info));
+    if(info != 0) throw std::runtime_error("SparseMatrix::dense(): Error processing row " + std::to_string(info));
 
     return dns;
 }
@@ -115,20 +115,20 @@ void SparseMatrix::multiply_inplace(dvec& x, bool transpose) {
     for(llong i = 0; i < x.size; i++) x(i) = workspace(i);
 }
 
-ostream& operator<< (ostream& os, const SparseMatrix& M) {
-    os << "%%MatrixMarket matrix coordinate real general" << endl;
-    os << M.n_row << "\t" << M.n_col << "\t" << M.non_zeros << endl;
+std::ostream& operator<<(std::ostream& os, const SparseMatrix& M) {
+    os << "%%MatrixMarket matrix coordinate real general" << std::endl;
+    os << M.n_row << "\t" << M.n_col << "\t" << M.non_zeros << std::endl;
 
-    os.precision(numeric_limits<double>::max_digits10 + 2);
+    os.precision(std::numeric_limits<double>::max_digits10 + 2);
     for (llong i = 0; i < M.n_row; ++i) {
         for (llong j = M.row_index[i]; j < M.row_index[i + 1]; ++j) {
-            os << i + 1 << "\t" << M.columns[j] + 1 << "\t" << scientific << M.values[j] << endl;
+            os << i + 1 << "\t" << M.columns[j] + 1 << "\t" << std::scientific << M.values[j] << std::endl;
         }
     }
     return os;
 }
 
-void SparseMatrix::save_market(const string path) {
+void SparseMatrix::save_market(const std::string path) {
     FILE* out = fopen(path.c_str(), "w");
     fprintf(out, "%%%%MatrixMarket matrix coordinate real general\n");
     fprintf(out, LPF "\t" LPF "\t" LPF "\n", n_row, n_col, non_zeros);

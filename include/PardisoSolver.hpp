@@ -3,8 +3,6 @@
 #include "MKL_Const.hpp"
 #include "SparseMatrix.hpp"
 
-using namespace std;
-
 class PardisoSolver {
 
     llong size;

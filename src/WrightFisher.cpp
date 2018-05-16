@@ -74,22 +74,21 @@ WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, co
 
 WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const absorption_type abs_t, const double s, const double h, const double u, const double v, const double alpha, const llong block_size) {
 
-   llong Nx2 = 2 * Nx; 
-   llong Ny2 = 2 * Ny; 
+    llong Nx2 = 2 * Nx; 
+    llong Ny2 = 2 * Ny; 
+
+    llong n_abs = n_absorbing(abs_t);
+
+    Matrix W(Nx2 + 1 - n_abs, Ny2 + 1 - n_abs, n_abs);
 
     if(abs_t == NON_ABSORBING) {
-
-        Matrix W(Nx2 + 1, Ny2 + 1, n_absorbing(abs_t));
         for(llong i = 0; i <= Nx2; i++) {
             Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
             W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
         }
-        return W;
     }
 
     else if (abs_t == EXTINCTION_ONLY) {
-
-        Matrix W(Nx2, Ny2, n_absorbing(abs_t));
         for(llong i = 1; i <= Nx2; i++) {
             Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
             if (r.start == 0) {
@@ -101,12 +100,9 @@ WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const 
             }
             
         }
-        return W;
     }
 
     else if (abs_t == FIXATION_ONLY) {
-
-        Matrix W(Nx2, Ny2, n_absorbing(abs_t));
         for(llong i = 0; i <= Nx2 - 1; i++) {
             Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
             if (r.end == Ny2) {
@@ -118,12 +114,9 @@ WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const 
             }
             
         }
-        return W;
     }
 
     else if (abs_t == BOTH_ABSORBING) {
-
-        Matrix W(Nx2 - 1, Ny2 - 1, n_absorbing(abs_t));
         for(llong i = 1; i <= Nx2 - 1; i++) {
             Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
 
@@ -141,12 +134,13 @@ WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const 
                 W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r.size - 1);
             }
         }
-        return W;
     }
 
     else {
-        throw runtime_error("WrightFisher::Single() unknown absorption_type");
+        throw std::runtime_error("WrightFisher::Single() unknown absorption_type");
     }
+
+    return W;
 
 
     // llong size = (2 * N) + 1 - n_abs;
@@ -174,6 +168,91 @@ WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const 
 
 }
 
+WrightFisher::Matrix WrightFisher::SingleAlt(const llong Nx, const llong Ny, const absorption_type abs_t, const double s, const double h, const double u, const double v, const double alpha, const llong block_size) 
+{
+    llong Nx2 = 2 * Nx; 
+    llong Ny2 = 2 * Ny; 
+
+    llong n_abs = n_absorbing(abs_t);
+
+    Matrix W(Nx2 + 1 - n_abs, Ny2 + 1 - n_abs, n_abs);
+
+    for(llong row = 0; row <= Nx2; row++) {
+        Row r = binom_row(row, Nx, Ny, s, h, u, v, alpha);
+        llong last = r.size - 1;
+
+        switch(abs_t) {
+            case NON_ABSORBING:
+                W.Q.append_data(r.Q, r.start, r.end, 0, last);
+            break;
+
+            case EXTINCTION_ONLY:
+                if (row == 0) continue;
+                else {
+                    if (r.start == 0) {
+                        W.Q.append_data(r.Q, r.start, r.end - 1, 1, last);
+                        W.R(row - 1, 0) = r.Q(0);
+                    } else {
+                        W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, last);
+                    }
+                }
+            break;
+
+            case FIXATION_ONLY:
+                if (row == Nx2) continue;
+                else {
+                    if (r.end == Ny2) {
+                        W.Q.append_data(r.Q, r.start, r.end - 1, 0, last - 1);
+                        W.R(row, 0) = r.Q(last);
+                    } else {
+                        W.Q.append_data(r.Q, r.start, r.end, 0, last);
+                    }
+                }
+            break;
+
+            case BOTH_ABSORBING:
+                if (row == 0 || row == Nx2) continue;
+                else {
+                    if (r.start == 0 && r.end == Ny2) {
+                        W.Q.append_data(r.Q, r.start, r.end - 2, 1, r.end - 1);
+                        W.R(row - 1, 0) = r.Q(0);
+                        W.R(row - 1, 1) = r.Q(last);
+                    } else if (r.start == 0) {
+                        W.Q.append_data(r.Q, r.start, r.end - 1, 1, last);
+                        W.R(row - 1, 0) = r.Q(0);
+                    } else if (r.end == Ny2) {
+                        W.Q.append_data(r.Q, r.start - 1, r.end - 2, 0, last - 1);
+                        W.R(row - 1, 0) = r.Q(last);
+                    } else {
+                        W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, last);
+                    }
+                }
+
+            break;
+        }
+    }
+    return W;
+}
+
+std::vector<std::pair<llong, llong>> submatrix_indeces(const lvec& sizes) {
+    llong i = 0;
+    llong j = 0;
+
+    llong size = sizes.sum();
+
+    std::vector<std::pair<llong, llong>>idx (size);
+
+    for(llong r = 0; r < size; r++) {
+        if (j == sizes(i)) {
+            j = 0;
+            i++;
+        }
+        idx[r].first = i;
+        idx[r].second = j;
+    }
+    return idx;
+}
+
 WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_type abs_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, double alpha, llong block_size) {
     llong k = N.size;
 
@@ -198,6 +277,27 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
     llong size = sizes.sum();
 
     Matrix W(size, size, n_abs_total);
+    std::vector<std::pair<llong, llong>> index = submatrix_indeces(sizes);
+
+    for(llong row = 0; row < size; row++) {
+        llong i = index[row].first; // model index
+        llong im = index[i].second; // current index within model i
+
+        // coordinate of the submodel start
+        llong offset = 0;
+        // iterate over submodels
+        for(llong j = 0; j < k; j++) {
+            Row r = binom_row(im, N(i), N(j), s(i), h(i), u(i), v(i), alpha);
+            r.Q *= switching(i, j);
+
+            if(abs_t == NON_ABSORBING) {
+
+
+            } 
+
+
+        }
+    }
 
     return W;
 

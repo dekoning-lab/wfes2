@@ -4,8 +4,6 @@
 #include "NumericVector.hpp"
 #include "DenseMatrix.hpp"
 
-using namespace std;
-
 class SparseMatrix : public MoveOnly
 {
 protected:
@@ -55,9 +53,11 @@ public:
     void multiply_inplace(dvec& x, bool transpose = false);
 
     // friend ostream& operator<< (ostream& os, const SparseMatrix& M);
-    void save_market(string path);
+    void save_market(std::string path);
     void subtract_identity();
     double operator() (llong i, llong j);
 };
+
+std::ostream& operator<<(std::ostream& os, const SparseMatrix& M);
 
 typedef SparseMatrix smat;

@@ -41,23 +41,29 @@ public:
 		return s;
 	}
 
+	void operator*=(T v) {
+		for(llong i = 0; i < size; i++) {
+			(*this)(i) *= v;
+		}
+	}
+
 	T normalize_inplace() {
 		T s = sum();	
-		for(long i = 0; i < size; i++) {
+		for(llong i = 0; i < size; i++) {
 			(*this)(i) /= s;
 		}
 		return s;
 	}
 
 	void negate_inplace() {
-		for(long i = 0; i < size; i++) {
+		for(llong i = 0; i < size; i++) {
 			T x = (*this)(i);
 			(*this)(i) = -x;
 		}
 	}
 
 	void abs_inplace() {
-		for(long i = 0; i < size; i++) {
+		for(llong i = 0; i < size; i++) {
 			T x = (*this)(i);
 			(*this)(i) = fabs(x);
 		}
