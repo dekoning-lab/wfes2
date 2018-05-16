@@ -52,7 +52,7 @@ WrightFisher::Row WrightFisher::binom_row(llong i, llong Nx, llong Ny, double s,
 
 WrightFisher::Matrix WrightFisher::Equilibrium(llong N, double s, double h, double u, double v, double alpha, llong block_size) {
     llong N2 = 2 * N;
-    WrightFisher::Matrix W(N2 + 1, N2 + 1, 0, WrightFisher::NEITHER);
+    WrightFisher::Matrix W(N2 + 1, N2 + 1, WrightFisher::NEITHER);
     for(llong i = 0; i <= N2; i++) {
         WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
         // I - Q
@@ -79,7 +79,7 @@ WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type ab
 
     if(abs_t == NEITHER) {
 
-        WrightFisher::Matrix W(Nx2 + 1, Ny2 + 1, 0, abs_t);
+        WrightFisher::Matrix W(Nx2 + 1, Ny2 + 1, abs_t);
         for(llong i = 0; i <= Nx2; i++) {
             WrightFisher::Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
             W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
@@ -89,7 +89,7 @@ WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type ab
 
     else if (abs_t == EXTINCTION) {
 
-        WrightFisher::Matrix W(Nx2, Ny2, 1, abs_t);
+        WrightFisher::Matrix W(Nx2, Ny2, abs_t);
         for(llong i = 1; i <= Nx2; i++) {
             WrightFisher::Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
             if (r.start == 0) {
@@ -106,7 +106,7 @@ WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type ab
 
     else if (abs_t == FIXATION) {
 
-        WrightFisher::Matrix W(Nx2, Ny2, 1, abs_t);
+        WrightFisher::Matrix W(Nx2, Ny2, abs_t);
         for(llong i = 0; i <= Nx2 - 1; i++) {
             WrightFisher::Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
             if (r.end == Ny2) {
@@ -123,7 +123,7 @@ WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type ab
 
     else if (abs_t == BOTH) {
 
-        WrightFisher::Matrix W(Nx2 - 1, Ny2 - 1, 2, abs_t);
+        WrightFisher::Matrix W(Nx2 - 1, Ny2 - 1, abs_t);
         for(llong i = 1; i <= Nx2 - 1; i++) {
             WrightFisher::Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
 
@@ -173,3 +173,7 @@ WrightFisher::Matrix WrightFisher::Single(llong Nx, llong Ny, absorption_type ab
     // }
 
 }
+
+// Matrix Switching(lvec Nx, lvec Ny, std::vector<absorption_type>& mt, dvec s, dvec h, dvec u, dvec v, double alpha = 1e-20, llong block_size = 100) {
+//    llong k = N.size;
+// }
