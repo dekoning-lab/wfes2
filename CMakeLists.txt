@@ -28,14 +28,21 @@ set(CMAKE_CXX_FLAGS "-DMKL_ILP64 -m64 -Wall -Wformat -Wno-deprecated-declaration
 
 find_package(Eigen3 3.3 REQUIRED)
 
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB LIB_SOURCES "src/*.cpp")
+list(FILTER LIB_SOURCES EXCLUDE REGEX "src/.*_exe.cpp")
 
 link_directories(${INTEL_OMP_LIB_DIRS} ${MKL_LIB_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${MKL_INCLUDE_DIR})
 include_directories("include")
 
-add_executable(wfafle ${SOURCES})
-target_link_libraries(wfafle ${MKL_LIBS} ${INTEL_OMP_LIBS} ${OTHER_LIBS} Eigen3::Eigen)
+add_library(wfes SHARED ${LIB_SOURCES})
+target_link_libraries(wfes ${MKL_LIBS} ${INTEL_OMP_LIBS} ${OTHER_LIBS} Eigen3::Eigen)
 
-install(TARGETS wfafle RUNTIME DESTINATION bin)
+add_executable(wfafle "src/wfafle_exe.cpp")
+target_link_libraries(wfafle wfes)
+
+add_executable(wfes_soft "src/wfes_soft_exe.cpp")
+target_link_libraries(wfes_soft wfes)
+
+# install(TARGETS wfafle RUNTIME DESTINATION bin)

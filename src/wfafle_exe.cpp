@@ -78,20 +78,7 @@ int main(int argc, char const *argv[])
 
     iterate_generations(d[k - 1], pop_sizes(k - 1), epoch_gens(k - 1), s, h, mu, mu, alpha);
 
-    // cout << d[k - 1] << endl;
-
-    dmat switching(2, 2);
-    for(llong i = 0; i < 2; i++) {
-        for(llong j = 0; j < 2; j++) {
-            switching(i,j) = 1;
-        }
-    }
-
-    dvec sel(2); sel << 0, 0;
-    dvec dom(2); dom << 0.5, 0.5;
-    dvec muv(2); muv << 1e-5, 1e-5;
-    cout << WF::NonAbsorbingToFixationOnly(pop_sizes(0), sel, dom, muv, muv, switching).Q << endl;
-
+    cout << d[k - 1] << endl;
 
     return EXIT_SUCCESS;
 }

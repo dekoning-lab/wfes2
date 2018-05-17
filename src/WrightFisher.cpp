@@ -235,13 +235,13 @@ WrightFisher::Matrix WrightFisher::SingleAlt(const llong Nx, const llong Ny, con
     return W;
 }
 
-std::vector<std::pair<llong, llong>> submatrix_indeces(const lvec& sizes) {
+std::deque<std::pair<llong, llong>> submatrix_indeces(const lvec& sizes) {
     llong i = 0;
     llong j = 0;
 
     llong size = sizes.sum();
 
-    std::vector<std::pair<llong, llong>>idx (size);
+    std::deque<std::pair<llong, llong>>idx (size);
 
     for(llong r = 0; r < size; r++) {
         if (j == sizes(i)) {
@@ -277,7 +277,7 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
     llong size = sizes.sum();
 
     Matrix W(size - n_abs_total, size - n_abs_total, n_abs_total);
-    std::vector<std::pair<llong, llong>> index = submatrix_indeces(sizes);
+    std::deque<std::pair<llong, llong>> index = submatrix_indeces(sizes);
 
     for(llong row = 0; row < size; row++) {
         llong i = index[row].first; // model index
@@ -330,6 +330,7 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
                     else {
                         if (r.start == 0 && r.end == N(j) * 2) {
                             W.Q.append_data(r.Q, m_start, m_end - 2, 1, r_last - 1, row_complete);
+                            // TODO: why is this not `row` ?
                             W.R(im + offset - 1, 2 * j) = r.Q(0);
                             W.R(im + offset - 1, (2 * j) + 1) = r.Q(r_last);
                         } else if (r.start == 0) {
@@ -344,13 +345,10 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
                     }
                 break;
             }
-
             offset += (sizes(j) - n_absorbing(abs_t));
         }
     }
-
     return W;
-
 }
 
 WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha, const llong block_size) {
@@ -363,21 +361,23 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, con
     llong size = sizes.sum();
 
     Matrix W(size, size, 1);
-    std::vector<std::pair<llong, llong>> index = submatrix_indeces(sizes);
+    std::deque<std::pair<llong, llong>> index = submatrix_indeces(sizes);
     
     for(llong row = 0; row < size; row++) {
         
-        // llong i = index[row].first; // model index
+        llong i = index[row].first; // model index
         llong im = index[row].second; // current index within model i
 
         // coordinate of the submodel start
         llong offset = 0;
 
         Row r_a = binom_row(im, N, N, s(0), h(0), u(0), v(0), alpha);
+        r_a.Q *= switching(i, 0);
         W.Q.append_data(r_a.Q, r_a.start, r_a.end, 0, r_a.size - 1, false);
 
         offset = (2 * N) + 1;
         Row r_b = binom_row(im, N, N, s(1), h(1), u(1), v(1), alpha);
+        r_b.Q *= switching(i, 1);
         if (r_b.end == N * 2) {
             W.Q.append_data(r_b.Q, r_b.start + offset, r_b.end + offset - 1, 0, r_b.size - 2, true);
             W.R(row, 0) = r_b.Q(r_b.size - 1);
