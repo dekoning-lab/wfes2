@@ -90,7 +90,7 @@ int main(int argc, char const *argv[])
     dvec sel(2); sel << 0, 0;
     dvec dom(2); dom << 0.5, 0.5;
     dvec muv(2); muv << 1e-5, 1e-5;
-    cout << WF::Switching(pop_sizes, WF::BOTH_ABSORBING, sel, dom, muv, muv, switching).Q << endl;
+    cout << WF::NonAbsorbingToFixationOnly(pop_sizes(0), sel, dom, muv, muv, switching).Q << endl;
 
 
     return EXIT_SUCCESS;

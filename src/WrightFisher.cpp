@@ -352,3 +352,39 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
     return W;
 
 }
+
+WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha, const llong block_size) {
+    // TODO: proper error checking
+    assert(s.size() == 2);
+    // forward mutation rate should be above 0
+    for(llong i = 0; i < 2; i++) assert(v(i) > 0);
+
+    lvec sizes(2); sizes << (2 * N) + 1, 2 * N;
+    llong size = sizes.sum();
+
+    Matrix W(size, size, 1);
+    std::vector<std::pair<llong, llong>> index = submatrix_indeces(sizes);
+    
+    for(llong row = 0; row < size; row++) {
+        
+        llong i = index[row].first; // model index
+        llong im = index[row].second; // current index within model i
+
+        // coordinate of the submodel start
+        llong offset = 0;
+
+        Row r_a = binom_row(im, N, N, s(0), h(0), u(0), v(0), alpha);
+        W.Q.append_data(r_a.Q, r_a.start, r_a.end, 0, r_a.size - 1, false);
+
+        offset = (2 * N) + 1;
+        Row r_b = binom_row(im, N, N, s(1), h(1), u(1), v(1), alpha);
+        if (r_b.end == N * 2) {
+            W.Q.append_data(r_b.Q, r_b.start + offset, r_b.end + offset - 1, 0, r_b.size - 2, true);
+            W.R(im + offset, 0) = r_b.Q(r_b.size - 1);
+        } else {
+            W.Q.append_data(r_b.Q, r_b.start + offset, r_b.end + offset, 0, r_b.size - 1, true);
+        }
+
+    }
+    return W;
+}
