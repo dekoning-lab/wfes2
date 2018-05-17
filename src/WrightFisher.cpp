@@ -363,28 +363,41 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, con
     Matrix W(size, size, 1);
     std::deque<std::pair<llong, llong>> index = submatrix_indeces(sizes);
     
-    for(llong row = 0; row < size; row++) {
-        
-        llong i = index[row].first; // model index
-        llong im = index[row].second; // current index within model i
+    for(llong block_row = 0; block_row < size; block_row += block_size) {
+        llong block_length = (block_row + block_size) < size ? block_size : size - block_row;
+        std::deque<Row> buffer_1(block_length);
+        std::deque<Row> buffer_2(block_length);
 
-        // coordinate of the submodel start
-        llong offset = 0;
+        #pragma omp parallel for
+        for(llong b = 0; b < block_length; b++) {
+            llong row = block_row + b;
+            llong i = index[row].first; // model index
+            llong im = index[row].second; // current index within model i
 
-        Row r_a = binom_row(im, N, N, s(0), h(0), u(0), v(0), alpha);
-        r_a.Q *= switching(i, 0);
-        W.Q.append_data(r_a.Q, r_a.start, r_a.end, 0, r_a.size - 1, false);
+            Row r_1 = binom_row(im, N, N, s(0), h(0), u(0), v(0), alpha);
+            r_1.Q *= switching(i, 0);
+            buffer_1[b] = r_1;
 
-        offset = (2 * N) + 1;
-        Row r_b = binom_row(im, N, N, s(1), h(1), u(1), v(1), alpha);
-        r_b.Q *= switching(i, 1);
-        if (r_b.end == N * 2) {
-            W.Q.append_data(r_b.Q, r_b.start + offset, r_b.end + offset - 1, 0, r_b.size - 2, true);
-            W.R(row, 0) = r_b.Q(r_b.size - 1);
-        } else {
-            W.Q.append_data(r_b.Q, r_b.start + offset, r_b.end + offset, 0, r_b.size - 1, true);
+            Row r_2 = binom_row(im, N, N, s(1), h(1), u(1), v(1), alpha);
+            r_2.Q *= switching(i, 1);
+            buffer_2[b] = r_2;
         }
 
+        for(llong b = 0; b < block_length; b++) {
+            llong row = block_row + b;
+            // llong i = index[row].first; // model index
+            // llong im = index[row].second; // current index within model i
+            llong offset = (2 * N) + 1;
+
+            W.Q.append_data(buffer_1[b].Q, buffer_1[b].start, buffer_1[b].end, 0, buffer_1[b].size - 1, false);
+
+            if (buffer_2[b].end == N * 2) {
+                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset - 1, 0, buffer_2[b].size - 2, true);
+                W.R(row, 0) = buffer_2[b].Q(buffer_2[b].size - 1);
+            } else {
+                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset, 0, buffer_2[b].size - 1, true);
+            }
+        }
     }
     return W;
 }
