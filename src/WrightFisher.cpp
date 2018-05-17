@@ -285,7 +285,7 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
         llong offset = 0;
         // iterate over submodels
         for(llong j = 0; j < k; j++) {
-            Row r = binom_row(im, N(i), N(j), s(i), h(i), u(i), v(i), alpha);
+            Row r = binom_row(im, N(i), N(j), s(j), h(j), u(j), v(j), alpha);
             r.Q *= switching(i, j);
 
             bool row_complete = (j == (k - 1));
