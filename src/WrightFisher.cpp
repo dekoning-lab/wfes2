@@ -42,9 +42,10 @@ WrightFisher::Row WrightFisher::binom_row(const llong i, const llong Nx, const l
     }
 
     // Exponentiate
-    r.Q.exp_inplace();
+    vdExp(r.Q.size(), r.Q.data(), r.Q.data());
     // Re-weigh to sum to 1
-    r.weight = r.Q.normalize_inplace();
+    r.weight = r.Q.sum();
+    r.Q /= r.weight;
 
     return r;
 
@@ -56,7 +57,7 @@ WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, co
     for(llong i = 0; i <= N2; i++) {
         WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
         // I - Q
-        r.Q.negate_inplace();
+        r.Q = -r.Q;
         r.Q(i - r.start) += 1;
         if (r.end == N2) {
             r.Q(r.size - 1) += 1;
@@ -64,7 +65,7 @@ WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, co
         } else {
             // allocate one additional cell (slack = 1)
             W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1, false, 1);
-            W.Q.values[W.Q.non_zeros - 1] = 1;
+            W.Q.data[W.Q.non_zeros - 1] = 1;
             W.Q.columns[W.Q.non_zeros - 1] = N2;
             W.Q.finalize_row();
         }
@@ -254,7 +255,7 @@ std::vector<std::pair<llong, llong>> submatrix_indeces(const lvec& sizes) {
 }
 
 WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_type abs_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, double alpha, llong block_size) {
-    llong k = N.size;
+    llong k = N.size();
 
     if (abs_t == EXTINCTION_ONLY) {
         // backward mutation rate should be above 0

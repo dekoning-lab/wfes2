@@ -16,6 +16,8 @@
 
 #include <mkl.h>
 
+#include <Eigen/Core>
+
 #define DPF "%.10e" // Double print format
 #define LPF "%lld" // Long long int print format
 #define IPF "%d" // Int print format
@@ -29,3 +31,8 @@ void print_buffer(T* buffer, size_t size, std::ostream& os = std::cout, bool new
     }
     if (newline) std::cout << std::endl;
 }
+
+typedef Eigen::VectorXd dvec;
+typedef Eigen::Matrix<llong, Eigen::Dynamic, 1> lvec;
+typedef Eigen::MatrixXd dmat;
+

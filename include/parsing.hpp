@@ -1,7 +1,6 @@
 #pragma once
 
 #include "common.hpp"
-#include "NumericVector.hpp"
 
 // Tempalte sto<xx> functions:
 template<typename T>
@@ -16,7 +15,7 @@ struct TokenReader
 template<typename T>
 struct NumericVectorReader : TokenReader
 {
-    void operator()(const std::string& name, const std::string& value, std::vector<T>& destination, char delim = ',') {
+    void operator()(const std::string& name, const std::string& value, Eigen::Matrix<T, Eigen::Dynamic, 1>& destination, char delim = ',') {
         std::deque<std::string> tokens = split(value, delim);
         destination.resize(tokens.size());
         for(size_t i = 0; i < tokens.size(); i++) {

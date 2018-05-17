@@ -37,19 +37,19 @@ void PardisoSolver::analyze()
 {
     phase = MKL_PARDISO_SOLVER_PHASE_ANALYSIS;
 
-    pardiso_64(internal.values, &max_factors, &matrix_number,
+    pardiso_64(internal.data(), &max_factors, &matrix_number,
                &matrix_type, &phase, &size,
-               m.values, m.row_index, m.columns,
-               nullptr, &n_right_hand_sides, control.values,
+               m.data, m.row_index, m.columns,
+               nullptr, &n_right_hand_sides, control.data(),
                &message_level, nullptr, nullptr, &error);
 
     if(error != 0) throw std::runtime_error("PardisoSolver::analyze(): Symbolic factorization error: " + std::to_string(error));
 
     phase = MKL_PARDISO_SOLVER_PHASE_NUMERICAL_FACTORIZATION;
-    pardiso_64(internal.values, &max_factors, &matrix_number,
+    pardiso_64(internal.data(), &max_factors, &matrix_number,
                &matrix_type, &phase, &size,
-               m.values, m.row_index, m.columns,
-               nullptr, &n_right_hand_sides, control.values,
+               m.data, m.row_index, m.columns,
+               nullptr, &n_right_hand_sides, control.data(),
                &message_level, nullptr, nullptr, &error);
 
     if(error != 0) throw std::runtime_error("PardisoSolver::analyze(): Numerical factorization error: " + std::to_string(error));
@@ -61,11 +61,11 @@ dvec PardisoSolver::solve(dvec& b, bool transpose)
     if(transpose) control(MKL_PARDISO_SOLVE_OPTION) = MKL_PARDISO_SOLVE_TRANSPOSED;
     else control(MKL_PARDISO_SOLVE_OPTION) = MKL_PARDISO_DEFAULT;
 
-    pardiso_64(internal.values, &max_factors, &matrix_number,
+    pardiso_64(internal.data(), &max_factors, &matrix_number,
                &matrix_type, &phase, &size,
-               m.values, m.row_index, m.columns,
-               nullptr, &n_right_hand_sides, control.values,
-               &message_level, b.values, workspace.values, &error);
+               m.data, m.row_index, m.columns,
+               nullptr, &n_right_hand_sides, control.data(),
+               &message_level, b.data(), workspace.data(), &error);
 
     if(error != 0) throw std::runtime_error("PardisoSolver::solve(): Solution error: " + std::to_string(error));
 
@@ -79,7 +79,7 @@ dvec PardisoSolver::get_diagonal()
   dvec df(size);
   dvec da(size);
 
-  pardiso_getdiag(internal.values, df.values, da.values, &matrix_number, &error);
+  pardiso_getdiag(internal.data(), df.data(), da.data(), &matrix_number, &error);
 
   if(error == 1) throw std::runtime_error("PardisoSolver::get_diagonal(): Diagonal information not turned on before pardiso main loop: " + std::to_string(error));
 
@@ -89,10 +89,10 @@ dvec PardisoSolver::get_diagonal()
 PardisoSolver::~PardisoSolver()
 {
     phase = MKL_PARDISO_SOLVER_PHASE_RELEASE_MEMORY_ALL;
-    pardiso_64(internal.values, &max_factors, &matrix_number,
+    pardiso_64(internal.data(), &max_factors, &matrix_number,
                &matrix_type, &phase, &size,
                nullptr, m.row_index, m.columns,
-               nullptr, &n_right_hand_sides, control.values,
+               nullptr, &n_right_hand_sides, control.data(),
                &message_level, nullptr, nullptr, &error);
 
 }

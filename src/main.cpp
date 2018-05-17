@@ -15,10 +15,11 @@ dvec equilibrium(llong N, double s, double h, double u, double v, double alpha, 
     PardisoSolver solver(wf_eq.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
     solver.analyze();
 
-    dvec id = dvec::identity(wf_eq.Q.n_row, wf_eq.Q.n_row - 1);
+    dvec id = dvec::Zero(wf_eq.Q.n_row);
+    id(wf_eq.Q.n_row - 1) = 1;
 
     dvec eq = solver.solve(id, true);
-    eq.abs_inplace();
+    // eq = eq.abs();
 
     return eq;
 }
@@ -40,8 +41,8 @@ dvec switch_population_size(dvec& x, llong Nx, llong Ny, double s, double h, dou
 int main(int argc, char const *argv[])
 {
     args::ArgumentParser parser("WFAFLE");
-    args::ValueFlag<vector<llong>, NumericVectorReader<llong>> population_sizes_f(parser, "k", "Population sizes", {'N', "pop-sizes"}, args::Options::Required);
-    args::ValueFlag<vector<llong>, NumericVectorReader<llong>> epoch_lengths_f(parser, "k", "Epoch lengths", {'E', "epochs"}, args::Options::Required);
+    args::ValueFlag<Eigen::Matrix<llong, Eigen::Dynamic, 1>, NumericVectorReader<llong>> population_sizes_f(parser, "k", "Population sizes", {'N', "pop-sizes"}, args::Options::Required);
+    args::ValueFlag<Eigen::Matrix<llong, Eigen::Dynamic, 1>, NumericVectorReader<llong>> epoch_lengths_f(parser, "k", "Epoch lengths", {'E', "epochs"}, args::Options::Required);
 
     try {
         parser.ParseCLI(argc, argv);
@@ -57,15 +58,15 @@ int main(int argc, char const *argv[])
     lvec pop_sizes(args::get(population_sizes_f));
     lvec epoch_gens(args::get(epoch_lengths_f));
 
-    if(pop_sizes.size != epoch_gens.size) throw runtime_error("Population size vector should be the same length as epoch lengths");
-    if(pop_sizes.size < 2) throw runtime_error("Population size vector should be longer than 2");
+    if(pop_sizes.size() != epoch_gens.size()) throw runtime_error("Population size vector should be the same length as epoch lengths");
+    if(pop_sizes.size() < 2) throw runtime_error("Population size vector should be longer than 2");
 
     double s = 0;
     double h = 0.5;
     double mu = 1e-5;
     double alpha = 1e-20;
 
-    llong k = pop_sizes.size;
+    llong k = pop_sizes.size();
 
     deque<dvec> d;
     d.push_back(equilibrium(pop_sizes(0), s, h, mu, mu, alpha));
@@ -86,9 +87,9 @@ int main(int argc, char const *argv[])
         }
     }
 
-    dvec sel(std::vector<double>({0, 0}));
-    dvec dom(std::vector<double>({0.5, 0.5}));
-    dvec muv(std::vector<double>({1e-5, 1e-5}));
+    dvec sel(2); sel << 0, 0;
+    dvec dom(2); dom << 0.5, 0.5;
+    dvec muv(2); muv << 1e-5, 1e-5;
     cout << WF::Switching(pop_sizes, WF::BOTH_ABSORBING, sel, dom, muv, muv, switching).Q << endl;
 
 
