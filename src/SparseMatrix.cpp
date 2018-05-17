@@ -67,8 +67,8 @@ void SparseMatrix::debug_print()
     print_buffer(row_index, (size_t)(n_row + 1));
 }
 
-DenseMatrix<double> SparseMatrix::dense() {
-    DenseMatrix<double> dns(n_row, n_col);
+dmat SparseMatrix::dense() {
+    dmat dns(n_row, n_col);
 
     llong info = 0;
     llong* j = (llong*)malloc(6 * sizeof(llong));

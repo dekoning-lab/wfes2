@@ -2,19 +2,17 @@
 
 #include "NumericVectorBase.hpp"
 
-// "Owning" vector, owns its own allocation, cleans up after itself
+template <typename T> class NumericVector;
+template <typename T> class NumericVectorView;
+
+// "Owning" NumericVector, owns its own allocation, cleans up after itself
 template <typename T>
-class NumericVector : public NumericVectorBase<T> {
+class NumericVector : public NumericVectorBase<T>
+{
+protected:
+	NumericVector(llong size, llong stride, T* values): NumericVectorBase<T>(size, stride, values) {}
 public:
-
-	NumericVector(llong size, T init = 0): 
-		NumericVectorBase<T>(size, init, 1) {}
-
-	NumericVector(NumericVector&& rhs): 
-		NumericVectorBase<T>(rhs.size, rhs.stride, rhs.values) {
-			
-		rhs.valid = false;
-	}
+	NumericVector(llong size, T init = 0, llong stride = 1): NumericVectorBase<T>(size, init, stride) {}
 
 	NumericVector(const std::vector<T>& r): NumericVector<T>(r.size()) {
 		for(llong i = 0; i < this->size; i++) {
@@ -23,7 +21,9 @@ public:
 	}
 
 	~NumericVector() {
-		if (this->valid) free(this->values);
+		if(this->valid) {
+			free(this->values);
+		}
 	}
 
 	static NumericVector zeros(llong size) {
@@ -40,6 +40,11 @@ public:
 		return id;
 	}
 
+	NumericVectorView<T> slice(int start, int size) {
+		NumericVectorView<T> s(size, this->stride, this->values);
+		return s;
+	}
+
 	static NumericVector closed_range(llong start, llong stop) {
 		NumericVector<T> r(stop - start + 1);
 		for(llong i = start; i <= stop; i++) {
@@ -54,17 +59,13 @@ public:
 
 };
 
-// "Non-owning" vector, points to memory of existing vector, does not clean
+// "Non-owning" NumericVector, points to memory of existing NumericVector, does not clean
 template <typename T>
 class NumericVectorView : public NumericVectorBase<T>
 {
-private:
-
 public:
-
 	NumericVectorView(llong size, llong stride, T* values): NumericVectorBase<T>(size, stride, values) {}
-	NumericVectorView(NumericVector<T>& d): NumericVectorView(d.size, d.stride, d.values) {}
-
+	NumericVectorView(const NumericVector<T>& rhs): NumericVectorBase<T>(rhs.size, rhs.stride, rhs.values) {}
 	~NumericVectorView() {}
 };
 

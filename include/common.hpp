@@ -16,8 +16,6 @@
 
 #include <mkl.h>
 
-#include "MoveOnly.hpp"
-
 #define DPF "%.10e" // Double print format
 #define LPF "%lld" // Long long int print format
 #define IPF "%d" // Int print format

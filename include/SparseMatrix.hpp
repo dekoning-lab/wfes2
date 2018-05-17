@@ -2,11 +2,12 @@
 
 #include "common.hpp"
 #include "NumericVector.hpp"
-#include "DenseMatrix.hpp"
+#include "NumericMatrix.hpp"
 
-class SparseMatrix : public MoveOnly
+class SparseMatrix
 {
 protected:
+    mutable bool valid = true;
     llong current_row;
     bool full;
 
@@ -31,9 +32,7 @@ public:
 
     ~SparseMatrix();
 
-    SparseMatrix(SparseMatrix&& r): 
-        SparseMatrix(r.current_row, r.full, r.non_zeros, r.n_row, r.n_col, r.values, r.columns, r.row_index) {
-
+    SparseMatrix(const SparseMatrix& r): SparseMatrix(r.current_row, r.full, r.non_zeros, r.n_row, r.n_col, r.values, r.columns, r.row_index) {
         r.valid = false;
     }
 

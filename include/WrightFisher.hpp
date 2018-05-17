@@ -3,7 +3,7 @@
 #include "common.hpp"
 #include "rdist.hpp"
 #include "NumericVector.hpp"
-#include "DenseMatrix.hpp"
+#include "NumericMatrix.hpp"
 #include "SparseMatrix.hpp"
 
 namespace WrightFisher {
@@ -28,7 +28,7 @@ namespace WrightFisher {
         }
     }
 
-    class Row : public MoveOnly {
+    class Row {
     public:
         
         llong start;
@@ -42,11 +42,11 @@ namespace WrightFisher {
 
         ~Row() {}
 
-        Row(Row&& r): 
+        Row(const Row& r): 
             start(r.start), end(r.end), size(r.size), weight(r.weight), Q(std::move(r.Q)) {}
     };
 
-    struct Matrix : public MoveOnly {
+    struct Matrix {
         llong n_row;
         llong n_col;
         llong n_abs;
@@ -58,7 +58,7 @@ namespace WrightFisher {
 
         ~Matrix() {}
 
-        Matrix(Matrix&& m): 
+        Matrix(const Matrix& m): 
             n_row(m.n_row), n_col(m.n_col), n_abs(m.n_abs), Q(std::move(m.Q)), R(std::move(m.R)) {}
 
     };
