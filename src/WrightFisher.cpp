@@ -57,7 +57,8 @@ WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, co
     for(llong i = 0; i <= N2; i++) {
         WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
         // I - Q
-        r.Q = -r.Q;
+        for(llong j = 0; j < r.Q.size(); j++) r.Q(j) = -r.Q(j);
+        // r.Q = -r.Q;
         r.Q(i - r.start) += 1;
         if (r.end == N2) {
             r.Q(r.size - 1) += 1;

@@ -23,6 +23,8 @@ namespace WrightFisher {
                 return 1;
             case BOTH_ABSORBING:
                 return 2;
+            default:
+                throw std::runtime_error("Unknown absorption type");
         }
     }
 
@@ -38,8 +40,6 @@ namespace WrightFisher {
         dvec Q;
 
         Row(llong start, llong end): start(start), end(end), size(end - start + 1), weight(1), Q(end - start + 1) {}
-
-        // ~Row() {}
 
         Row(const Row& r): start(r.start), end(r.end), size(r.size), weight(r.weight), Q(r.Q) {
             r.valid = false;
@@ -57,8 +57,6 @@ namespace WrightFisher {
         dmat R;
 
         Matrix(llong n_row, llong n_col, llong n_abs): n_row(n_row), n_col(n_col), n_abs(n_abs), Q(n_row, n_col), R(n_row, n_abs) {}
-
-        // ~Matrix() {}
 
         Matrix(const Matrix& m): n_row(m.n_row), n_col(m.n_col), n_abs(m.n_abs), Q(m.Q), R(m.R) {
             m.valid = false;
