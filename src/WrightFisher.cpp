@@ -367,7 +367,7 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, con
     
     for(llong row = 0; row < size; row++) {
         
-        llong i = index[row].first; // model index
+        // llong i = index[row].first; // model index
         llong im = index[row].second; // current index within model i
 
         // coordinate of the submodel start
@@ -380,7 +380,7 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, con
         Row r_b = binom_row(im, N, N, s(1), h(1), u(1), v(1), alpha);
         if (r_b.end == N * 2) {
             W.Q.append_data(r_b.Q, r_b.start + offset, r_b.end + offset - 1, 0, r_b.size - 2, true);
-            W.R(im + offset, 0) = r_b.Q(r_b.size - 1);
+            W.R(row, 0) = r_b.Q(r_b.size - 1);
         } else {
             W.Q.append_data(r_b.Q, r_b.start + offset, r_b.end + offset, 0, r_b.size - 1, true);
         }
