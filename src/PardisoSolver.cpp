@@ -10,9 +10,9 @@ PardisoSolver::PardisoSolver(SparseMatrix& A, llong matrix_type, llong message_l
         error(0),
         message_level(message_level),
         m(A),
-        control(MKL_IFS_SIZE),
-        internal(MKL_IFS_SIZE),
-        workspace((ulong)(size * n_rhs))
+        control(MKL_IFS_SIZE, 0),
+        internal(MKL_IFS_SIZE, 0),
+        workspace(size * n_rhs, 0)
 {
     control(MKL_PARDISO_DEFAULT_SETTINGS) = MKL_PARDISO_FALSE;
     control(MKL_PARDISO_INDEXING_OPTION) = MKL_PARDISO_INDEXING_ZERO;
