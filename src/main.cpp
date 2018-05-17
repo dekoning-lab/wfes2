@@ -80,17 +80,17 @@ int main(int argc, char const *argv[])
 
     // cout << d[k - 1] << endl;
 
-    // dmat switching(2, 2);
-    // for(llong i = 0; i < 2; i++) {
-    //     for(llong j = 0; j < 2; j++) {
-    //         switching(i,j) = 1;
-    //     }
-    // }
+    dmat switching(2, 2);
+    for(llong i = 0; i < 2; i++) {
+        for(llong j = 0; j < 2; j++) {
+            switching(i,j) = 1;
+        }
+    }
 
-    // dvec sel(2); sel << 0, 0;
-    // dvec dom(2); dom << 0.5, 0.5;
-    // dvec muv(2); muv << 1e-5, 1e-5;
-    // cout << WF::Switching(pop_sizes, WF::BOTH_ABSORBING, sel, dom, muv, muv, switching).Q << endl;
+    dvec sel(2); sel << 0, 0;
+    dvec dom(2); dom << 0.5, 0.5;
+    dvec muv(2); muv << 1e-5, 1e-5;
+    cout << WF::Switching(pop_sizes, WF::BOTH_ABSORBING, sel, dom, muv, muv, switching).Q << endl;
 
 
     return EXIT_SUCCESS;
