@@ -68,7 +68,7 @@ int main(int argc, char const *argv[])
     llong msg_level = verbose_f ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
 
     dvec first_row = WF::binom_row(0, population_size, population_size, s, h, u, v, a).Q;
-    dvec starting_copies_p = first_row.tail(first_row.size() - 1);
+    dvec starting_copies_p = first_row.tail(first_row.size() - 1); // renormalize
     starting_copies_p /= 1 - first_row(0);
 
     llong z = 0;
@@ -104,9 +104,9 @@ int main(int argc, char const *argv[])
             id(i) = 1;
 
             N_mat.row(i) = solver.solve(id, true);
-            N_mat.row(i) *= starting_copies_p(i);
 
             T_fix += N_mat.row(i).sum();
+            T_fix *= starting_copies_p(i);
 
         }
         double rate = 1.0 / T_fix;
@@ -164,15 +164,15 @@ int main(int argc, char const *argv[])
             id(i) = 1;
 
             N_mat.row(i) = solver.solve(id, true);
-            N_mat.row(i) *= starting_copies_p(i);
+            // N_mat.row(i) *= starting_copies_p(i);
 
             P_ext += B_ext(i) * starting_copies_p(i);
             dvec E_ext = B_ext.transpose() * N_mat.row(i).transpose() / B_ext(i);
-            T_ext += E_ext.sum();
+            T_ext += E_ext.sum() * starting_copies_p(i);
 
             P_fix += B_fix(i) * starting_copies_p(i);
             dvec E_fix = B_fix.transpose() * N_mat.row(i).transpose() / B_fix(i);
-            T_fix += E_fix.sum();
+            T_fix += E_fix.sum() * starting_copies_p(i);
         }
 
         if(output_N_f) write_matrix_to_file(N_mat, args::get(output_N_f));
