@@ -25,4 +25,24 @@ struct NumericVectorReader : TokenReader
 };
 
 template<typename T>
+struct NumericMatrixReader : TokenReader
+{
+    void operator()(const std::string& name, const std::string& value, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& destination, char delim = ',') {
+        std::deque<std::string> rows = split(value, ';');
+        size_t n_row = rows.size();
+        std::deque<std::deque<std::string>> m(n_row);
+        for(size_t i = 0; i < n_row; i++) {
+            m[i] = split(rows[i], delim);
+        }
+
+        destination.resize(n_row, n_row);
+        for(size_t i = 0; i < n_row; i++) {
+            for(size_t j = 0; j < n_row; j++) {
+                destination(i, j) = from_string<T>(m[i][j]);
+            }
+        }
+    }
+};
+
+template<typename T>
 const char* string_format();
