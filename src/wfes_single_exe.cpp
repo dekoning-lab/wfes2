@@ -25,9 +25,9 @@ int main(int argc, char const *argv[])
     args::ValueFlag<double> dominance_f(parser, "float", "Dominance coefficient", {'h', "dominance"});
     args::ValueFlag<double> backward_mutation_f(parser, "float", "Backward mutation rate", {'u', "backward-mu"});
     args::ValueFlag<double> forward_mutation_f(parser, "float", "Forward mutation rate", {'v', "forward-mu"});
-    args::ValueFlag<double> observed_count_f(parser, "float", "Observed allele count (allele-age only)", {'i', "observed-count"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
     args::ValueFlag<double> integration_cutoff_f(parser, "float", "Starting number of copies integration cutoff", {'c', "integration-cutoff"});
+    args::ValueFlag<llong>  starting_copies_f(parser, "int", "Starting number of copies - no integration", {'p', "starting-copies"});
 
     // Output options
     args::ValueFlag<string> output_Q_f(parser, "path", "Output Q matrix to file", {"output-Q"});
@@ -64,6 +64,8 @@ int main(int argc, char const *argv[])
     double v = forward_mutation_f ? args::get(forward_mutation_f) : 1e-9;
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
     double integration_cutoff = integration_cutoff_f ? args::get(integration_cutoff_f) : 1e-10;
+    // translate starting number of copies into model state (p - 1)
+    llong starting_copies = starting_copies_f ? (args::get(starting_copies_f) - 1) : 0;
 
     llong msg_level = verbose_f ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
 
@@ -79,6 +81,7 @@ int main(int argc, char const *argv[])
     } else {
         for(llong i = 0; starting_copies_p(i) > integration_cutoff; i++, z++);
     }
+    if(starting_copies_f) z = 1;
 
     if(fixation_f) // BEGIN SINGLE FIXATION
     {
@@ -98,17 +101,24 @@ int main(int argc, char const *argv[])
         dmat N_mat(z, size);
         double T_fix = 0;
 
-        // Iterate over starting states
-        for(llong i = 0; i < z; i++) {
+        if(!starting_copies_f) {
+            // Iterate over starting states
+            for(llong i = 0; i < z; i++) {
+                id.setZero();
+                id(i) = 1;
+
+                N_mat.row(i) = solver.solve(id, true);
+
+                T_fix += N_mat.row(i).sum();
+                T_fix *= starting_copies_p(i);
+            }    
+        } else {
             id.setZero();
-            id(i) = 1;
-
-            N_mat.row(i) = solver.solve(id, true);
-
-            T_fix += N_mat.row(i).sum();
-            T_fix *= starting_copies_p(i);
-
+            id(starting_copies) = 1;
+            N_mat.row(0) = solver.solve(id, true);
+            T_fix += N_mat.row(0).sum();
         }
+        
         double rate = 1.0 / T_fix;
 
         if(output_N_f) write_matrix_to_file(N_mat, args::get(output_N_f));
@@ -159,20 +169,35 @@ int main(int argc, char const *argv[])
         double T_fix = 0;
 
         dmat N_mat(z, size);
-        for(llong i = 0; i < z; i++) {
+        if(!starting_copies_f) {
+            for(llong i = 0; i < z; i++) {
+                id.setZero();
+                id(i) = 1;
+
+                N_mat.row(i) = solver.solve(id, true);
+                // N_mat.row(i) *= starting_copies_p(i);
+
+                P_ext += B_ext(i) * starting_copies_p(i);
+                dvec E_ext = B_ext.transpose() * N_mat.row(i).transpose() / B_ext(i);
+                T_ext += E_ext.sum() * starting_copies_p(i);
+
+                P_fix += B_fix(i) * starting_copies_p(i);
+                dvec E_fix = B_fix.transpose() * N_mat.row(i).transpose() / B_fix(i);
+                T_fix += E_fix.sum() * starting_copies_p(i);
+            }    
+        } else {
+            cout << "starting with " << starting_copies << endl;
             id.setZero();
-            id(i) = 1;
+            id(starting_copies) = 1;
+            N_mat.row(0) = solver.solve(id, true);
 
-            N_mat.row(i) = solver.solve(id, true);
-            // N_mat.row(i) *= starting_copies_p(i);
+            P_ext = B_ext(starting_copies);
+            dvec E_ext = B_ext.transpose() * N_mat.row(0).transpose() / B_ext(starting_copies);
+            T_ext = E_ext.sum();
 
-            P_ext += B_ext(i) * starting_copies_p(i);
-            dvec E_ext = B_ext.transpose() * N_mat.row(i).transpose() / B_ext(i);
-            T_ext += E_ext.sum() * starting_copies_p(i);
-
-            P_fix += B_fix(i) * starting_copies_p(i);
-            dvec E_fix = B_fix.transpose() * N_mat.row(i).transpose() / B_fix(i);
-            T_fix += E_fix.sum() * starting_copies_p(i);
+            P_fix = B_fix(starting_copies);
+            dvec E_fix = B_fix.transpose() * N_mat.row(0).transpose() / B_fix(starting_copies);
+            T_fix = E_fix.sum();
         }
 
         if(output_N_f) write_matrix_to_file(N_mat, args::get(output_N_f));
@@ -186,7 +211,7 @@ int main(int argc, char const *argv[])
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
                            DPF ", " DPF ", " DPF ", " DPF "\n",
-                   population_size, s, h, u, v, a, B_ext(0), B_fix(0), T_ext, T_fix);
+                   population_size, s, h, u, v, a, P_ext, P_fix, T_ext, T_fix);
 
         } else {
             printf("N = " LPF "\n", population_size);
@@ -195,8 +220,8 @@ int main(int argc, char const *argv[])
             printf("u = " DPF "\n", u);
             printf("v = " DPF "\n", v);
             printf("a = " DPF "\n", a);
-            printf("P_ext = " DPF "\n", B_ext(0));
-            printf("P_fix = " DPF "\n", B_fix(0));
+            printf("P_ext = " DPF "\n", P_ext);
+            printf("P_fix = " DPF "\n", P_fix);
             printf("T_ext = " DPF "\n", T_ext);
             printf("T_fix = " DPF "\n", T_fix);
         }
