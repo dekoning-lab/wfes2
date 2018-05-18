@@ -45,4 +45,7 @@ target_link_libraries(wfafle wfes)
 add_executable(wfes_soft "src/wfes_soft_exe.cpp")
 target_link_libraries(wfes_soft wfes)
 
+add_executable(wfes_single "src/wfes_single_exe.cpp")
+target_link_libraries(wfes_single wfes)
+
 # install(TARGETS wfafle RUNTIME DESTINATION bin)
