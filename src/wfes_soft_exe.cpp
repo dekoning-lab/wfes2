@@ -14,7 +14,8 @@ int main(int argc, char const *argv[])
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> backward_mutation_f(parser, "float[k]", "Backward mutation rates", {'u', "backward-mu"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> forward_mutation_f(parser, "float[k]", "Forward mutation rates", {'v', "forward-mu"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> selection_coefficient_f(parser, "k", "Selection coefficients", {'s', "selection"}, args::Options::Required);
-    args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>, NumericMatrixReader<double>> switching_f(parser, "float[k][k]", "Switching parameters over models", {'r', "switching"}, args::Options::Required);
+    // args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>, NumericMatrixReader<double>> switching_f(parser, "float[k][k]", "Switching parameters over models", {'r', "switching"}, args::Options::Required);
+    args::ValueFlag<double> lambda_f(parser, "float", "Transition probability", {'l', "lambda"}, args::Options::Required);
     args::ValueFlag<string> output_Q_f(parser, "path", "Output Q matrix to file", {"output-Q"});
     args::ValueFlag<string> output_N_f(parser, "path", "Output N matrix to file", {"output-N"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
@@ -40,14 +41,17 @@ int main(int argc, char const *argv[])
 
     if(selection_coefficient.size() < 2) throw runtime_error("Population size vector should be longer than 2");
 
-    dmat switching = switching_f ? args::get(switching_f) : dmat::Ones(1, 1);
+    // dmat switching = switching_f ? args::get(switching_f) : dmat::Ones(1, 1);
 
-    dvec row_sums = switching.rowwise().sum();
-    for (llong i = 0; i < 2; i++) {
-        for (llong j = 0; j < 2; j++) {
-            switching(i, j) /= row_sums(i);
-        }
-    }
+    // dvec row_sums = switching.rowwise().sum();
+    // for (llong i = 0; i < 2; i++) {
+    //     for (llong j = 0; j < 2; j++) {
+    //         switching(i, j) /= row_sums(i);
+    //     }
+    // }
+
+    double l = args::get(lambda_f);
+    dmat switching(2, 2); switching << 1 - l, l, 0, 1;
 
 
     dvec dom(2); dom << 0.5, 0.5;
