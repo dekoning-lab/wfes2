@@ -19,6 +19,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<string> output_N_f(parser, "path", "Output N matrix to file", {"output-N"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
     args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
+    args::Flag csv_f(parser, "csv", "Output results in CSV format", {"csv"});
 
     try {
         parser.ParseCLI(argc, argv);
@@ -63,9 +64,27 @@ int main(int argc, char const *argv[])
     dvec id = dvec::Zero(wf.Q.n_row);
     id(0) = 1;
 
-    dvec N = solver.solve(id, true);
+    dmat N(1, wf.Q.n_row);
+    N.row(0) = solver.solve(id, true);
 
-    if(output_N_f) write_vector_to_file(N, args::get(output_N_f));
+    if(output_N_f) write_matrix_to_file(N, args::get(output_N_f));
+
+    if (csv_f) {
+        printf("%lld, ", population_size);
+        print_vector(selection_coefficient, "", ", ");
+        print_vector(dom, "", ", ");
+        print_vector(u, "", ", ");
+        print_vector(v, "", ", ");
+        printf(DPF "\n", a);
+    } else {
+        printf("N = %lld\n", population_size);
+        print_vector(selection_coefficient, "s = ", "\n");
+        print_vector(dom, "h = ", "\n");
+        print_vector(u, "u = ", "\n");
+        print_vector(v, "v = ", "\n");
+        printf("a = " DPF "\n", a);
+    }
+
 
     return 0;
 }
