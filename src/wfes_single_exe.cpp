@@ -186,7 +186,6 @@ int main(int argc, char const *argv[])
                 T_fix += E_fix.sum() * starting_copies_p(i);
             }    
         } else {
-            cout << "starting with " << starting_copies << endl;
             id.setZero();
             id(starting_copies) = 1;
             N_mat.row(0) = solver.solve(id, true);

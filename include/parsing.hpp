@@ -64,13 +64,21 @@ const static Eigen::IOFormat CSVFormat(Eigen::FullPrecision, Eigen::DontAlignCol
 
 template<typename T>
 void write_matrix_to_file(const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& A, std::string path) {
-    std::ofstream file(path);
-    if (file.is_open()) file << A.format(CSVFormat) << std::endl;
+	if (path == "stdout") {
+		std::cout << A.format(CSVFormat) << std::endl;
+	} else {
+		std::ofstream file(path);
+    	if (file.is_open()) file << A.format(CSVFormat) << std::endl;	
+	}
 }
 
 
 template<typename T>
 void write_vector_to_file(const Eigen::Matrix<T, Eigen::Dynamic, 1>& A, std::string path) {
-    std::ofstream file(path);
-    if (file.is_open()) file << A.format(CSVFormat) << std::endl;
+	if (path == "stdout") {
+		std::cout << A.format(CSVFormat) << std::endl;
+	} else {
+		std::ofstream file(path);
+		if (file.is_open()) file << A.format(CSVFormat) << std::endl;
+	}
 }
