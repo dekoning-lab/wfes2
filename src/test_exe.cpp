@@ -36,3 +36,21 @@ TEST_CASE("Non-Absorbing WF - narrow", "[non-absorbing]") {
 	dmat W2 = WFE::Single(20, 100, WF::NON_ABSORBING, 0, 0.5, 1e-9, 1e-9).first;
 	REQUIRE(approx_eq(W1.Q.dense(), W2));
 }
+
+TEST_CASE("Both-Absorbing WF - square", "[both-absorbing]") {
+	WF::Matrix W1 = WF::SingleAlt(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
+	dmat W2 = WFE::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9).first;
+	REQUIRE(approx_eq(W1.Q.dense(), W2));
+}
+
+TEST_CASE("Both-Absorbing WF - wide", "[both-absorbing]") {
+	WF::Matrix W1 = WF::SingleAlt(100, 20, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
+	dmat W2 = WFE::Single(100, 20, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9).first;
+	REQUIRE(approx_eq(W1.Q.dense(), W2));
+}
+
+TEST_CASE("Both-Absorbing WF - narrow", "[both-absorbing]") {
+	WF::Matrix W1 = WF::SingleAlt(20, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
+	dmat W2 = WFE::Single(20, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9).first;
+	REQUIRE(approx_eq(W1.Q.dense(), W2));
+}

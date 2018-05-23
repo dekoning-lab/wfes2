@@ -63,7 +63,7 @@ std::pair<dmat, dmat> WrightFisherElementary::Single(const llong Nx, const llong
         Q = dmat((2 * Nx) - 1, (2 * Ny) - 1);
         R = dmat((2 * Nx) - 1, 2);
         for (long i = 1; i <= (2 * Nx) - 1; i++) {
-            double p = WF::psi_diploid(i, Ny, s, h, u, v);
+            double p = WF::psi_diploid(i, Nx, s, h, u, v);
             R(i - 1, 0) = d_binom(0, 2 * Ny, p);
             for (long j = 1; j <= (2 * Ny) - 1; j++) {
                 Q(i - 1, j - 1) = d_binom(j, 2 * Ny, p);
