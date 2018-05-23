@@ -26,7 +26,7 @@ set(OTHER_LIBS "-lm -ldl")
 # add -fopenmp
 set(CMAKE_CXX_FLAGS "-DMKL_ILP64 -m64 -Wall -Wformat -Wno-deprecated-declarations")
 
-find_package(Eigen3 3.3 REQUIRED)
+# find_package(Eigen3 3.3 REQUIRED)
 
 file(GLOB LIB_SOURCES "src/*.cpp")
 list(FILTER LIB_SOURCES EXCLUDE REGEX "src/.*_exe.cpp")
@@ -37,7 +37,7 @@ include_directories(${MKL_INCLUDE_DIR})
 include_directories("include")
 
 add_library(wfes SHARED ${LIB_SOURCES})
-target_link_libraries(wfes ${MKL_LIBS} ${INTEL_OMP_LIBS} ${OTHER_LIBS} Eigen3::Eigen)
+target_link_libraries(wfes ${MKL_LIBS} ${INTEL_OMP_LIBS} ${OTHER_LIBS})
 
 add_executable(wfafle "src/wfafle_exe.cpp")
 target_link_libraries(wfafle wfes)
