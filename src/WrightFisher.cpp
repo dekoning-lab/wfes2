@@ -84,9 +84,21 @@ WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const 
     Matrix W(Nx2 + 1 - n_abs, Ny2 + 1 - n_abs, n_abs);
 
     if(abs_t == NON_ABSORBING) {
-        for(llong i = 0; i <= Nx2; i++) {
-            Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
-            W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
+        llong size = Nx2 + 1;
+        for(llong block_row = 0; block_row < size; block_row += block_size) {
+            llong block_length = (block_row + block_size) < size ? block_size : size - block_row;
+            std::deque<Row> buffer(block_length);
+
+            #pragma omp parallel for
+            for(llong b = 0; b < block_length; b++) {
+                llong row = block_row + b;
+                buffer[b] = binom_row(row, Nx, Ny, s, h, u, v, alpha);
+            }
+
+            for(llong b = 0; b < block_length; b++) {
+                Row& r = buffer[b];
+                W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
+            }
         }
     }
 
