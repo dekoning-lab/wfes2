@@ -67,7 +67,7 @@ namespace WrightFisher {
     };
 
     double psi_diploid(const llong i, const llong N, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9);
-    Row binom_row(const llong i, const llong Nx, const llong Ny, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, const double alpha = 1e-20);
+    Row binom_row(const llong size, const double p, const double alpha = 1e-20);
 
     // Harrod matrix to solve for equilibrium distribution
     Matrix Equilibrium(const llong N, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, const double alpha = 1e-20, const llong block_size = 100);

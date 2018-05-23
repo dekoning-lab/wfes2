@@ -2,6 +2,7 @@
 #include "WrightFisher.hpp"
 #include "PardisoSolver.hpp"
 #include "parsing.hpp"
+#include "util.hpp"
 #include "args.hpp"
 
 namespace WF = WrightFisher;

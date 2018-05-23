@@ -2,6 +2,7 @@
 #include "WrightFisher.hpp"
 #include "PardisoSolver.hpp"
 #include "parsing.hpp"
+#include "util.hpp"
 #include "args.hpp"
 
 namespace WF = WrightFisher;
@@ -72,7 +73,7 @@ int main(int argc, char const *argv[])
 
     llong msg_level = verbose_f ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
 
-    dvec first_row = WF::binom_row(0, population_size, population_size, s, h, u, v, a).Q;
+    dvec first_row = WF::binom_row(2 * population_size, WF::psi_diploid(0, population_size, s, h, u, v), a).Q;
     dvec starting_copies_p = first_row.tail(first_row.size() - 1); // renormalize
     starting_copies_p /= 1 - first_row(0);
 

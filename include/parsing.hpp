@@ -47,38 +47,3 @@ struct NumericMatrixReader : TokenReader
 template<typename T>
 const char* string_format();
 
-template<typename T>
-void print_vector(const Eigen::Matrix<T, Eigen::Dynamic, 1>& src, const char* prefix = "", const char* postfix = "", const char* delim = ",") {
-    size_t size = src.size();
-    const char* f = string_format<T>();
-    printf("%s", prefix);
-    for(size_t i = 0; i < size - 1; i++) {
-        printf(f, src(i));
-        printf("%s ", delim);
-    }
-    printf(f, src(size-1));
-    printf("%s", postfix);
-}
-
-const static Eigen::IOFormat CSVFormat(Eigen::FullPrecision, Eigen::DontAlignCols, ", ", "\n");
-
-template<typename T>
-void write_matrix_to_file(const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& A, std::string path) {
-	if (path == "stdout") {
-		std::cout << A.format(CSVFormat) << std::endl;
-	} else {
-		std::ofstream file(path);
-    	if (file.is_open()) file << A.format(CSVFormat) << std::endl;	
-	}
-}
-
-
-template<typename T>
-void write_vector_to_file(const Eigen::Matrix<T, Eigen::Dynamic, 1>& A, std::string path) {
-	if (path == "stdout") {
-		std::cout << A.format(CSVFormat) << std::endl;
-	} else {
-		std::ofstream file(path);
-		if (file.is_open()) file << A.format(CSVFormat) << std::endl;
-	}
-}

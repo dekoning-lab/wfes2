@@ -13,16 +13,11 @@ double WrightFisher::psi_diploid(const llong i, const llong N, const double s, c
     return (((a + b) * (1 - u)) + ((b + c) * v)) / w_bar;
 }
 
-WrightFisher::Row WrightFisher::binom_row(const llong i, const llong Nx, const llong Ny, const double s, const double h, const double u, const double v, const double alpha) {
-
-    llong Ny2 = 2 * Ny;
-
-    // binomial sampling probability
-    double p = psi_diploid(i, Nx, s, h, u, v);
+WrightFisher::Row WrightFisher::binom_row(const llong size, const double p, const double alpha) {
 
     // start and end quantiles for covering 1 - alpha weight of the probability mass
-    llong start = (llong)binom_tail_cover(alpha / 2, Ny2, p, true);
-    llong end = (llong)binom_tail_cover(alpha / 2, Ny2, p, false);
+    llong start = (llong)binom_tail_cover(alpha / 2, size, p, true);
+    llong end = (llong)binom_tail_cover(alpha / 2, size, p, false);
 
     // make sure we didn't mess up
     assert(start < end);
@@ -31,13 +26,13 @@ WrightFisher::Row WrightFisher::binom_row(const llong i, const llong Nx, const l
     Row r(start, end);
 
     // Start iterative binomial calculation (WFES supplementary, eq 18,19)
-    double d = ld_binom(start, Ny2, p);
+    double d = ld_binom(start, size, p);
     double lc = log(p) - log(1 - p);
     r.Q(0) = d;
 
     // Iterative binomial (in log)
     for(llong j = start + 1; j <= end; j++) {
-        d += log(Ny2 - j + 1) - log(j) + lc;
+        d += log(size - j + 1) - log(j) + lc;
         r.Q(j - start) = d;
     }
 
@@ -55,7 +50,8 @@ WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, co
     llong N2 = 2 * N;
     WrightFisher::Matrix W(N2 + 1, N2 + 1, n_absorbing(WrightFisher::NON_ABSORBING));
     for(llong i = 0; i <= N2; i++) {
-        WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
+        WrightFisher::Row r = binom_row(2 * N, psi_diploid(i, N, s, h, u, v), alpha);
+        // WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
         // I - Q
         for(llong j = 0; j < r.Q.size(); j++) r.Q(j) = -r.Q(j);
         // r.Q = -r.Q;
@@ -92,7 +88,7 @@ WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const 
             #pragma omp parallel for
             for(llong b = 0; b < block_length; b++) {
                 llong row = block_row + b;
-                buffer[b] = binom_row(row, Nx, Ny, s, h, u, v, alpha);
+                buffer[b] = binom_row(2 * Nx, psi_diploid(row, Ny, s, h, u, v), alpha);
             }
 
             for(llong b = 0; b < block_length; b++) {
@@ -104,7 +100,7 @@ WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const 
 
     else if (abs_t == EXTINCTION_ONLY) {
         for(llong i = 1; i <= Nx2; i++) {
-            Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
+            Row r = binom_row(2 * Nx, psi_diploid(i, Ny, s, h, u, v), alpha);
             if (r.start == 0) {
                 //                   m0       m1         r0 r1
                 W.Q.append_data(r.Q, r.start, r.end - 1, 1, r.size - 1);
@@ -118,7 +114,7 @@ WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const 
 
     else if (abs_t == FIXATION_ONLY) {
         for(llong i = 0; i <= Nx2 - 1; i++) {
-            Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
+            Row r = binom_row(2 * Nx, psi_diploid(i, Ny, s, h, u, v), alpha);
             if (r.end == Ny2) {
                 //                   m0       m1         r0 r1
                 W.Q.append_data(r.Q, r.start, r.end - 1, 0, r.size - 2);
@@ -132,7 +128,7 @@ WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const 
 
     else if (abs_t == BOTH_ABSORBING) {
         for(llong i = 1; i <= Nx2 - 1; i++) {
-            Row r = binom_row(i, Nx, Ny, s, h, u, v, alpha);
+            Row r = binom_row(2 * Nx, psi_diploid(i, Ny, s, h, u, v), alpha);
 
             if (r.start == 0 && r.end == Ny2) {
                 W.Q.append_data(r.Q, r.start, r.end - 2, 1, r.end - 1);
@@ -191,8 +187,8 @@ WrightFisher::Matrix WrightFisher::SingleAlt(const llong Nx, const llong Ny, con
 
     Matrix W(Nx2 + 1 - n_abs, Ny2 + 1 - n_abs, n_abs);
 
-    for(llong row = 0; row <= Nx2; row++) {
-        Row r = binom_row(row, Nx, Ny, s, h, u, v, alpha);
+    for(llong i = 0; i <= Nx2; i++) {
+        Row r = binom_row(2 * Ny, psi_diploid(i, Nx, s, h, u, v), alpha);
         llong r_last = r.size - 1;
 
         switch(abs_t) {
@@ -201,11 +197,11 @@ WrightFisher::Matrix WrightFisher::SingleAlt(const llong Nx, const llong Ny, con
             break;
 
             case EXTINCTION_ONLY:
-                if (row == 0) continue;
+                if (i == 0) continue;
                 else {
                     if (r.start == 0) {
                         W.Q.append_data(r.Q, r.start, r.end - 1, 1, r_last);
-                        W.R(row - 1, 0) = r.Q(0);
+                        W.R(i - 1, 0) = r.Q(0);
                     } else {
                         W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r_last);
                     }
@@ -213,11 +209,11 @@ WrightFisher::Matrix WrightFisher::SingleAlt(const llong Nx, const llong Ny, con
             break;
 
             case FIXATION_ONLY:
-                if (row == Nx2) continue;
+                if (i == Nx2) continue;
                 else {
                     if (r.end == Ny2) {
                         W.Q.append_data(r.Q, r.start, r.end - 1, 0, r_last - 1);
-                        W.R(row, 0) = r.Q(r_last);
+                        W.R(i, 0) = r.Q(r_last);
                     } else {
                         W.Q.append_data(r.Q, r.start, r.end, 0, r_last);
                     }
@@ -225,18 +221,18 @@ WrightFisher::Matrix WrightFisher::SingleAlt(const llong Nx, const llong Ny, con
             break;
 
             case BOTH_ABSORBING:
-                if (row == 0 || row == Nx2) continue;
+                if (i == 0 || i == Nx2) continue;
                 else {
                     if (r.start == 0 && r.end == Ny2) {
                         W.Q.append_data(r.Q, r.start, r.end - 2, 1, r_last - 1);
-                        W.R(row - 1, 0) = r.Q(0);
-                        W.R(row - 1, 1) = r.Q(r_last);
+                        W.R(i - 1, 0) = r.Q(0);
+                        W.R(i - 1, 1) = r.Q(r_last);
                     } else if (r.start == 0) {
                         W.Q.append_data(r.Q, r.start, r.end - 1, 1, r_last);
-                        W.R(row - 1, 0) = r.Q(0);
+                        W.R(i - 1, 0) = r.Q(0);
                     } else if (r.end == Ny2) {
                         W.Q.append_data(r.Q, r.start - 1, r.end - 2, 0, r_last - 1);
-                        W.R(row - 1, 1) = r.Q(r_last);
+                        W.R(i - 1, 1) = r.Q(r_last);
                     } else {
                         W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r_last);
                     }
@@ -299,7 +295,7 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
         llong offset = 0;
         // iterate over submodels
         for(llong j = 0; j < k; j++) {
-            Row r = binom_row(im, N(i), N(j), s(j), h(j), u(j), v(j), alpha);
+            Row r = binom_row(2 * N(i), psi_diploid(im, N(j), s(j), h(j), u(j), v(j)), alpha);
             r.Q *= switching(i, j);
 
             bool row_complete = (j == (k - 1));
@@ -386,11 +382,11 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, con
             llong i = index[row].first; // model index
             llong im = index[row].second; // current index within model i
 
-            Row r_1 = binom_row(im, N, N, s(0), h(0), u(0), v(0), alpha);
+            Row r_1 = binom_row(2 * N, psi_diploid(im, N, s(0), h(0), u(0), v(0)), alpha);
             r_1.Q *= switching(i, 0);
             buffer_1[b] = r_1;
 
-            Row r_2 = binom_row(im, N, N, s(1), h(1), u(1), v(1), alpha);
+            Row r_2 = binom_row(2 * N, psi_diploid(im, N, s(1), h(1), u(1), v(1)), alpha);
             r_2.Q *= switching(i, 1);
             buffer_2[b] = r_2;
         }

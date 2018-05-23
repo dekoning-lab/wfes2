@@ -1,11 +1,31 @@
 #include "SparseMatrix.hpp"
 
-SparseMatrix::SparseMatrix(llong n_row, llong n_col): current_row(0), full(false), non_zeros(0), n_row(n_row), n_col(n_col) {
+SparseMatrix::SparseMatrix(llong n_row, llong n_col): current_row(0), full(false), non_zeros(0), n_row(n_row), n_col(n_col), data(nullptr), columns(nullptr), row_index(nullptr) {
 
     data = (double*)malloc(sizeof(double));
     columns = (llong*)malloc(sizeof(llong));
     row_index = (llong*)malloc((n_row + 1) * sizeof(llong));
     row_index[0] = 0;
+}
+
+SparseMatrix::SparseMatrix(dmat& dense): current_row(0), full(true), non_zeros(0), n_row(dense.rows()), n_col(dense.cols()), data(nullptr), columns(nullptr), row_index(nullptr) {
+    llong nnz = (dense.array() != 0.0).count();
+    non_zeros = nnz;
+    data = (double*)malloc(nnz * sizeof(double));
+    columns = (llong*)malloc(nnz * sizeof(llong));
+    row_index = (llong*)malloc((n_row + 1) * sizeof(llong));
+
+    llong info = 0;
+    llong* j = (llong*)malloc(6 * sizeof(llong));
+    j[0] = 0; j[1] = 0; j[2] = 0;
+    j[3] = 2; j[4] = non_zeros; j[5] = 1;
+
+    std::cout << "converting" << std::endl;
+    mkl_ddnscsr(j, &n_row, &n_col, dense.data(), &n_col, data, columns, row_index, &info);
+
+    free(j);
+
+    if(info != 0) throw std::runtime_error("SparseMatrix::dense(): Error processing row " + std::to_string(info));
 }
 
 SparseMatrix::~SparseMatrix() {
@@ -164,4 +184,21 @@ void SparseMatrix::subtract_identity() {
             else data[j] = -data[j];
         }
     }
+}
+
+bool SparseMatrix::approx_eq(const SparseMatrix& rhs, double tol) {
+    if(n_row != rhs.n_row) return false;
+    if(n_col != rhs.n_col) return false;
+    if(non_zeros != rhs.non_zeros) return false;
+
+    for (llong i = 0; i < n_row; ++i) {
+        for (llong j = row_index[i]; j < row_index[i + 1]; ++j) {
+            double diff = fabs(data[j] - rhs.data[j]);
+            if(diff > tol || isnan(diff)) {
+                fprintf(stderr, DPF " != " DPF " [%lld] (" DPF ", " DPF ")\n", data[j], rhs.data[j], j, diff, tol);
+                return false;
+            }
+        }
+    }
+    return true;
 }

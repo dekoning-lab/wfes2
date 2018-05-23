@@ -33,6 +33,5 @@ void print_buffer(T* buffer, size_t size, std::ostream& os = std::cout, bool new
 
 typedef Eigen::VectorXd dvec;
 typedef Eigen::Matrix<llong, Eigen::Dynamic, 1> lvec;
-typedef Eigen::MatrixXd dmat;
+typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dmat;
 typedef Eigen::DiagonalMatrix<double, Eigen::Dynamic> diagmat;
-
