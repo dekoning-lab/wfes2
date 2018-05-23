@@ -16,6 +16,8 @@ int main(int argc, char const *argv[])
     args::Group model_f(parser, "Model type - specify one", args::Group::Validators::Xor, args::Options::Required);
     args::Flag absorption_f(model_f, "absorption", "Both fixation and extinction states are absorbing", {"absorption"});
     args::Flag fixation_f(model_f, "fixation", "Only fixation state is absorbing", {"fixation"});
+    args::Flag fundamental_f(model_f, "fundamental", "Calculate the entire fundamental matrix (slow)", {"fundamental"});
+    args::Flag equilibrium_f(model_f, "fundamental", "Calculate the entire fundamental matrix (slow)", {"fundamental"});
     args::Flag allele_age_f(model_f, "allele-age", "Calculate age of an allele", {"allele-age"});
 
     args::ValueFlag<llong> population_size_f(parser, "int", "Size of the population", {'N', "pop-size"}, args::Options::Required);
@@ -34,7 +36,8 @@ int main(int argc, char const *argv[])
     args::ValueFlag<string> output_R_f(parser, "path", "Output R vectors to file", {"output-R"});
     args::ValueFlag<string> output_N_f(parser, "path", "Output N matrix to file", {"output-N"});
     args::ValueFlag<string> output_B_f(parser, "path", "Output B vectors to file", {"output-B"});
-    args::ValueFlag<string> output_E_f(parser, "path", "Output Equilibrium frequencies to file (eigen only)", {"output-E"});
+    args::ValueFlag<string> output_E_f(parser, "path", "Output Equilibrium frequencies to file (--equilibrium only)", {"output-E"});
+    args::ValueFlag<string> output_V_f(parser, "path", "Output Variance time matrix to file (--fundamental only)", {"output-V"});
     
     args::Flag csv_f(parser, "csv", "Output results in CSV format", {"csv"});
     args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
@@ -225,6 +228,34 @@ int main(int argc, char const *argv[])
             printf("T_fix = " DPF "\n", T_fix);
         }
     } // END SINGLE ABSORPTION
+
+    if (fundamental_f) 
+    {
+        llong size = (2 * population_size) - 1;
+        WF::Matrix W = WF::SingleAlt(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, a);
+        if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
+        if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
+
+        W.Q.subtract_identity();   
+        PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+        solver.analyze();
+        dmat N(size, size);
+        dvec id(size);
+        for(llong i = 0; i < size; i++) {
+            id.setZero();
+            id(i) = 1;
+            N.row(i) = solver.solve(id, true);
+        }
+        if(output_N_f) write_matrix_to_file(N, args::get(output_N_f));
+
+        if (output_V_f) {
+            dvec Ndg = (2 * N.diagonal().array()) - 1;
+            dmat Nsq = N.array().square();
+            dmat V = (N * diagmat(Ndg)) - Nsq;    
+
+            write_matrix_to_file(V, args::get(output_V_f));
+        }
+    }
 
     if(allele_age_f) // BEGIN SINGLE ALLELE AGE
     {

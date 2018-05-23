@@ -19,7 +19,6 @@ class PardisoSolver {
     lvec internal;
     dvec workspace;
 
-
 public:
     PardisoSolver(SparseMatrix& A, llong matrix_type, llong message_level, llong n_rhs = 1);
     ~PardisoSolver();

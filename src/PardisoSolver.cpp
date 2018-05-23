@@ -14,23 +14,22 @@ PardisoSolver::PardisoSolver(SparseMatrix& A, llong matrix_type, llong message_l
         internal(lvec::Zero(MKL_IFS_SIZE)),
         workspace(dvec::Zero(size * n_rhs))
 {
-    control(MKL_PARDISO_DEFAULT_SETTINGS) = MKL_PARDISO_FALSE;
-    control(MKL_PARDISO_INDEXING_OPTION) = MKL_PARDISO_INDEXING_ZERO;
-    control(MKL_PARDISO_FILL_IN_REDUCING_ORDERING_OPTION) = MKL_PARDISO_FILL_IN_REDUCING_ORDERING_NESTED_DISSECTION_OMP;
-    control(MKL_PARDISO_ITERATIVE_REFINEMENT_MAX) = 0;
-    control(MKL_PARDISO_PIVOTING_PERTURBATION) = 20; // Perturb the pivot elements with 1E-20
-    control(MKL_PARDISO_SCALING_OPTION) = MKL_PARDISO_SCALING_ENABLE; 
-    control(MKL_PARDISO_SOLVE_OPTION) = MKL_PARDISO_DEFAULT;
-    control(MKL_PARDISO_WEIGHTED_MATCHING_OPTION) = MKL_PARDISO_WEIGHTED_MATCHING_ENABLE;
-    control(MKL_PARDISO_PRECISION_OPTION) = MKL_PARDISO_PRECISION_DOUBLE;
-    control(MKL_PARDISO_INDEXING_OPTION) = MKL_PARDISO_INDEXING_ZERO;
-    control(MKL_PARDISO_OOC_OPTION) = MKL_PARDISO_DEFAULT;
-    control(MKL_PARDISO_REPORT_NNZ_FACTORS) = MKL_PARDISO_REPORT_ENABLE;
-    control(MKL_PARDISO_REPORT_FLOP_FACTOR_PHASE) = MKL_PARDISO_REPORT_ENABLE;
-    control(MKL_PARDISO_REPORT_CGS_CG_DIAGNOSTIC) = MKL_PARDISO_REPORT_ENABLE;
-    control(MKL_PARDISO_MATRIX_CHECK_OPTION) = MKL_PARDISO_MATRIX_CHECK_ENABLE;
-    control(MKL_PARDISO_PARALLEL_FACTORIZATION_OPTION) = MKL_PARDISO_PARALLEL_FACTORIZATION_TWO_LEVEL;
-    control(MKL_PARDISO_PIVOT_OPTION) = MKL_PARDISO_PIVOT_CALLBACK;
+    control(MKL_PARDISO_DEFAULT_SETTINGS) = MKL_PARDISO_FALSE;                                                                  // iparm[0]  = 1
+    control(MKL_PARDISO_FILL_IN_REDUCING_ORDERING_OPTION) = MKL_PARDISO_FILL_IN_REDUCING_ORDERING_NESTED_DISSECTION_OMP;        // iparm[1]  = 3
+    control(MKL_PARDISO_ITERATIVE_REFINEMENT_MAX) = 0;                                                                          // iparm[7]  = 0
+    control(MKL_PARDISO_PIVOTING_PERTURBATION) = 20; // Perturb the pivot elements with 1E-20                                   // iparm[9]  = 20
+    control(MKL_PARDISO_SCALING_OPTION) = MKL_PARDISO_SCALING_ENABLE;                                                           // iparm[10] = 1
+    control(MKL_PARDISO_SOLVE_OPTION) = MKL_PARDISO_DEFAULT;                                                                    // iparm[11] = 0
+    control(MKL_PARDISO_WEIGHTED_MATCHING_OPTION) = MKL_PARDISO_WEIGHTED_MATCHING_ENABLE;                                       // iparm[12] = 1
+    control(MKL_PARDISO_PRECISION_OPTION) = MKL_PARDISO_PRECISION_DOUBLE;                                                       // iparm[27] = 0
+    control(MKL_PARDISO_INDEXING_OPTION) = MKL_PARDISO_INDEXING_ZERO;                                                           // iparm[34] = 1
+    control(MKL_PARDISO_OOC_OPTION) = MKL_PARDISO_DEFAULT;                                                                      // iparm[59] = 0
+    control(MKL_PARDISO_REPORT_NNZ_FACTORS) = MKL_PARDISO_REPORT_ENABLE;                                                        // iparm[17] = -1
+    control(MKL_PARDISO_REPORT_FLOP_FACTOR_PHASE) = MKL_PARDISO_REPORT_ENABLE;                                                  // iparm[18] = -1
+    control(MKL_PARDISO_REPORT_CGS_CG_DIAGNOSTIC) = MKL_PARDISO_REPORT_ENABLE;                                                  // iparm[19] = -1
+    control(MKL_PARDISO_MATRIX_CHECK_OPTION) = MKL_PARDISO_MATRIX_CHECK_ENABLE;                                                 // iparm[26] = 1
+    control(MKL_PARDISO_PARALLEL_FACTORIZATION_OPTION) = MKL_PARDISO_PARALLEL_FACTORIZATION_TWO_LEVEL;                          // iparm[23] = 1
+    control(MKL_PARDISO_PIVOT_OPTION) = MKL_PARDISO_PIVOT_CALLBACK; // allow calling get_diag                                   // iparm[55] = 1
 }
 
 void PardisoSolver::analyze()
@@ -76,14 +75,14 @@ dvec PardisoSolver::solve(dvec& b, bool transpose)
 
 dvec PardisoSolver::get_diagonal() 
 {
-  dvec df(size);
-  dvec da(size);
+  dvec d_factorized(size);
+  dvec d_initial(size);
 
-  pardiso_getdiag(internal.data(), df.data(), da.data(), &matrix_number, &error);
+  pardiso_getdiag(internal.data(), d_factorized.data(), d_initial.data(), &matrix_number, &error);
 
   if(error == 1) throw std::runtime_error("PardisoSolver::get_diagonal(): Diagonal information not turned on before pardiso main loop: " + std::to_string(error));
 
-  return df;
+  return d_initial;
 }
 
 PardisoSolver::~PardisoSolver()
