@@ -204,76 +204,95 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
     Matrix W(size - n_abs_total, size - n_abs_total, n_abs_total);
     std::deque<std::pair<llong, llong>> index = submatrix_indeces(sizes);
 
-    for(llong row = 0; row < size; row++) {
-        llong i = index[row].first; // model index
-        llong im = index[row].second; // current index within model i
+    for(llong block_row = 0; block_row <= size; block_row += block_size) {
+        llong block_length = (block_row + block_size) < size ? block_size : size - block_row;
+        std::deque<std::deque<Row>> buffer(block_length);
+        for(llong b = 0; b < block_length; b++) buffer[b] = std::deque<Row>(k);
 
-        // coordinate of the submodel start
-        llong offset = 0;
-        // iterate over submodels
-        for(llong j = 0; j < k; j++) {
-            double p = psi_diploid(im, N(i), s(j), h(j), u(j), v(j));
-            Row r = binom_row(2 * N(j), p, alpha);
-            r.Q *= switching(i, j);
+        #pragma omp parallel for
+        for(llong b = 0; b < block_length; b++) {
+            llong row = b + block_row;
+            llong i = index[row].first; // model index
+            llong im = index[row].second; // current index within model i
 
-            bool row_complete = (j == (k - 1));
-            llong m_start = r.start + offset;
-            llong m_end = r.end + offset;
-            llong r_last = r.size - 1;
-
-            switch(abs_t) {
-                case NON_ABSORBING:
-                    W.Q.append_data(r.Q, m_start, m_end, 0, r_last, row_complete);
-                break;
-
-                case EXTINCTION_ONLY:
-                    if (im == 0) continue;
-                    else {
-                        if (r.start == 0) {
-                            W.Q.append_data(r.Q, m_start, m_end - 1, 1, r_last, row_complete);
-                            W.R(row - (i + 1), j) = r.Q(0);
-                        } else {
-                            W.Q.append_data(r.Q, m_start - 1, m_end - 1, 0, r_last, row_complete);
-                        }
-                    }
-                break;
-
-                case FIXATION_ONLY:
-                    if (im == N(i) * 2) continue;
-                    else {
-                        if (r.end == N(j) * 2) {
-                            W.Q.append_data(r.Q, m_start, m_end - 1, 0, r_last - 1, row_complete);
-                            W.R(row - i, j) = r.Q(r_last);
-                        } else {
-                            W.Q.append_data(r.Q, m_start, m_end, 0, r_last, row_complete);
-                        }
-                    }
-                break;
-
-                case BOTH_ABSORBING:
-                    if (im == 0 || im == N(i) * 2) continue;
-                    else {
-                        if (r.start == 0 && r.end == N(j) * 2) {
-                            W.Q.append_data(r.Q, m_start, m_end - 2, 1, r_last - 1, row_complete);
-                            // TODO: why is this not `row` ?
-                            W.R(row - i - i - 1, 2 * j) = r.Q(0);
-                            W.R(row - i - i - 1, (2 * j) + 1) = r.Q(r_last);
-                        } else if (r.start == 0) {
-                            W.Q.append_data(r.Q, m_start, m_end - 1, 1, r_last, row_complete);
-                            W.R(row - i - i - 1, 2 * j) = r.Q(0);
-                        } else if (r.end == N(j) * 2) {
-                            W.Q.append_data(r.Q, m_start - 1, m_end - 2, 0, r_last - 1, row_complete);
-                            W.R(row - i - i - 1, (2 * j) + 1) = r.Q(r_last);
-                        } else {
-                            W.Q.append_data(r.Q, m_start - 1, m_end - 1, 0, r_last, row_complete);
-                        }
-                    }
-                break;
+            for(llong j = 0; j < k; j++) {
+                double p = psi_diploid(im, N(i), s(j), h(j), u(j), v(j));
+                buffer[b][j] = binom_row(2 * N(j), p, alpha);
+                buffer[b][j].Q *= switching(i, j);
             }
-            // Increment row offset
-            offset += (sizes(j) - n_absorbing(abs_t));
         }
+
+
+        for(llong b = 0; b < block_length; b++) {
+            llong row = b + block_row;
+            llong i = index[row].first; // model index
+            llong im = index[row].second; // current index within model i
+            llong offset = 0; // coordinate of the submodel start
+
+            for(llong j = 0; j < k; j++) {
+                Row& r = buffer[b][j];
+                bool row_complete = (j == (k - 1));
+                llong m_start = r.start + offset;
+                llong m_end = r.end + offset;
+                llong r_last = r.size - 1;
+
+                switch(abs_t) {
+                    case NON_ABSORBING:
+                        W.Q.append_data(r.Q, m_start, m_end, 0, r_last, row_complete);
+                    break;
+
+                    case EXTINCTION_ONLY:
+                        if (im == 0) continue;
+                        else {
+                            if (r.start == 0) {
+                                W.Q.append_data(r.Q, m_start, m_end - 1, 1, r_last, row_complete);
+                                W.R(row - (i + 1), j) = r.Q(0);
+                            } else {
+                                W.Q.append_data(r.Q, m_start - 1, m_end - 1, 0, r_last, row_complete);
+                            }
+                        }
+                    break;
+
+                    case FIXATION_ONLY:
+                        if (im == N(i) * 2) continue;
+                        else {
+                            if (r.end == N(j) * 2) {
+                                W.Q.append_data(r.Q, m_start, m_end - 1, 0, r_last - 1, row_complete);
+                                W.R(row - i, j) = r.Q(r_last);
+                            } else {
+                                W.Q.append_data(r.Q, m_start, m_end, 0, r_last, row_complete);
+                            }
+                        }
+                    break;
+
+                    case BOTH_ABSORBING:
+                        if (im == 0 || im == N(i) * 2) continue;
+                        else {
+                            if (r.start == 0 && r.end == N(j) * 2) {
+                                W.Q.append_data(r.Q, m_start, m_end - 2, 1, r_last - 1, row_complete);
+                                // TODO: why is this not `row` ?
+                                W.R(row - i - i - 1, 2 * j) = r.Q(0);
+                                W.R(row - i - i - 1, (2 * j) + 1) = r.Q(r_last);
+                            } else if (r.start == 0) {
+                                W.Q.append_data(r.Q, m_start, m_end - 1, 1, r_last, row_complete);
+                                W.R(row - i - i - 1, 2 * j) = r.Q(0);
+                            } else if (r.end == N(j) * 2) {
+                                W.Q.append_data(r.Q, m_start - 1, m_end - 2, 0, r_last - 1, row_complete);
+                                W.R(row - i - i - 1, (2 * j) + 1) = r.Q(r_last);
+                            } else {
+                                W.Q.append_data(r.Q, m_start - 1, m_end - 1, 0, r_last, row_complete);
+                            }
+                        }
+                    break;
+                }
+                // Increment row offset
+                offset += (sizes(j) - n_absorbing(abs_t));
+            }
+        }
+
+
     }
+
     return W;
 }
 
