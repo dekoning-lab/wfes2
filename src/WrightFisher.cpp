@@ -70,174 +70,80 @@ WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, co
     return W;
 }
 
-WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const absorption_type abs_t, const double s, const double h, const double u, const double v, const double alpha, const llong block_size) {
 
-    llong Nx2 = 2 * Nx; 
-    llong Ny2 = 2 * Ny; 
-
-    llong n_abs = n_absorbing(abs_t);
-
-    Matrix W(Nx2 + 1 - n_abs, Ny2 + 1 - n_abs, n_abs);
-
-    if(abs_t == NON_ABSORBING) {
-        llong size = Nx2 + 1;
-        for(llong block_row = 0; block_row < size; block_row += block_size) {
-            llong block_length = (block_row + block_size) < size ? block_size : size - block_row;
-            std::deque<Row> buffer(block_length);
-
-            #pragma omp parallel for
-            for(llong b = 0; b < block_length; b++) {
-                llong row = block_row + b;
-                buffer[b] = binom_row(2 * Nx, psi_diploid(row, Ny, s, h, u, v), alpha);
-            }
-
-            for(llong b = 0; b < block_length; b++) {
-                Row& r = buffer[b];
-                W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
-            }
-        }
-    }
-
-    else if (abs_t == EXTINCTION_ONLY) {
-        for(llong i = 1; i <= Nx2; i++) {
-            Row r = binom_row(2 * Nx, psi_diploid(i, Ny, s, h, u, v), alpha);
-            if (r.start == 0) {
-                //                   m0       m1         r0 r1
-                W.Q.append_data(r.Q, r.start, r.end - 1, 1, r.size - 1);
-                W.R(i - 1, 0) = r.Q(0);
-            } else {
-                W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r.size - 1);
-            }
-            
-        }
-    }
-
-    else if (abs_t == FIXATION_ONLY) {
-        for(llong i = 0; i <= Nx2 - 1; i++) {
-            Row r = binom_row(2 * Nx, psi_diploid(i, Ny, s, h, u, v), alpha);
-            if (r.end == Ny2) {
-                //                   m0       m1         r0 r1
-                W.Q.append_data(r.Q, r.start, r.end - 1, 0, r.size - 2);
-                W.R(i, 0) = r.Q(r.size - 1);
-            } else {
-                W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
-            }
-            
-        }
-    }
-
-    else if (abs_t == BOTH_ABSORBING) {
-        for(llong i = 1; i <= Nx2 - 1; i++) {
-            Row r = binom_row(2 * Nx, psi_diploid(i, Ny, s, h, u, v), alpha);
-
-            if (r.start == 0 && r.end == Ny2) {
-                W.Q.append_data(r.Q, r.start, r.end - 2, 1, r.end - 1);
-                W.R(i - 1, 0) = r.Q(0);
-                W.R(i - 1, 1) = r.Q(r.size - 1);
-            } else if (r.start == 0) {
-                W.Q.append_data(r.Q, r.start, r.end - 1, 1, r.size - 1);
-                W.R(i - 1, 0) = r.Q(0);
-            } else if (r.end == Ny2) {
-                W.Q.append_data(r.Q, r.start - 1, r.end - 2, 0, r.size - 2);
-                W.R(i - 1, 0) = r.Q(r.size - 1);
-            } else {
-                W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r.size - 1);
-            }
-        }
-    }
-
-    else {
-        throw std::runtime_error("WrightFisher::Single() unknown absorption_type");
-    }
-
-    return W;
-
-
-    // llong size = (2 * N) + 1 - n_abs;
-
-    // Matrix W(size, n_abs);
-
-    // for(llong r = 0; r < size; r += block_size) {
-
-    //     llong block = (r + block_size) < size ? block_size : size - r;
-    //     vector<Row> buffer(block);
-
-    //     #pragma omp parallel for
-    //     for(llong b = 0; b < block; b++) {
-    //         buffer[b] = make_row(r + b, N, N, n_abs, s, h, u, v, alpha);
-    //     }
-
-    //     for(llong b = 0; b < block; b++) {
-    //         Row& row = buffer[b];
-    //         W.Q.append_data(row.Q, row.col_start);
-    //         for(llong j = 0; j < n_abs; j++) {
-    //             W.R(r + b, j) = row.R(j);
-    //         }
-    //     }
-    // }
-
-}
-
-WrightFisher::Matrix WrightFisher::SingleAlt(const llong Nx, const llong Ny, const absorption_type abs_t, const double s, const double h, const double u, const double v, const double alpha, const llong block_size) 
+WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const absorption_type abs_t, const double s, const double h, const double u, const double v, const double alpha, const llong block_size) 
 {
     llong Nx2 = 2 * Nx; 
     llong Ny2 = 2 * Ny; 
+    llong size = Nx2 + 1;
 
     llong n_abs = n_absorbing(abs_t);
 
     Matrix W(Nx2 + 1 - n_abs, Ny2 + 1 - n_abs, n_abs);
 
-    for(llong i = 0; i <= Nx2; i++) {
-        Row r = binom_row(2 * Ny, psi_diploid(i, Nx, s, h, u, v), alpha);
-        llong r_last = r.size - 1;
+    for(llong block_row = 0; block_row <= Nx2; block_row += block_size) {
+        llong block_length = (block_row + block_size) < size ? block_size : size - block_row;
+        std::deque<Row> buffer(block_length);
 
-        switch(abs_t) {
-            case NON_ABSORBING:
-                W.Q.append_data(r.Q, r.start, r.end, 0, r_last);
-            break;
+        #pragma omp parallel for
+        for(llong b = 0; b < block_length; b++) {
+            llong i = b + block_row;
+            buffer[b] = binom_row(2 * Ny, psi_diploid(i, Nx, s, h, u, v), alpha);
+        }
 
-            case EXTINCTION_ONLY:
-                if (i == 0) continue;
-                else {
-                    if (r.start == 0) {
-                        W.Q.append_data(r.Q, r.start, r.end - 1, 1, r_last);
-                        W.R(i - 1, 0) = r.Q(0);
-                    } else {
-                        W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r_last);
+        for(llong b = 0; b < block_length; b++) {
+            Row& r = buffer[b];
+            llong i = b + block_row;
+            llong r_last = r.size - 1;
+
+            switch(abs_t) {
+                case NON_ABSORBING:
+                    W.Q.append_data(r.Q, r.start, r.end, 0, r_last);
+                break;
+
+                case EXTINCTION_ONLY:
+                    if (i == 0) continue;
+                    else {
+                        if (r.start == 0) {
+                            W.Q.append_data(r.Q, r.start, r.end - 1, 1, r_last);
+                            W.R(i - 1, 0) = r.Q(0);
+                        } else {
+                            W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r_last);
+                        }
                     }
-                }
-            break;
+                break;
 
-            case FIXATION_ONLY:
-                if (i == Nx2) continue;
-                else {
-                    if (r.end == Ny2) {
-                        W.Q.append_data(r.Q, r.start, r.end - 1, 0, r_last - 1);
-                        W.R(i, 0) = r.Q(r_last);
-                    } else {
-                        W.Q.append_data(r.Q, r.start, r.end, 0, r_last);
+                case FIXATION_ONLY:
+                    if (i == Nx2) continue;
+                    else {
+                        if (r.end == Ny2) {
+                            W.Q.append_data(r.Q, r.start, r.end - 1, 0, r_last - 1);
+                            W.R(i, 0) = r.Q(r_last);
+                        } else {
+                            W.Q.append_data(r.Q, r.start, r.end, 0, r_last);
+                        }
                     }
-                }
-            break;
+                break;
 
-            case BOTH_ABSORBING:
-                if (i == 0 || i == Nx2) continue;
-                else {
-                    if (r.start == 0 && r.end == Ny2) {
-                        W.Q.append_data(r.Q, r.start, r.end - 2, 1, r_last - 1);
-                        W.R(i - 1, 0) = r.Q(0);
-                        W.R(i - 1, 1) = r.Q(r_last);
-                    } else if (r.start == 0) {
-                        W.Q.append_data(r.Q, r.start, r.end - 1, 1, r_last);
-                        W.R(i - 1, 0) = r.Q(0);
-                    } else if (r.end == Ny2) {
-                        W.Q.append_data(r.Q, r.start - 1, r.end - 2, 0, r_last - 1);
-                        W.R(i - 1, 1) = r.Q(r_last);
-                    } else {
-                        W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r_last);
+                case BOTH_ABSORBING:
+                    if (i == 0 || i == Nx2) continue;
+                    else {
+                        if (r.start == 0 && r.end == Ny2) {
+                            W.Q.append_data(r.Q, r.start, r.end - 2, 1, r_last - 1);
+                            W.R(i - 1, 0) = r.Q(0);
+                            W.R(i - 1, 1) = r.Q(r_last);
+                        } else if (r.start == 0) {
+                            W.Q.append_data(r.Q, r.start, r.end - 1, 1, r_last);
+                            W.R(i - 1, 0) = r.Q(0);
+                        } else if (r.end == Ny2) {
+                            W.Q.append_data(r.Q, r.start - 1, r.end - 2, 0, r_last - 1);
+                            W.R(i - 1, 1) = r.Q(r_last);
+                        } else {
+                            W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r_last);
+                        }
                     }
-                }
-            break;
+                break;
+            }
         }
     }
     return W;

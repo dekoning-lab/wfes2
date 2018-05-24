@@ -74,7 +74,6 @@ namespace WrightFisher {
 
     // Single - one matrix of a given absorption type
     Matrix Single(const llong Nx, const llong Ny, const absorption_type a_t, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, const double alpha = 1e-20, const llong block_size = 100);
-    Matrix SingleAlt(const llong Nx, const llong Ny, const absorption_type a_t, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, const double alpha = 1e-20, const llong block_size = 100);
 
     // Switching - each sub-model is of the same absorbing type
     Matrix Switching(const lvec& N, const absorption_type a_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha = 1e-20, const llong block_size = 100);

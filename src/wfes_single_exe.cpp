@@ -89,7 +89,7 @@ int main(int argc, char const *argv[])
 
     if(fixation_f) // BEGIN SINGLE FIXATION
     {
-        WF::Matrix W = WF::SingleAlt(population_size, population_size, WF::FIXATION_ONLY, s, h, u, v, a);
+        WF::Matrix W = WF::Single(population_size, population_size, WF::FIXATION_ONLY, s, h, u, v, a);
 
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
@@ -148,7 +148,7 @@ int main(int argc, char const *argv[])
 
     if(absorption_f) // BEGIN SINGLE ABSORPTION
     {
-        WF::Matrix W = WF::SingleAlt(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, a);
+        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, a);
 
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
@@ -233,7 +233,7 @@ int main(int argc, char const *argv[])
     if (fundamental_f) 
     {
         llong size = (2 * population_size) - 1;
-        WF::Matrix W = WF::SingleAlt(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, a);
+        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, a);
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
 
