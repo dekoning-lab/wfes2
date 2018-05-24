@@ -48,23 +48,35 @@ WrightFisher::Row WrightFisher::binom_row(const llong size, const double p, cons
 
 WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, const double h, const double u, const double v, const double alpha, const llong block_size) {
     llong N2 = 2 * N;
-    WrightFisher::Matrix W(N2 + 1, N2 + 1, n_absorbing(WrightFisher::NON_ABSORBING));
-    for(llong i = 0; i <= N2; i++) {
-        WrightFisher::Row r = binom_row(2 * N, psi_diploid(i, N, s, h, u, v), alpha);
-        // WrightFisher::Row r = binom_row(i, N, N, s, h, u, v, alpha);
-        // I - Q
-        for(llong j = 0; j < r.Q.size(); j++) r.Q(j) = -r.Q(j);
-        // r.Q = -r.Q;
-        r.Q(i - r.start) += 1;
-        if (r.end == N2) {
-            r.Q(r.size - 1) += 1;
-            W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
-        } else {
+    llong size = N2 + 1;
+    WrightFisher::Matrix W(size, size, n_absorbing(WrightFisher::NON_ABSORBING));
+    for(llong block_row = 0; block_row < size; block_row += block_size) {
+        llong block_length = (block_row + block_size) < size ? block_size : size - block_row;
+        std::deque<Row> buffer(block_length);
+
+        #pragma omp parallel for
+        for(llong b = 0; b < block_length; b++) {
+            llong i = b + block_row;
+            buffer[b] = binom_row(2 * N, psi_diploid(i, N, s, h, u, v), alpha);
+            Row& r = buffer[b];
+            // I - Q
+            for(llong j = 0; j < r.Q.size(); j++) r.Q(j) = -r.Q(j);
+            // r.Q = -r.Q;
+            r.Q(i - r.start) += 1;
+        }
+
+        for(llong b = 0; b < block_length; b++) {
+            Row& r = buffer[b];
+            if (r.end == N2) {
+                r.Q(r.size - 1) += 1;
+                W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
+            } else {
             // allocate one additional cell (slack = 1)
-            W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1, false, 1);
-            W.Q.data[W.Q.non_zeros - 1] = 1;
-            W.Q.columns[W.Q.non_zeros - 1] = N2;
-            W.Q.finalize_row();
+                W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1, false, 1);
+                W.Q.data[W.Q.non_zeros - 1] = 1;
+                W.Q.columns[W.Q.non_zeros - 1] = N2;
+                W.Q.finalize_row();
+            }
         }
     }
     return W;
