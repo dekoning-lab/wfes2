@@ -9,6 +9,13 @@ namespace WFE = WrightFisherElementary;
 
 using namespace std;
 
+TEST_CASE("Sparse Matrix Column accessor", "[sparse-col]") {
+	WF::Matrix W = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
+	REQUIRE(approx_eq(W.Q.dense().col(10), W.Q.col(10)));
+	REQUIRE(approx_eq(W.Q.dense().col(0), W.Q.col(0)));
+	REQUIRE(approx_eq(W.Q.dense().col(198), W.Q.col(198)));
+}
+
 TEST_CASE("Psi Calculations", "[psi]") {
 	REQUIRE(WF::psi_diploid(0, 100) == WFE::psi_diploid(0, 100));
 }

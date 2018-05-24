@@ -177,6 +177,19 @@ double SparseMatrix::operator() (llong row, llong col) {
     return 0; // was not found
 }
 
+dvec SparseMatrix::col(llong c) {
+    dvec column = dvec::Zero(n_row);
+    for(llong i = 0; i < n_row; i++) {
+        for(llong j = row_index[i]; j < row_index[i + 1]; j++) {
+            if (columns[j] == c) {
+                column[i] = data[j];
+                break;
+            }
+        }  
+    }  
+    return column;
+}
+
 void SparseMatrix::subtract_identity() {
     for (llong i = 0; i < n_row; ++i) {
         for (llong j = row_index[i]; j < row_index[i + 1]; ++j) {

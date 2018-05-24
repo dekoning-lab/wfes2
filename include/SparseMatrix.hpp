@@ -42,6 +42,7 @@ public:
     void save_market(std::string path);
     void subtract_identity();
     double operator() (llong i, llong j);
+    dvec col(llong j);
     bool approx_eq(const SparseMatrix& rhs, double tol = 1e-10);
 };
 
