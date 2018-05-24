@@ -26,13 +26,10 @@ set(OTHER_LIBS "-lm -ldl")
 # add -fopenmp
 set(CMAKE_CXX_FLAGS "-DMKL_ILP64 -m64 -Wall -Wformat -Wno-deprecated-declarations")
 
-# find_package(Eigen3 3.3 REQUIRED)
-
 file(GLOB LIB_SOURCES "src/*.cpp")
 list(FILTER LIB_SOURCES EXCLUDE REGEX "src/.*_exe.cpp")
 
 link_directories(${INTEL_OMP_LIB_DIRS} ${MKL_LIB_DIR})
-include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${MKL_INCLUDE_DIR})
 include_directories("include")
 

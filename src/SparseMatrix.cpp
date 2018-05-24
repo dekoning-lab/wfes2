@@ -194,7 +194,7 @@ bool SparseMatrix::approx_eq(const SparseMatrix& rhs, double tol) {
     for (llong i = 0; i < n_row; ++i) {
         for (llong j = row_index[i]; j < row_index[i + 1]; ++j) {
             double diff = fabs(data[j] - rhs.data[j]);
-            if(diff > tol || isnan(diff)) {
+            if(diff > tol || std::isnan(diff)) {
                 fprintf(stderr, DPF " != " DPF " [%lld] (" DPF ", " DPF ")\n", data[j], rhs.data[j], j, diff, tol);
                 return false;
             }
