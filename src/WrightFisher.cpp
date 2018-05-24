@@ -186,8 +186,7 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
 
     llong n_abs_total = n_absorbing(abs_t) * k;
 
-    lvec sizes(k);
-    for(llong i = 0; i < k; i++) sizes(i) = 2 * N(i) + 1;
+    lvec sizes = 2 * N + lvec::Ones(k);
     llong size = sizes.sum();
 
     Matrix W(size - n_abs_total, size - n_abs_total, n_abs_total);
@@ -201,7 +200,8 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
         llong offset = 0;
         // iterate over submodels
         for(llong j = 0; j < k; j++) {
-            Row r = binom_row(2 * N(i), psi_diploid(im, N(j), s(j), h(j), u(j), v(j)), alpha);
+            double p = psi_diploid(im, N(i), s(j), h(j), u(j), v(j));
+            Row r = binom_row(2 * N(j), p, alpha);
             r.Q *= switching(i, j);
 
             bool row_complete = (j == (k - 1));
@@ -209,7 +209,6 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
             llong m_end = r.end + offset;
             llong r_last = r.size - 1;
 
-            // W.Q.append_data(r.Q, r.start + offset, r.end + offset, 0, r_last, j == (k - 1));
             switch(abs_t) {
                 case NON_ABSORBING:
                     W.Q.append_data(r.Q, m_start, m_end, 0, r_last, row_complete);
@@ -299,8 +298,6 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, con
 
         for(llong b = 0; b < block_length; b++) {
             llong row = block_row + b;
-            // llong i = index[row].first; // model index
-            // llong im = index[row].second; // current index within model i
             llong offset = (2 * N) + 1;
 
             W.Q.append_data(buffer_1[b].Q, buffer_1[b].start, buffer_1[b].end, 0, buffer_1[b].size - 1, false);

@@ -28,6 +28,21 @@ namespace WrightFisher {
         }
     }
 
+    inline std::string absorption_type_desc(absorption_type a_t){
+        switch(a_t) {
+            case NON_ABSORBING:
+                return "No absorbing boundaries";
+            case EXTINCTION_ONLY:
+                return "Only extinction boundary is absorbing";
+            case FIXATION_ONLY:
+                return "Only fixation boundary is absorbing";
+            case BOTH_ABSORBING:
+                return "Both extinction and fixation boundaries are absorbing";
+            default:
+                throw std::runtime_error("Unknown absorption type");
+        }
+    }
+
     class Row {
     protected:
         mutable bool valid = true;

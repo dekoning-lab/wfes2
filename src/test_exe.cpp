@@ -19,80 +19,72 @@ TEST_CASE("Binomial row", "[binom-row]") {
 	REQUIRE(approx_eq(a, b));
 }
 
-// Non-absorbing 
-TEST_CASE("Non-Absorbing WF - square", "[non-absorbing]") {
-	WF::Matrix W1 = WF::Single(100, 100, WF::NON_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
-	dmat W2 = WFE::Single(100, 100, WF::NON_ABSORBING, 0, 0.5, 1e-9, 1e-9).first;
-	REQUIRE(approx_eq(W1.Q.dense(), W2));
+// SINGLE 
+
+SCENARIO("Single Square matrix are built correctly", "[single-square]") {
+	for(int i = WF::NON_ABSORBING; i <= WF::BOTH_ABSORBING; i ++) {
+		WF::absorption_type a_t = WF::absorption_type(i);
+		GIVEN(absorption_type_desc(a_t)) {
+			WF::Matrix W1 = WF::Single(100, 100, a_t, 0, 0.5, 1e-9, 1e-9, 0);
+			dmat W2 = WFE::Single(100, 100, a_t, 0, 0.5, 1e-9, 1e-9).first;
+			REQUIRE(approx_eq(W1.Q.dense(), W2));	
+		}
+	}
+	
 }
 
-TEST_CASE("Non-Absorbing WF - wide", "[non-absorbing]") {
-	WF::Matrix W1 = WF::Single(100, 20, WF::NON_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
-	dmat W2 = WFE::Single(100, 20, WF::NON_ABSORBING, 0, 0.5, 1e-9, 1e-9).first;
-	REQUIRE(approx_eq(W1.Q.dense(), W2));
+SCENARIO("Single Wide matrix are built correctly", "[single-square]") {
+	for(int i = WF::NON_ABSORBING; i <= WF::BOTH_ABSORBING; i ++) {
+		WF::absorption_type a_t = WF::absorption_type(i);
+		GIVEN(absorption_type_desc(a_t)) {
+			WF::Matrix W1 = WF::Single(200, 100, a_t, 0, 0.5, 1e-9, 1e-9, 0);
+			dmat W2 = WFE::Single(200, 100, a_t, 0, 0.5, 1e-9, 1e-9).first;
+			REQUIRE(approx_eq(W1.Q.dense(), W2));	
+		}
+	}
 }
 
-TEST_CASE("Non-Absorbing WF - narrow", "[non-absorbing]") {
-	WF::Matrix W1 = WF::Single(20, 100, WF::NON_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
-	dmat W2 = WFE::Single(20, 100, WF::NON_ABSORBING, 0, 0.5, 1e-9, 1e-9).first;
-	REQUIRE(approx_eq(W1.Q.dense(), W2));
+SCENARIO("Single Narrow matrix are built correctly", "[single-square]") {
+	for(int i = WF::NON_ABSORBING; i <= WF::BOTH_ABSORBING; i ++) {
+		WF::absorption_type a_t = WF::absorption_type(i);
+		GIVEN(absorption_type_desc(a_t)) {
+			WF::Matrix W1 = WF::Single(100, 200, a_t, 0, 0.5, 1e-9, 1e-9, 0);
+			dmat W2 = WFE::Single(100, 200, a_t, 0, 0.5, 1e-9, 1e-9).first;
+			REQUIRE(approx_eq(W1.Q.dense(), W2));	
+		}
+	}
 }
 
-// Both absorbing
-TEST_CASE("Both-Absorbing WF - square", "[both-absorbing]") {
-	WF::Matrix W1 = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
-	dmat W2 = WFE::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9).first;
-	REQUIRE(approx_eq(W1.Q.dense(), W2));
+SCENARIO("Switching Up matrix are built correctly", "[single-square]") {
+	lvec N(2); N << 100, 200;
+	dvec s(2); s << 0, 0.1;
+	dvec h(2); h << 0.5, 0.5;
+	dvec mu(2); mu << 1e-9, 1e-9;
+	dmat sw(2,2); sw << 1, 1, 1, 1;
+
+	for(int i = WF::NON_ABSORBING; i <= WF::BOTH_ABSORBING; i ++) {
+		WF::absorption_type a_t = WF::absorption_type(i);
+		GIVEN(absorption_type_desc(a_t)) {
+			WF::Matrix W1 = WF::Switching(N, a_t, s, h, mu, mu, sw, 0);
+			dmat W2 = WFE::SwitchingTwoByTwo(N, a_t, s, h, mu, mu, sw).first;
+			REQUIRE(approx_eq(W1.Q.dense(), W2));	
+		}
+	}
 }
 
-TEST_CASE("Both-Absorbing WF - wide", "[both-absorbing]") {
-	WF::Matrix W1 = WF::Single(100, 20, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
-	dmat W2 = WFE::Single(100, 20, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9).first;
-	REQUIRE(approx_eq(W1.Q.dense(), W2));
-}
+SCENARIO("Switching Down matrix are built correctly", "[single-square]") {
+	lvec N(2); N << 200, 100;
+	dvec s(2); s << 0, 0.1;
+	dvec h(2); h << 0.5, 0.5;
+	dvec mu(2); mu << 1e-9, 1e-9;
+	dmat sw(2,2); sw << 1, 1, 1, 1;
 
-TEST_CASE("Both-Absorbing WF - narrow", "[both-absorbing]") {
-	WF::Matrix W1 = WF::Single(20, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
-	dmat W2 = WFE::Single(20, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9).first;
-	REQUIRE(approx_eq(W1.Q.dense(), W2));
-}
-
-// Fixation
-
-TEST_CASE("Fixation WF - square", "[fixation]") {
-	WF::Matrix W1 = WF::Single(100, 100, WF::FIXATION_ONLY, 0, 0.5, 1e-9, 1e-9, 0);
-	dmat W2 = WFE::Single(100, 100, WF::FIXATION_ONLY, 0, 0.5, 1e-9, 1e-9).first;
-	REQUIRE(approx_eq(W1.Q.dense(), W2));
-}
-
-TEST_CASE("Fixation WF - wide", "[fixation]") {
-	WF::Matrix W1 = WF::Single(100, 20, WF::FIXATION_ONLY, 0, 0.5, 1e-9, 1e-9, 0);
-	dmat W2 = WFE::Single(100, 20, WF::FIXATION_ONLY, 0, 0.5, 1e-9, 1e-9).first;
-	REQUIRE(approx_eq(W1.Q.dense(), W2));
-}
-
-TEST_CASE("Fixation WF - narrow", "[fixation]") {
-	WF::Matrix W1 = WF::Single(20, 100, WF::FIXATION_ONLY, 0, 0.5, 1e-9, 1e-9, 0);
-	dmat W2 = WFE::Single(20, 100, WF::FIXATION_ONLY, 0, 0.5, 1e-9, 1e-9).first;
-	REQUIRE(approx_eq(W1.Q.dense(), W2));
-}
-
-//Extinction
-
-TEST_CASE("Extinction WF - square", "[extinction]") {
-	WF::Matrix W1 = WF::Single(100, 100, WF::EXTINCTION_ONLY, 0, 0.5, 1e-9, 1e-9, 0);
-	dmat W2 = WFE::Single(100, 100, WF::EXTINCTION_ONLY, 0, 0.5, 1e-9, 1e-9).first;
-	REQUIRE(approx_eq(W1.Q.dense(), W2));
-}
-
-TEST_CASE("Extinction WF - wide", "[extinction]") {
-	WF::Matrix W1 = WF::Single(100, 20, WF::EXTINCTION_ONLY, 0, 0.5, 1e-9, 1e-9, 0);
-	dmat W2 = WFE::Single(100, 20, WF::EXTINCTION_ONLY, 0, 0.5, 1e-9, 1e-9).first;
-	REQUIRE(approx_eq(W1.Q.dense(), W2));
-}
-
-TEST_CASE("Extinction WF - narrow", "[extinction]") {
-	WF::Matrix W1 = WF::Single(20, 100, WF::EXTINCTION_ONLY, 0, 0.5, 1e-9, 1e-9, 0);
-	dmat W2 = WFE::Single(20, 100, WF::EXTINCTION_ONLY, 0, 0.5, 1e-9, 1e-9).first;
-	REQUIRE(approx_eq(W1.Q.dense(), W2));
+	for(int i = WF::NON_ABSORBING; i <= WF::BOTH_ABSORBING; i ++) {
+		WF::absorption_type a_t = WF::absorption_type(i);
+		GIVEN(absorption_type_desc(a_t)) {
+			WF::Matrix W1 = WF::Switching(N, a_t, s, h, mu, mu, sw, 0);
+			dmat W2 = WFE::SwitchingTwoByTwo(N, a_t, s, h, mu, mu, sw).first;
+			REQUIRE(approx_eq(W1.Q.dense(), W2));	
+		}
+	}
 }

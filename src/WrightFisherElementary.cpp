@@ -75,3 +75,28 @@ std::pair<dmat, dmat> WrightFisherElementary::Single(const llong Nx, const llong
     
    	return std::make_pair(Q, R); 
 }
+
+std::pair<dmat, dmat> WrightFisherElementary::SwitchingTwoByTwo(const lvec& N, const WF::absorption_type a_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching) {
+	llong k = N.size();
+    llong n_abs_total = WF::n_absorbing(a_t) * k;
+    lvec sizes(k);
+    for(llong i = 0; i < k; i++) sizes(i) = 2 * N(i) + 1;
+    llong size = sizes.sum();
+	dmat Q(size - n_abs_total, size - n_abs_total);
+	dmat R(size - n_abs_total, n_abs_total);
+
+	std::deque<std::pair<dmat,dmat>> W;
+	for(llong i = 0; i < k; i++) {
+		for(llong j = 0; j < k; j++) {
+			std::pair<dmat, dmat> w = WrightFisherElementary::Single(N(i), N(j), a_t, s(j), h(j), u(j), v(j));
+			w.first *= switching(i, j);
+			w.second *= switching(i, j);
+			W.push_back(w);
+		}
+	}
+
+	// My, my, is this ugly
+	Q << W[0].first, W[1].first, W[2].first, W[3].first;
+	R << W[0].second, W[1].second, W[2].second, W[3].second;
+	return std::make_pair(Q, R);
+}
