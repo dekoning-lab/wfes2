@@ -18,7 +18,7 @@ int main(int argc, char const *argv[])
     args::Flag absorption_f(model_f, "absorption", "Both fixation and extinction states are absorbing", {"absorption"});
     args::Flag fixation_f(model_f, "fixation", "Only fixation state is absorbing", {"fixation"});
     args::Flag fundamental_f(model_f, "fundamental", "Calculate the entire fundamental matrix (slow)", {"fundamental"});
-    args::Flag equilibrium_f(model_f, "fundamental", "Calculate the entire fundamental matrix (slow)", {"fundamental"});
+    args::Flag equilibrium_f(model_f, "equilibrium", "Calculate the equilibrium distribtion of allele states", {"equilibrium"});
     args::Flag allele_age_f(model_f, "allele-age", "Calculate age of an allele", {"allele-age"});
 
     args::ValueFlag<llong> population_size_f(parser, "int", "Size of the population", {'N', "pop-size"}, args::Options::Required);

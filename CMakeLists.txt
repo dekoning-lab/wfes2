@@ -48,6 +48,9 @@ target_link_libraries(wfes_soft wfes)
 add_executable(wfes_single "src/wfes_single_exe.cpp")
 target_link_libraries(wfes_single wfes)
 
+add_executable(wfes_switching "src/wfes_switching_exe.cpp")
+target_link_libraries(wfes_switching wfes)
+
 add_executable(test_wfes "src/test_exe.cpp")
 target_link_libraries(test_wfes wfes)
 

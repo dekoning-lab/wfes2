@@ -36,3 +36,14 @@ void print_vector(const dvec& src, const char* prefix, const char* postfix, cons
     printf(DPF, src(size-1));
     printf("%s", postfix);
 }
+
+void print_vector(const lvec& src, const char* prefix, const char* postfix, const char* delim) {
+    size_t size = src.size();
+    printf("%s", prefix);
+    for(size_t i = 0; i < size - 1; i++) {
+        printf(LPF, src(i));
+        printf("%s ", delim);
+    }
+    printf(LPF, src(size-1));
+    printf("%s", postfix);
+}
