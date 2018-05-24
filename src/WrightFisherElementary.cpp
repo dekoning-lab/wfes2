@@ -76,6 +76,38 @@ std::pair<dmat, dmat> WrightFisherElementary::Single(const llong Nx, const llong
    	return std::make_pair(Q, R); 
 }
 
+std::pair<dmat, dmat> WrightFisherElementary::Equilibrium(const llong N, const double s, const double h, const double u, const double v) {
+	std::pair<dmat, dmat> W = WrightFisherElementary::Single(N, N, WF::NON_ABSORBING, s, h, u, v);
+	llong N2 = 2 * N;
+	W.first = dmat::Identity(N2 + 1, N2 + 1) - W.first;
+	W.first.col(2 * N) += dvec::Ones(N2 + 1);
+	return W;
+}
+
+std::pair<dmat, dmat> WrightFisherElementary::NonAbsorbingToFixationOnly(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching) {
+
+
+    lvec sizes(2); sizes << (2 * N) + 1, 2 * N;
+    llong size = sizes.sum();
+
+    dmat Q(size, size);
+    dmat R(size, 1);
+
+    std::pair<dmat, dmat> W00 = WrightFisherElementary::Single(N, N, WF::NON_ABSORBING, s(0), h(0), u(0), v(0));
+    W00.first *= switching(0, 0); W00.second *= switching(0, 0);
+    std::pair<dmat, dmat> W01 = WrightFisherElementary::Single(N, N, WF::FIXATION_ONLY, s(1), h(1), u(1), v(1));
+    W01.first *= switching(0, 1); W01.second *= switching(0, 1);
+    dvec last_row = WrightFisherElementary::binom_row(2 * N, psi_diploid(N, s(1), h(1), u(1), v(1))) * switching(0, 1);
+    std::pair<dmat, dmat> W10 = WrightFisherElementary::Single(N, N, WF::NON_ABSORBING, s(1), h(1), u(1), v(1));
+    W10.first *= switching(1, 0); W10.second *= switching(1, 0);
+    std::pair<dmat, dmat> W11 = WrightFisherElementary::Single(N, N, WF::FIXATION_ONLY, s(1), h(1), u(1), v(1));
+    W11.first *= switching(1, 1); W10.second *= switching(1, 1);
+
+    // build matrix
+
+    return std::make_pair(Q, R);
+}
+
 std::pair<dmat, dmat> WrightFisherElementary::SwitchingTwoByTwo(const lvec& N, const WF::absorption_type a_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching) {
 	llong k = N.size();
     llong n_abs_total = WF::n_absorbing(a_t) * k;

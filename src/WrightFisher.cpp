@@ -219,7 +219,7 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
                     else {
                         if (r.start == 0) {
                             W.Q.append_data(r.Q, m_start, m_end - 1, 1, r_last, row_complete);
-                            W.R(im + offset - 1, j) = r.Q(0);
+                            W.R(row - (i + 1), j) = r.Q(0);
                         } else {
                             W.Q.append_data(r.Q, m_start - 1, m_end - 1, 0, r_last, row_complete);
                         }
@@ -231,7 +231,7 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
                     else {
                         if (r.end == N(j) * 2) {
                             W.Q.append_data(r.Q, m_start, m_end - 1, 0, r_last - 1, row_complete);
-                            W.R(im + offset, j) = r.Q(r_last);
+                            W.R(row - i, j) = r.Q(r_last);
                         } else {
                             W.Q.append_data(r.Q, m_start, m_end, 0, r_last, row_complete);
                         }
@@ -244,20 +244,21 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
                         if (r.start == 0 && r.end == N(j) * 2) {
                             W.Q.append_data(r.Q, m_start, m_end - 2, 1, r_last - 1, row_complete);
                             // TODO: why is this not `row` ?
-                            W.R(im + offset - 1, 2 * j) = r.Q(0);
-                            W.R(im + offset - 1, (2 * j) + 1) = r.Q(r_last);
+                            W.R(row - i - i - 1, 2 * j) = r.Q(0);
+                            W.R(row - i - i - 1, (2 * j) + 1) = r.Q(r_last);
                         } else if (r.start == 0) {
                             W.Q.append_data(r.Q, m_start, m_end - 1, 1, r_last, row_complete);
-                            W.R(im + offset - 1, 2 * j) = r.Q(0);
+                            W.R(row - i - i - 1, 2 * j) = r.Q(0);
                         } else if (r.end == N(j) * 2) {
                             W.Q.append_data(r.Q, m_start - 1, m_end - 2, 0, r_last - 1, row_complete);
-                            W.R(im + offset - 1, (2 * j) + 1) = r.Q(r_last);
+                            W.R(row - i - i - 1, (2 * j) + 1) = r.Q(r_last);
                         } else {
                             W.Q.append_data(r.Q, m_start - 1, m_end - 1, 0, r_last, row_complete);
                         }
                     }
                 break;
             }
+            // Increment row offset
             offset += (sizes(j) - n_absorbing(abs_t));
         }
     }
