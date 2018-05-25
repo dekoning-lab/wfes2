@@ -41,6 +41,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<string> output_R_f(parser, "path", "Output R vectors to file", {"output-R"});
     args::ValueFlag<string> output_N_f(parser, "path", "Output N matrix to file", {"output-N"});
     args::ValueFlag<string> output_B_f(parser, "path", "Output B vectors to file", {"output-B"});
+    args::ValueFlag<string> output_I_f(parser, "path", "Output Initial probability distribution", {"output-I"});
     args::ValueFlag<string> output_E_f(parser, "path", "Output Equilibrium frequencies to file (--equilibrium only)", {"output-E"});
     args::ValueFlag<string> output_V_f(parser, "path", "Output Variance time matrix to file (--fundamental only)", {"output-V"});
     
@@ -97,6 +98,8 @@ int main(int argc, char const *argv[])
     dvec first_row = WF::binom_row(2 * population_size, WF::psi_diploid(0, population_size, s, h, u, v), a).Q;
     dvec starting_copies_p = first_row.tail(first_row.size() - 1); // renormalize
     starting_copies_p /= 1 - first_row(0);
+
+    if(output_I_f) write_vector_to_file(starting_copies_p, args::get(output_I_f));
 
     llong z = 0;
 
@@ -291,36 +294,53 @@ int main(int argc, char const *argv[])
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
         dvec Q_x = W.Q.col(x);
-        
         W.Q.subtract_identity();
-
         PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
         solver.analyze();
 
-        dvec e_p = dvec::Zero(size);
-        e_p(0) = 1;
-
-        dvec M1 = solver.solve(e_p, true);
-        dvec M2 = solver.solve(M1, true);
-
-        double mu1 = M2.dot(Q_x) / M1(x);
-    
-        dvec M3 = solver.solve(M2, true);
         W.Q.add_identity();
-
         dvec Q_I_x = W.Q.col(x);
         Q_I_x(x) += 1;
-
         dvec A_x = W.Q.multiply(Q_I_x);
 
-        double mu2 = sqrt((M3.dot(A_x) / M1(x)) - pow(mu1, 2));
+        double first_moment = 0;
+        double second_moment = 0;
+        if(!starting_copies_f) {
+            // Iterate over starting states
+            for(llong i = 0; i < z; i++) {
+                dvec e_p = dvec::Zero(size);
+                e_p(i) = 1;
 
-        if(output_N_f) write_matrix_to_file(M1, args::get(output_N_f));
+                dvec M1 = solver.solve(e_p, true);
+                dvec M2 = solver.solve(M1, true);
+
+                double mu1 = M2.dot(Q_x) / M1(x);
+
+                dvec M3 = solver.solve(M2, true);
+
+                double mu2 = sqrt((M3.dot(A_x) / M1(x)) - pow(mu1, 2));
+
+                first_moment += mu1 * starting_copies_p(i);
+                second_moment += mu2 * starting_copies_p(i);
+            }    
+        } else {
+            dvec e_p = dvec::Zero(size);
+            e_p(starting_copies) = 1;
+
+            dvec M1 = solver.solve(e_p, true);
+            dvec M2 = solver.solve(M1, true);
+
+            first_moment = M2.dot(Q_x) / M1(x);
+
+            dvec M3 = solver.solve(M2, true);
+
+            second_moment = sqrt((M3.dot(A_x) / M1(x)) - pow(first_moment, 2));
+        }
 
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
                            DPF ", " DPF "\n",
-                   population_size, s, h, u, v, a, mu1, mu2);
+                   population_size, s, h, u, v, a, first_moment, second_moment);
 
         } else {
             printf("N = " LPF "\n", population_size);
@@ -329,8 +349,8 @@ int main(int argc, char const *argv[])
             printf("u = " DPF "\n", u);
             printf("v = " DPF "\n", v);
             printf("a = " DPF "\n", a);
-            printf("mu_1 = " DPF "\n", mu1);
-            printf("mu_2 = " DPF "\n", mu2);
+            printf("mu_1 = " DPF "\n", first_moment);
+            printf("mu_2 = " DPF "\n", second_moment);
         }
     } // END SINGLE ALLELE AGE
 
