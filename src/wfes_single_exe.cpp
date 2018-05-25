@@ -195,6 +195,7 @@ int main(int argc, char const *argv[])
         double P_fix = 0;
         double T_ext = 0;
         double T_fix = 0;
+        double N_ext = 0;
 
         dmat N_mat(z, size);
         if(!starting_copies_f) {
@@ -203,7 +204,6 @@ int main(int argc, char const *argv[])
                 id(i) = 1;
 
                 N_mat.row(i) = solver.solve(id, true);
-                // N_mat.row(i) *= starting_copies_p(i);
 
                 P_ext += B_ext(i) * starting_copies_p(i);
                 dvec E_ext = B_ext.transpose() * N_mat.row(i).transpose() / B_ext(i);
@@ -225,6 +225,8 @@ int main(int argc, char const *argv[])
             P_fix = B_fix(starting_copies);
             dvec E_fix = B_fix.transpose() * N_mat.row(0).transpose() / B_fix(starting_copies);
             T_fix = E_fix.sum();
+
+            // N_ext = (N_mat.row(0) * B_ext * dvec::LinSpaced(size, 1, size)).sum() / B_ext(starting_copies);
         }
 
         if(output_N_f) write_matrix_to_file(N_mat, args::get(output_N_f));
@@ -237,8 +239,8 @@ int main(int argc, char const *argv[])
 
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
-                           DPF ", " DPF ", " DPF ", " DPF "\n",
-                   population_size, s, h, u, v, a, P_ext, P_fix, T_ext, T_fix);
+                           DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
+                   population_size, s, h, u, v, a, P_ext, P_fix, T_ext, T_fix, N_ext);
 
         } else {
             printf("N = " LPF "\n", population_size);
@@ -251,6 +253,7 @@ int main(int argc, char const *argv[])
             printf("P_fix = " DPF "\n", P_fix);
             printf("T_ext = " DPF "\n", T_ext);
             printf("T_fix = " DPF "\n", T_fix);
+            printf("N_ext = " DPF "\n", N_ext);
         }
     } // END SINGLE ABSORPTION
 

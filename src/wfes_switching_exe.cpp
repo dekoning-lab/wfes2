@@ -83,13 +83,13 @@ int main(int argc, char const *argv[])
     		throw args::Error("Population size is quite large - the computations will take a long time. Use --force to ignore");   
     	}
     	dvec N = population_sizes.cast<double>();
-    	dvec theta_f = dvec::Constant(n_models, 4) * N * v;
-    	dvec theta_b = dvec::Constant(n_models, 4) * N * u;
+    	dvec theta_f = dvec::Constant(n_models, 4).array() * N.array() * v.array();
+    	dvec theta_b = dvec::Constant(n_models, 4).array() * N.array() * u.array();
     	double max_theta = max(theta_b.maxCoeff(), theta_f.maxCoeff());
     	if (max_theta > 1) {
     		throw args::Error("The mutation rate might violate the Wright-Fisher assumptions. Use --force to ignore");
     	}
-    	dvec gamma = dvec::Constant(n_models, 2) * N * s;
+    	dvec gamma = dvec::Constant(n_models, 2).array() * N.array() * s.array();
     	if (gamma.minCoeff() < -10) {
     		throw args::Error("The selection coefficient is quite negative. Fixations might be impossible. Use --force to ignore");
     	}
