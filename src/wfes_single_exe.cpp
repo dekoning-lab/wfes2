@@ -128,6 +128,7 @@ int main(int argc, char const *argv[])
         dvec id(size);
         dmat N_mat(z, size);
         double T_fix = 0;
+        double T_var = 0;
 
         if(!starting_copies_f) {
             // Iterate over starting states
@@ -137,17 +138,26 @@ int main(int argc, char const *argv[])
 
                 N_mat.row(i) = solver.solve(id, true);
 
-                T_fix += N_mat.row(i).sum();
-                T_fix *= starting_copies_p(i);
+                dvec N1 = N_mat.row(i);
+                dvec N2 = solver.solve(N1, true);
+
+                T_fix += N1.sum() * starting_copies_p(i);
+                T_var += (((2 * N2.sum()) - N1.sum()) - pow(N1.sum(), 2)) * starting_copies_p(i);
             }    
         } else {
             id.setZero();
             id(starting_copies) = 1;
             N_mat.row(0) = solver.solve(id, true);
-            T_fix += N_mat.row(0).sum();
+            dvec N1 = N_mat.row(0);
+            dvec N2 = solver.solve(N1, true);
+            T_fix = N1.sum();
+            T_var = ((2 * N2.sum()) - N1.sum()) - pow(N1.sum(), 2);
         }
         
         double rate = 1.0 / T_fix;
+        double T_std = sqrt(T_var);
+
+        cout << T_std / T_fix << endl;
 
         if(output_N_f) write_matrix_to_file(N_mat, args::get(output_N_f));
         if(output_B_f) {
@@ -157,7 +167,7 @@ int main(int argc, char const *argv[])
 
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
-                           DPF ", " DPF "\n", population_size, s, h, u, v, a, T_fix, rate);
+                           DPF ", " DPF ", " DPF "\n", population_size, s, h, u, v, a, T_fix, T_std, rate);
         } else {
             printf("N = " LPF "\n", population_size);
             printf("s = " DPF "\n", s);
@@ -166,6 +176,7 @@ int main(int argc, char const *argv[])
             printf("v = " DPF "\n", v);
             printf("a = " DPF "\n", a);
             printf("T_fix = " DPF "\n", T_fix);
+            printf("T_std = " DPF "\n", T_std);
             printf("Rate = " DPF "\n", rate);
         }
     } // END SINGLE FIXATION
