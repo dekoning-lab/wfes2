@@ -39,8 +39,8 @@ target_link_libraries(wfes ${MKL_LIBS} ${INTEL_OMP_LIBS} ${OTHER_LIBS})
 add_executable(wfafle "src/wfafle_exe.cpp")
 target_link_libraries(wfafle wfes)
 
-add_executable(wfes_soft "src/wfes_soft_exe.cpp")
-target_link_libraries(wfes_soft wfes)
+add_executable(wfes_sweep "src/wfes_sweep_exe.cpp")
+target_link_libraries(wfes_sweep wfes)
 
 add_executable(wfes_single "src/wfes_single_exe.cpp")
 target_link_libraries(wfes_single wfes)

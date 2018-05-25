@@ -93,6 +93,9 @@ int main(int argc, char const *argv[])
     dmat N(1, wf.Q.n_row);
     N.row(0) = solver.solve(id, true);
 
+    double T_fix = N.sum();
+    double rate = 1.0 / T_fix;
+
     if(output_N_f) write_matrix_to_file(N, args::get(output_N_f));
 
     if (csv_f) {
@@ -101,7 +104,9 @@ int main(int argc, char const *argv[])
         print_vector(dom, "", ", ");
         print_vector(u, "", ", ");
         print_vector(v, "", ", ");
-        printf(DPF "\n", a);
+        printf(DPF ", ", a);
+        printf(DPF ", ", T_fix);
+        printf(DPF "\n", rate);
     } else {
         printf("N = %lld\n", population_size);
         print_vector(selection_coefficient, "s = ", "\n");
@@ -109,6 +114,8 @@ int main(int argc, char const *argv[])
         print_vector(u, "u = ", "\n");
         print_vector(v, "v = ", "\n");
         printf("a = " DPF "\n", a);
+        printf("T_fix = " DPF "\n", T_fix);
+        printf("Rate = " DPF "\n", rate);
     }
 
 
