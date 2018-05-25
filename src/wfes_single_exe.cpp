@@ -13,6 +13,9 @@ int main(int argc, char const *argv[])
 {
     
     args::ArgumentParser parser("WFES-SINGLE");
+    parser.helpParams.width = 120;
+    parser.helpParams.helpindent = 50;
+    parser.helpParams.flagindent = 2;
     
     args::Group model_f(parser, "Model type - specify one", args::Group::Validators::Xor, args::Options::Required);
     args::Flag absorption_f(model_f, "absorption", "Both fixation and extinction states are absorbing", {"absorption"});

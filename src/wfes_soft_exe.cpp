@@ -11,6 +11,10 @@ using namespace std;
 int main(int argc, char const *argv[])
 {
     args::ArgumentParser parser("WFES-SOFT");
+    parser.helpParams.width = 120;
+    parser.helpParams.helpindent = 50;
+    parser.helpParams.flagindent = 2;
+    
     args::ValueFlag<llong> population_size_f(parser, "int", "Size of the population", {'N', "pop-size"}, args::Options::Required);
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> backward_mutation_f(parser, "float[k]", "Backward mutation rates", {'u', "backward-mu"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> forward_mutation_f(parser, "float[k]", "Forward mutation rates", {'v', "forward-mu"});
