@@ -40,10 +40,11 @@ public:
 
     // friend ostream& operator<< (ostream& os, const SparseMatrix& M);
     void save_market(std::string path);
-    void subtract_identity();
+    void subtract_identity(); // I - Q
+    void add_identity(); // -(Q + I)
     double operator() (llong i, llong j);
     dvec col(llong j);
-    bool approx_eq(const SparseMatrix& rhs, double tol = 1e-10);
+    bool approx_eq(const SparseMatrix& rhs, double tol = 1e-10, bool verbose = false);
 };
 
 std::ostream& operator<<(std::ostream& os, const SparseMatrix& M);

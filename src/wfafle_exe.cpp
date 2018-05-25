@@ -78,7 +78,7 @@ int main(int argc, char const *argv[])
 
     iterate_generations(d[k - 1], pop_sizes(k - 1), epoch_gens(k - 1), s, h, mu, mu, alpha);
 
-    cout << d[k - 1] << endl;
+    cout << d[k - 1].transpose() << endl;
 
     return EXIT_SUCCESS;
 }

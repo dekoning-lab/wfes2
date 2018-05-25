@@ -9,18 +9,29 @@ namespace WFE = WrightFisherElementary;
 
 using namespace std;
 
-TEST_CASE("Sparse Matrix Column accessor", "[sparse-col]") {
+TEST_CASE("Sparse Matrix Column accessor", "[sparse]") {
 	WF::Matrix W = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
 	REQUIRE(approx_eq(W.Q.dense().col(10), W.Q.col(10)));
 	REQUIRE(approx_eq(W.Q.dense().col(0), W.Q.col(0)));
 	REQUIRE(approx_eq(W.Q.dense().col(198), W.Q.col(198)));
 }
 
-TEST_CASE("Psi Calculations", "[psi]") {
+TEST_CASE("Sparse Matrix add_identity is inverse of subtract_identity", "[sparse]") {
+	WF::Matrix W1 = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
+	WF::Matrix W2 = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
+
+	W1.Q.subtract_identity();
+	REQUIRE(!W1.Q.approx_eq(W2.Q));	
+
+	W1.Q.add_identity();
+	REQUIRE(W1.Q.approx_eq(W2.Q));	
+}
+
+TEST_CASE("Psi Calculations", "[binom]") {
 	REQUIRE(WF::psi_diploid(0, 100) == WFE::psi_diploid(0, 100));
 }
 
-TEST_CASE("Binomial row", "[binom-row]") {
+TEST_CASE("Binomial row", "[binom]") {
 	dvec a = WFE::binom_row(100, 0.5);
 	dvec b = WF::binom_row(100, 0.5, 0).Q;
 	REQUIRE(approx_eq(a, b));
@@ -28,7 +39,7 @@ TEST_CASE("Binomial row", "[binom-row]") {
 
 // SINGLE 
 
-SCENARIO("Single Square matrix are built correctly", "[single-square]") {
+SCENARIO("Single Square matrix are built correctly", "[single]") {
 	for(int i = WF::NON_ABSORBING; i <= WF::BOTH_ABSORBING; i ++) {
 		WF::absorption_type a_t = WF::absorption_type(i);
 		GIVEN(absorption_type_desc(a_t)) {
@@ -43,7 +54,7 @@ SCENARIO("Single Square matrix are built correctly", "[single-square]") {
 	
 }
 
-SCENARIO("Single Wide matrix are built correctly", "[single-wide]") {
+SCENARIO("Single Wide matrix are built correctly", "[single]") {
 	for(int i = WF::NON_ABSORBING; i <= WF::BOTH_ABSORBING; i ++) {
 		WF::absorption_type a_t = WF::absorption_type(i);
 		GIVEN(absorption_type_desc(a_t)) {
@@ -57,7 +68,7 @@ SCENARIO("Single Wide matrix are built correctly", "[single-wide]") {
 	}
 }
 
-SCENARIO("Single Narrow matrix are built correctly", "[single-narrow]") {
+SCENARIO("Single Narrow matrix are built correctly", "[single]") {
 	for(int i = WF::NON_ABSORBING; i <= WF::BOTH_ABSORBING; i ++) {
 		WF::absorption_type a_t = WF::absorption_type(i);
 		GIVEN(absorption_type_desc(a_t)) {
@@ -88,7 +99,7 @@ SCENARIO("Soft Selective Sweep model matrix is built correctly", "[soft]") {
 	// REQUIRE(approx_eq(W1.Q.dense(), W2.first));
 }
 
-SCENARIO("Switching Up matrix are built correctly", "[switch-up]") {
+SCENARIO("Switching Up matrix are built correctly", "[switch]") {
 	lvec N(2); N << 100, 200;
 	dvec s(2); s << 0, 0.1;
 	dvec h(2); h << 0.5, 0.5;
@@ -108,7 +119,7 @@ SCENARIO("Switching Up matrix are built correctly", "[switch-up]") {
 	}
 }
 
-SCENARIO("Switching Down matrix are built correctly", "[switch-down]") {
+SCENARIO("Switching Down matrix are built correctly", "[switch]") {
 	lvec N(2); N << 200, 100;
 	dvec s(2); s << 0, 0.1;
 	dvec h(2); h << 0.5, 0.5;

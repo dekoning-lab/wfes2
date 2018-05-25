@@ -190,6 +190,7 @@ dvec SparseMatrix::col(llong c) {
     return column;
 }
 
+// calculates I - Q
 void SparseMatrix::subtract_identity() {
     for (llong i = 0; i < n_row; ++i) {
         for (llong j = row_index[i]; j < row_index[i + 1]; ++j) {
@@ -199,7 +200,17 @@ void SparseMatrix::subtract_identity() {
     }
 }
 
-bool SparseMatrix::approx_eq(const SparseMatrix& rhs, double tol) {
+// calculates - Q + I
+void SparseMatrix::add_identity() {
+    for (llong i = 0; i < n_row; ++i) {
+        for (llong j = row_index[i]; j < row_index[i + 1]; ++j) {
+            if (i == columns[j]) data[j] = 1.0 - data[j];
+            else data[j] = -data[j];
+        }
+    }
+}
+
+bool SparseMatrix::approx_eq(const SparseMatrix& rhs, double tol, bool verbose) {
     if(n_row != rhs.n_row) return false;
     if(n_col != rhs.n_col) return false;
     if(non_zeros != rhs.non_zeros) return false;
@@ -208,7 +219,9 @@ bool SparseMatrix::approx_eq(const SparseMatrix& rhs, double tol) {
         for (llong j = row_index[i]; j < row_index[i + 1]; ++j) {
             double diff = fabs(data[j] - rhs.data[j]);
             if(diff > tol || std::isnan(diff)) {
-                fprintf(stderr, DPF " != " DPF " [%lld] (" DPF ", " DPF ")\n", data[j], rhs.data[j], j, diff, tol);
+                if(verbose) {
+                    fprintf(stderr, DPF " != " DPF " [%lld] (" DPF ", " DPF ")\n", data[j], rhs.data[j], j, diff, tol);    
+                }
                 return false;
             }
         }

@@ -31,6 +31,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
     args::ValueFlag<double> integration_cutoff_f(parser, "float", "Starting number of copies integration cutoff", {'c', "integration-cutoff"});
     args::ValueFlag<llong>  starting_copies_f(parser, "int", "Starting number of copies - no integration", {'p', "starting-copies"});
+    args::ValueFlag<llong>  observed_copies_f(parser, "int", "Observed number of copies (--allele-age only)", {'x', "observed-copies"});
 
     // Output options
     args::ValueFlag<string> output_Q_f(parser, "path", "Output Q matrix to file", {"output-Q"});
@@ -260,7 +261,57 @@ int main(int argc, char const *argv[])
 
     if(allele_age_f) // BEGIN SINGLE ALLELE AGE
     {
-        throw runtime_error("Unimplemented");
+        if (!observed_copies_f) {
+            throw args::Error("-x | --observed-copies required for allele are calculation");
+        }
+        llong x = args::get(observed_copies_f) - 1;
+
+        llong size = (2 * population_size) - 1;
+        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, a);
+        if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
+        if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
+        dvec Q_x = W.Q.col(x);
+        
+        W.Q.subtract_identity();
+
+        PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+        solver.analyze();
+
+        dvec e_p = dvec::Zero(size);
+        e_p(0) = 1;
+
+        dvec M1 = solver.solve(e_p, true);
+        dvec M2 = solver.solve(M1, true);
+
+        double mu1 = M2.dot(Q_x) / M1(x);
+    
+        dvec M3 = solver.solve(M2, true);
+        W.Q.add_identity();
+
+        dvec Q_I_x = W.Q.col(x);
+        Q_I_x(x) += 1;
+
+        dvec A_x = W.Q.multiply(Q_I_x);
+
+        double mu2 = sqrt((M3.dot(A_x) / M1(x)) - pow(mu1, 2));
+
+        if(output_N_f) write_matrix_to_file(M1, args::get(output_N_f));
+
+        if (csv_f) {
+            printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
+                           DPF ", " DPF "\n",
+                   population_size, s, h, u, v, a, mu1, mu2);
+
+        } else {
+            printf("N = " LPF "\n", population_size);
+            printf("s = " DPF "\n", s);
+            printf("h = " DPF "\n", h);
+            printf("u = " DPF "\n", u);
+            printf("v = " DPF "\n", v);
+            printf("a = " DPF "\n", a);
+            printf("mu_1 = " DPF "\n", mu1);
+            printf("mu_2 = " DPF "\n", mu2);
+        }
     } // END SINGLE ALLELE AGE
 
     return EXIT_SUCCESS;
