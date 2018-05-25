@@ -45,6 +45,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<string> output_V_f(parser, "path", "Output Variance time matrix to file (--fundamental only)", {"output-V"});
     
     args::Flag csv_f(parser, "csv", "Output results in CSV format", {"csv"});
+    args::Flag force_f(parser, "force", "Do not perform parameter checks", {"force"});
     args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
     
     args::HelpFlag help_f(parser, "help", "Display this help menu", {"help"});
@@ -74,6 +75,22 @@ int main(int argc, char const *argv[])
     double integration_cutoff = integration_cutoff_f ? args::get(integration_cutoff_f) : 1e-10;
     // translate starting number of copies into model state (p - 1)
     llong starting_copies = starting_copies_f ? (args::get(starting_copies_f) - 1) : 0;
+
+    if (!force_f) {
+        if (population_size > 500000) {
+            throw args::Error("Population size is quite large - the computations will take a long time. Use --force to ignore");   
+        }
+        double max_mu = max(u, v);
+        if (4 * population_size * max_mu > 1) {
+            throw args::Error("The mutation rate might violate the Wright-Fisher assumptions. Use --force to ignore");
+        }
+        if (2 * population_size * s < -10) {
+            throw args::Error("The selection coefficient is quite negative. Fixations might be impossible. Use --force to ignore");
+        }
+        if (a > 1e-5) {
+            throw args::Error("Zero cutoff value is quite high. This might produce inaccurate results. Use --force to ignore");   
+        }
+    }
 
     llong msg_level = verbose_f ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
 

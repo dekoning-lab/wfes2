@@ -14,7 +14,7 @@ int main(int argc, char const *argv[])
     parser.helpParams.width = 120;
     parser.helpParams.helpindent = 50;
     parser.helpParams.flagindent = 2;
-    
+
     args::ValueFlag<llong> population_size_f(parser, "int", "Size of the population", {'N', "pop-size"}, args::Options::Required);
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> backward_mutation_f(parser, "float[k]", "Backward mutation rates", {'u', "backward-mu"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> forward_mutation_f(parser, "float[k]", "Forward mutation rates", {'v', "forward-mu"});
@@ -24,6 +24,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<string> output_Q_f(parser, "path", "Output Q matrix to file", {"output-Q"});
     args::ValueFlag<string> output_N_f(parser, "path", "Output N matrix to file", {"output-N"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
+    args::Flag force_f(parser, "force", "Do not perform parameter checks", {"force"});
     args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
     args::Flag csv_f(parser, "csv", "Output results in CSV format", {"csv"});
 
@@ -45,6 +46,22 @@ int main(int argc, char const *argv[])
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
 
     if(selection_coefficient.size() < 2) throw runtime_error("Population size vector should be longer than 2");
+
+    if (!force_f) {
+        if (population_size > 500000) {
+            throw args::Error("Population size is quite large - the computations will take a long time. Use --force to ignore");   
+        }
+        double max_mu = max(u.maxCoeff(), v.maxCoeff());
+        if (4 * population_size * max_mu > 1) {
+            throw args::Error("The mutation rate might violate the Wright-Fisher assumptions. Use --force to ignore");
+        }
+        if (2 * population_size * selection_coefficient.minCoeff() < -10) {
+            throw args::Error("The selection coefficient is quite negative. Fixations might be impossible. Use --force to ignore");
+        }
+        if (a > 1e-5) {
+            throw args::Error("Zero cutoff value is quite high. This might produce inaccurate results. Use --force to ignore");   
+        }
+    }
 
     // dmat switching = switching_f ? args::get(switching_f) : dmat::Ones(1, 1);
 

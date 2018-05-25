@@ -43,6 +43,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<string> output_E_f(parser, "path", "Output Equilibrium frequencies to file (eigen only)", {"output-E"});
 
     args::Flag csv_f(parser, "csv", "Output results in CSV format", {"csv"});
+    args::Flag force_f(parser, "force", "Do not perform parameter checks", {"force"});
     args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
 
     args::HelpFlag help_f(parser, "help", "Display this help menu", {"help"});
@@ -76,6 +77,26 @@ int main(int argc, char const *argv[])
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
 
     llong msg_level = verbose_f ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
+
+    if (!force_f) {
+    	if (population_sizes.maxCoeff() > 500000) {
+    		throw args::Error("Population size is quite large - the computations will take a long time. Use --force to ignore");   
+    	}
+    	dvec N = population_sizes.cast<double>();
+    	dvec theta_f = dvec::Constant(n_models, 4) * N * v;
+    	dvec theta_b = dvec::Constant(n_models, 4) * N * u;
+    	double max_theta = max(theta_b.maxCoeff(), theta_f.maxCoeff());
+    	if (max_theta > 1) {
+    		throw args::Error("The mutation rate might violate the Wright-Fisher assumptions. Use --force to ignore");
+    	}
+    	dvec gamma = dvec::Constant(n_models, 2) * N * s;
+    	if (gamma.minCoeff() < -10) {
+    		throw args::Error("The selection coefficient is quite negative. Fixations might be impossible. Use --force to ignore");
+    	}
+    	if (a > 1e-5) {
+    		throw args::Error("Zero cutoff value is quite high. This might produce inaccurate results. Use --force to ignore");   
+    	}
+    }
 
     // dmat switching = GTR::Matrix(p, r);
     
