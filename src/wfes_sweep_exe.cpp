@@ -42,7 +42,7 @@ int main(int argc, char const *argv[])
 
     dvec selection_coefficient(args::get(selection_coefficient_f));
     llong population_size = args::get(population_size_f);
-    dvec h = dominance_f ? args::get(dominance_f) : dvec::Constant(n_models, 0.5);
+    dvec h = dominance_f ? args::get(dominance_f) : dvec::Constant(2, 0.5);
     dvec u = backward_mutation_f ? args::get(backward_mutation_f) : dvec::Constant(2, 1e-9);
     dvec v = forward_mutation_f ? args::get(forward_mutation_f) : dvec::Constant(2, 1e-9);
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
@@ -101,7 +101,7 @@ int main(int argc, char const *argv[])
     if (csv_f) {
         printf("%lld, ", population_size);
         print_vector(selection_coefficient, "", ", ");
-        print_vector(dom, "", ", ");
+        print_vector(h, "", ", ");
         print_vector(u, "", ", ");
         print_vector(v, "", ", ");
         printf(DPF ", ", a);
@@ -110,7 +110,7 @@ int main(int argc, char const *argv[])
     } else {
         printf("N = %lld\n", population_size);
         print_vector(selection_coefficient, "s = ", "\n");
-        print_vector(dom, "h = ", "\n");
+        print_vector(h, "h = ", "\n");
         print_vector(u, "u = ", "\n");
         print_vector(v, "v = ", "\n");
         printf("a = " DPF "\n", a);
