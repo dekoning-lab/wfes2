@@ -16,9 +16,10 @@ int main(int argc, char const *argv[])
     parser.helpParams.flagindent = 2;
 
     args::ValueFlag<llong> population_size_f(parser, "int", "Size of the population", {'N', "pop-size"}, args::Options::Required);
+    args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> selection_coefficient_f(parser, "float[k]", "Selection coefficients", {'s', "selection"}, args::Options::Required);
+    args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> dominance_f(parser, "float[k]", "Dominance coefficients", {'h', "dominance"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> backward_mutation_f(parser, "float[k]", "Backward mutation rates", {'u', "backward-mu"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> forward_mutation_f(parser, "float[k]", "Forward mutation rates", {'v', "forward-mu"});
-    args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> selection_coefficient_f(parser, "float[k]", "Selection coefficients", {'s', "selection"}, args::Options::Required);
     // args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>, NumericMatrixReader<double>> switching_f(parser, "float[k][k]", "Switching parameters over models", {'r', "switching"}, args::Options::Required);
     args::ValueFlag<double> lambda_f(parser, "float", "Transition probability", {'l', "lambda"}, args::Options::Required);
     args::ValueFlag<string> output_Q_f(parser, "path", "Output Q matrix to file", {"output-Q"});
@@ -41,6 +42,7 @@ int main(int argc, char const *argv[])
 
     dvec selection_coefficient(args::get(selection_coefficient_f));
     llong population_size = args::get(population_size_f);
+    dvec h = dominance_f ? args::get(dominance_f) : dvec::Constant(n_models, 0.5);
     dvec u = backward_mutation_f ? args::get(backward_mutation_f) : dvec::Constant(2, 1e-9);
     dvec v = forward_mutation_f ? args::get(forward_mutation_f) : dvec::Constant(2, 1e-9);
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
@@ -75,9 +77,7 @@ int main(int argc, char const *argv[])
     double l = args::get(lambda_f);
     dmat switching(2, 2); switching << 1 - l, l, 0, 1;
 
-
-    dvec dom(2); dom << 0.5, 0.5;
-    WF::Matrix wf = WF::NonAbsorbingToFixationOnly(population_size, selection_coefficient, dom, u, v, switching, a);
+    WF::Matrix wf = WF::NonAbsorbingToFixationOnly(population_size, selection_coefficient, h, u, v, switching, a);
     if(output_Q_f) wf.Q.save_market(args::get(output_Q_f));
 
 
