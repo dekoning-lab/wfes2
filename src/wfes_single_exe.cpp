@@ -296,6 +296,18 @@ int main(int argc, char const *argv[])
         }
     }
 
+    if (equilibrium_f) {
+        llong size = (2 * population_size) + 1;
+        WF::Matrix W = WF::Equilibrium(population_size, s, h, u, v, a); 
+        PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+        solver.analyze();
+        dvec O = dvec::Zero(size);
+        O(size - 1) = 1;
+
+        dvec pi = solver.solve(O, true);
+        cout << pi << endl;
+    }
+
     if(allele_age_f) // BEGIN SINGLE ALLELE AGE
     {
         if (!observed_copies_f) {
