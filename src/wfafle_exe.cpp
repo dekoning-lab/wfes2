@@ -3,6 +3,7 @@
 #include "PardisoSolver.hpp"
 #include "parsing.hpp"
 #include "args.hpp"
+#include "util.hpp"
 
 namespace WF = WrightFisher;
 using namespace std;
@@ -86,7 +87,7 @@ int main(int argc, char const *argv[])
 
     iterate_generations(d[k - 1], pop_sizes(k - 1), epoch_gens(k - 1), s(k - 1), h(k - 1), u(k - 1), v(k - 1), a);
 
-    cout << d[k - 1].transpose() << endl;
+    write_vector_to_file(d[k - 1], "stdout");
 
     return EXIT_SUCCESS;
 }

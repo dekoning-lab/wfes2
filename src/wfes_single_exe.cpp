@@ -305,7 +305,7 @@ int main(int argc, char const *argv[])
         O(size - 1) = 1;
 
         dvec pi = solver.solve(O, true);
-        cout << pi << endl;
+        write_vector_to_file(pi.transpose(), args::get(output_I_f));
     }
 
     if(allele_age_f) // BEGIN SINGLE ALLELE AGE
