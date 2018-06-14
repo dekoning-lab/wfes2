@@ -20,11 +20,11 @@ void write_matrix_to_file(const dmat& A, std::string path, bool append) {
 
 void write_vector_to_file(const dvec& A, std::string path, bool append) {
 	if (path == "stdout") {
-		std::cout << A.format(CSVFormat) << std::endl;
+		std::cout << A.format(CSVRowFormat) << std::endl;
 	} else {
 		std::ios_base::openmode mode = append ? std::ios_base::app : std::ios_base::out;
 		std::ofstream file(path, mode);
-		if (file.is_open()) file << A.format(CSVFormat) << std::endl;
+		if (file.is_open()) file << A.format(CSVRowFormat) << std::endl;
 	}
 }
 
