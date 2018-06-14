@@ -8,20 +8,22 @@ bool approx_eq(const dmat& a, const dmat& b, double tol) {
 	return ((a - b).array().abs() < tol).all();
 }
 
-void write_matrix_to_file(const dmat& A, std::string path) {
+void write_matrix_to_file(const dmat& A, std::string path, bool append) {
 	if (path == "stdout") {
 		std::cout << A.format(CSVFormat) << std::endl;
 	} else {
-		std::ofstream file(path);
+		std::ios_base::openmode mode = append ? std::ios_base::app : std::ios_base::out;
+		std::ofstream file(path, mode);
     	if (file.is_open()) file << A.format(CSVFormat) << std::endl;	
 	}
 }
 
-void write_vector_to_file(const dvec& A, std::string path) {
+void write_vector_to_file(const dvec& A, std::string path, bool append) {
 	if (path == "stdout") {
 		std::cout << A.format(CSVFormat) << std::endl;
 	} else {
-		std::ofstream file(path);
+		std::ios_base::openmode mode = append ? std::ios_base::app : std::ios_base::out;
+		std::ofstream file(path, mode);
 		if (file.is_open()) file << A.format(CSVFormat) << std::endl;
 	}
 }
