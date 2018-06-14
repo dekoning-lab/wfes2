@@ -157,8 +157,6 @@ int main(int argc, char const *argv[])
         double rate = 1.0 / T_fix;
         double T_std = sqrt(T_var);
 
-        cout << T_std / T_fix << endl;
-
         if(output_N_f) write_matrix_to_file(N_mat, args::get(output_N_f));
         if(output_B_f) {
             dvec B = dvec::Ones(size);
