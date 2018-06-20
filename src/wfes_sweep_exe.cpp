@@ -65,15 +65,6 @@ int main(int argc, char const *argv[])
         }
     }
 
-    // dmat switching = switching_f ? args::get(switching_f) : dmat::Ones(1, 1);
-
-    // dvec row_sums = switching.rowwise().sum();
-    // for (llong i = 0; i < 2; i++) {
-    //     for (llong j = 0; j < 2; j++) {
-    //         switching(i, j) /= row_sums(i);
-    //     }
-    // }
-
     double l = args::get(lambda_f);
     dmat switching(2, 2); switching << 1 - l, l, 0, 1;
 
@@ -90,13 +81,13 @@ int main(int argc, char const *argv[])
     dvec id = dvec::Zero(wf.Q.n_row);
     id(0) = 1;
 
-    dmat N(1, wf.Q.n_row);
-    N.row(0) = solver.solve(id, true);
+    dvec N(wf.Q.n_row);
+    N = solver.solve(id, true);
 
-    double T_fix = N.sum();
+    double T_fix = N.tail(2 * population_size).sum();
     double rate = 1.0 / T_fix;
 
-    if(output_N_f) write_matrix_to_file(N, args::get(output_N_f));
+    if(output_N_f) write_vector_to_file(N, args::get(output_N_f));
 
     if (csv_f) {
         printf("%lld, ", population_size);
