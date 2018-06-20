@@ -104,6 +104,7 @@ int main(int argc, char const *argv[])
         print_vector(h, "", ", ");
         print_vector(u, "", ", ");
         print_vector(v, "", ", ");
+        printf(DPF ", ", l);
         printf(DPF ", ", a);
         printf(DPF ", ", T_fix);
         printf(DPF "\n", rate);
@@ -113,6 +114,7 @@ int main(int argc, char const *argv[])
         print_vector(h, "h = ", "\n");
         print_vector(u, "u = ", "\n");
         print_vector(v, "v = ", "\n");
+        printf("l = " DPF "\n", l);
         printf("a = " DPF "\n", a);
         printf("T_fix = " DPF "\n", T_fix);
         printf("Rate = " DPF "\n", rate);
