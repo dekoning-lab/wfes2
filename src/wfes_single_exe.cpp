@@ -304,6 +304,18 @@ int main(int argc, char const *argv[])
 
         dvec pi = solver.solve(O, true);
         write_vector_to_file(pi, args::get(output_E_f));
+        if (csv_f) {
+            printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
+                    population_size, s, h, u, v, a);
+
+        } else {
+            printf("N = " LPF "\n", population_size);
+            printf("s = " DPF "\n", s);
+            printf("h = " DPF "\n", h);
+            printf("u = " DPF "\n", u);
+            printf("v = " DPF "\n", v);
+            printf("a = " DPF "\n", a);
+        }
     }
 
     if(allele_age_f) // BEGIN SINGLE ALLELE AGE
