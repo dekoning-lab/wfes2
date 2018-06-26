@@ -29,6 +29,10 @@ int main(int argc, char const *argv[])
     args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
     args::Flag csv_f(parser, "csv", "Output results in CSV format", {"csv"});
 
+    args::ValueFlag<string> output_I_f(parser, "path", "Output Initial probability distribution", {"output-I"});
+    args::ValueFlag<double> integration_cutoff_f(parser, "float", "Starting number of copies integration cutoff", {'c', "integration-cutoff"});
+    args::ValueFlag<llong>  starting_copies_f(parser, "int", "Starting number of copies - no integration", {'p', "starting-copies"});
+
     try {
         parser.ParseCLI(argc, argv);
     } catch (args::Help&) {
@@ -76,18 +80,59 @@ int main(int argc, char const *argv[])
 
     llong msg_level = verbose_f ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
 
+    double integration_cutoff = integration_cutoff_f ? args::get(integration_cutoff_f) : 1e-10;
+    llong starting_copies = starting_copies_f ? (args::get(starting_copies_f) - 1) : 0;
+    dvec first_row = WF::binom_row(2 * population_size, WF::psi_diploid(0, population_size, selection_coefficient[1], h[1], u[1], v[1]), a).Q;
+    dvec starting_copies_p = first_row.tail(first_row.size() - 1); // renormalize
+    starting_copies_p /= 1 - first_row(0);
+
+    if(output_I_f) write_vector_to_file(starting_copies_p, args::get(output_I_f));
+
+    llong z = 0;
+
+    if(integration_cutoff == -1) { // no integration
+        z = 1;
+        starting_copies_p[0] = 1;
+    } else {
+        for(llong i = 0; starting_copies_p(i) > integration_cutoff; i++, z++);
+    }
+    if(starting_copies_f) z = 1;
+
     PardisoSolver solver(wf.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
     solver.analyze();
-    dvec id = dvec::Zero(wf.Q.n_row);
-    id(0) = 1;
 
-    dvec N(wf.Q.n_row);
-    N = solver.solve(id, true);
+        dvec id(wf.Q.n_row);
+        dmat N_mat(z, wf.Q.n_row);
+        double T_fix = 0;
 
-    double T_fix = N.tail(2 * population_size).sum();
-    double rate = 1.0 / T_fix;
+        if(!starting_copies_f) {
+            // Iterate over starting states
+            for(llong i = 0; i < z; i++) {
+                id.setZero();
+                id(i + population_size + 1) = 1;
 
-    if(output_N_f) write_vector_to_file(N, args::get(output_N_f));
+                N_mat.row(i) = solver.solve(id, true);
+
+                dvec N1 = N_mat.row(i);
+
+                T_fix += N1.tail(2 * population_size).sum() * starting_copies_p(i);
+            }    
+        } else {
+            id.setZero();
+            id(starting_copies + population_size + 1) = 1;
+            N_mat.row(0) = solver.solve(id, true);
+            dvec N1 = N_mat.row(0);
+            T_fix = N1.tail(2 * population_size).sum();
+        }
+        
+        double rate = 1.0 / T_fix;
+    //dvec N(wf.Q.n_row);
+    //N = solver.solve(id, true);
+
+    //double T_fix = N.tail(2 * population_size).sum();
+    //double rate = 1.0 / T_fix;
+
+    if(output_N_f) write_matrix_to_file(N_mat, args::get(output_N_f));
 
     if (csv_f) {
         printf("%lld, ", population_size);
