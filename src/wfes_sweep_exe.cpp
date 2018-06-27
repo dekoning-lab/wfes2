@@ -70,6 +70,7 @@ int main(int argc, char const *argv[])
     }
 
     double l = args::get(lambda_f);
+    double tau = 1 / l;
     dmat switching(2, 2); switching << 1 - l, l, 0, 1;
 
     WF::Matrix wf = WF::NonAbsorbingToFixationOnly(population_size, selection_coefficient, h, u, v, switching, a);
@@ -109,20 +110,20 @@ int main(int argc, char const *argv[])
             // Iterate over starting states
             for(llong i = 0; i < z; i++) {
                 id.setZero();
-                id(i + population_size + 1) = 1;
+                id(i) = 1;
 
                 N_mat.row(i) = solver.solve(id, true);
 
                 dvec N1 = N_mat.row(i);
 
-                T_fix += N1.tail(2 * population_size).sum() * starting_copies_p(i);
+                T_fix += (N1.sum() * starting_copies_p(i)) - (tau * starting_copies_p(i)) ;
             }    
         } else {
             id.setZero();
-            id(starting_copies + population_size + 1) = 1;
+            id(starting_copies) = 1;
             N_mat.row(0) = solver.solve(id, true);
             dvec N1 = N_mat.row(0);
-            T_fix = N1.tail(2 * population_size).sum();
+            T_fix = N1.sum() - tau;
         }
         
         double rate = 1.0 / T_fix;
