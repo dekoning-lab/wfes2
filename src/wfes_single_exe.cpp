@@ -126,33 +126,15 @@ int main(int argc, char const *argv[])
         solver.analyze();
 
         dvec id(size);
-        dmat N_mat(z, size);
-        double T_fix = 0;
-        double T_var = 0;
+        dmat N_mat(1, size);
 
-        if(!starting_copies_f) {
-            // Iterate over starting states
-            for(llong i = 0; i < z; i++) {
-                id.setZero();
-                id(i) = 1;
-
-                N_mat.row(i) = solver.solve(id, true);
-
-                dvec N1 = N_mat.row(i);
-                dvec N2 = solver.solve(N1, true);
-
-                T_fix += N1.sum() * starting_copies_p(i);
-                T_var += (((2 * N2.sum()) - N1.sum()) - pow(N1.sum(), 2)) * starting_copies_p(i);
-            }    
-        } else {
-            id.setZero();
-            id(starting_copies) = 1;
-            N_mat.row(0) = solver.solve(id, true);
-            dvec N1 = N_mat.row(0);
-            dvec N2 = solver.solve(N1, true);
-            T_fix = N1.sum();
-            T_var = ((2 * N2.sum()) - N1.sum()) - pow(N1.sum(), 2);
-        }
+        id.setZero();
+        id(starting_copies) = 1;
+        N_mat.row(0) = solver.solve(id, true);
+        dvec N1 = N_mat.row(0);
+        dvec N2 = solver.solve(N1, true);
+        double T_fix = N1.sum();
+        double T_var = ((2 * N2.sum()) - N1.sum()) - pow(N1.sum(), 2);
         
         double rate = 1.0 / T_fix;
         double T_std = sqrt(T_var);
