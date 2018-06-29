@@ -10,15 +10,15 @@ namespace WFE = WrightFisherElementary;
 using namespace std;
 
 TEST_CASE("Sparse Matrix Column accessor", "[sparse]") {
-	WF::Matrix W = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
+	WF::Matrix W = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, true, 0);
 	REQUIRE(approx_eq(W.Q.dense().col(10), W.Q.col(10)));
 	REQUIRE(approx_eq(W.Q.dense().col(0), W.Q.col(0)));
 	REQUIRE(approx_eq(W.Q.dense().col(198), W.Q.col(198)));
 }
 
 TEST_CASE("Sparse Matrix add_identity is inverse of subtract_identity", "[sparse]") {
-	WF::Matrix W1 = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
-	WF::Matrix W2 = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, 0);
+	WF::Matrix W1 = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, true, 0);
+	WF::Matrix W2 = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, true, 0);
 
 	W1.Q.subtract_identity();
 	REQUIRE(!W1.Q.approx_eq(W2.Q));	
@@ -43,7 +43,7 @@ SCENARIO("Single Square matrix are built correctly", "[single]") {
 	for(int i = WF::NON_ABSORBING; i <= WF::BOTH_ABSORBING; i ++) {
 		WF::absorption_type a_t = WF::absorption_type(i);
 		GIVEN(absorption_type_desc(a_t)) {
-			WF::Matrix W1 = WF::Single(100, 100, a_t, 0, 0.5, 1e-9, 1e-9, 0);
+			WF::Matrix W1 = WF::Single(100, 100, a_t, 0, 0.5, 1e-9, 1e-9, true, 0);
 			std::pair<dmat,dmat> W2 = WFE::Single(100, 100, a_t, 0, 0.5, 1e-9, 1e-9);
 			REQUIRE(approx_eq(W1.Q.dense(), W2.first));	
 			if(a_t != WF::NON_ABSORBING) {
@@ -58,7 +58,7 @@ SCENARIO("Single Wide matrix are built correctly", "[single]") {
 	for(int i = WF::NON_ABSORBING; i <= WF::BOTH_ABSORBING; i ++) {
 		WF::absorption_type a_t = WF::absorption_type(i);
 		GIVEN(absorption_type_desc(a_t)) {
-			WF::Matrix W1 = WF::Single(200, 100, a_t, 0, 0.5, 1e-9, 1e-9, 0);
+			WF::Matrix W1 = WF::Single(200, 100, a_t, 0, 0.5, 1e-9, 1e-9, true, 0);
 			std::pair<dmat, dmat> W2 = WFE::Single(200, 100, a_t, 0, 0.5, 1e-9, 1e-9);
 			REQUIRE(approx_eq(W1.Q.dense(), W2.first));	
 			if(a_t != WF::NON_ABSORBING) {
@@ -72,7 +72,7 @@ SCENARIO("Single Narrow matrix are built correctly", "[single]") {
 	for(int i = WF::NON_ABSORBING; i <= WF::BOTH_ABSORBING; i ++) {
 		WF::absorption_type a_t = WF::absorption_type(i);
 		GIVEN(absorption_type_desc(a_t)) {
-			WF::Matrix W1 = WF::Single(100, 200, a_t, 0, 0.5, 1e-9, 1e-9, 0);
+			WF::Matrix W1 = WF::Single(100, 200, a_t, 0, 0.5, 1e-9, 1e-9, true, 0);
 			std::pair<dmat, dmat> W2 = WFE::Single(100, 200, a_t, 0, 0.5, 1e-9, 1e-9);
 			REQUIRE(approx_eq(W1.Q.dense(), W2.first));
 			if(a_t != WF::NON_ABSORBING) {

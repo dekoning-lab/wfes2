@@ -83,7 +83,7 @@ WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, co
 }
 
 
-WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const absorption_type abs_t, const double s, const double h, const double u, const double v, const double alpha, const llong block_size) 
+WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const absorption_type abs_t, const double s, const double h, const double u, const double v, bool recurrent_mutation, const double alpha, const llong block_size) 
 {
     llong Nx2 = 2 * Nx; 
     llong Ny2 = 2 * Ny; 
@@ -100,7 +100,12 @@ WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const 
         #pragma omp parallel for
         for(llong b = 0; b < block_length; b++) {
             llong i = b + block_row;
-            buffer[b] = binom_row(2 * Ny, psi_diploid(i, Nx, s, h, u, v), alpha);
+            if(!recurrent_mutation && i != 0) {
+                buffer[b] = binom_row(2 * Ny, psi_diploid(i, Nx, s, h, 0, 0), alpha);    
+            } else {
+                buffer[b] = binom_row(2 * Ny, psi_diploid(i, Nx, s, h, u, v), alpha);    
+            }
+            
         }
 
         for(llong b = 0; b < block_length; b++) {

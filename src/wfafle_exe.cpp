@@ -26,7 +26,7 @@ dvec equilibrium(llong N, double s, double h, double u, double v, double alpha, 
 }
 
 void iterate_generations(dvec& x, llong N, llong t, double s, double h, double u, double v, double alpha, bool verbose = false) {
-    WF::Matrix wf = WF::Single(N, N, WF::NON_ABSORBING, s, h, u, v, alpha);
+    WF::Matrix wf = WF::Single(N, N, WF::NON_ABSORBING, s, h, u, v, true, alpha);
 
     for(llong i = 0; i < t; i ++) {
         wf.Q.multiply_inplace(x, true);
@@ -34,7 +34,7 @@ void iterate_generations(dvec& x, llong N, llong t, double s, double h, double u
 }
 
 dvec switch_population_size(dvec& x, llong Nx, llong Ny, double s, double h, double u, double v, double alpha, bool verbose = false) {
-    WF::Matrix wf = WF::Single(Nx, Ny, WF::NON_ABSORBING, s, h, u, v, alpha);
+    WF::Matrix wf = WF::Single(Nx, Ny, WF::NON_ABSORBING, s, h, u, v, true, alpha);
     dvec next = wf.Q.multiply(x, true);
     return next;
 }
