@@ -8,6 +8,10 @@ bool approx_eq(const dmat& a, const dmat& b, double tol) {
 	return ((a - b).array().abs() < tol).all();
 }
 
+double total_diff(const dmat& a, const dmat& b) {
+    return (a - b).array().abs().sum();
+}
+
 void write_matrix_to_file(const dmat& A, std::string path, bool append) {
 	if (path == "stdout") {
 		std::cout << A.format(CSVFormat) << std::endl;

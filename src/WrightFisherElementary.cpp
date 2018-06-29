@@ -90,20 +90,72 @@ std::pair<dmat, dmat> WrightFisherElementary::NonAbsorbingToFixationOnly(const l
     lvec sizes(2); sizes << (2 * N) + 1, 2 * N;
     llong size = sizes.sum();
 
-    dmat Q(size, size);
+    dmat Q = dmat::Constant(size, size, -1);
     dmat R(size, 1);
 
     std::pair<dmat, dmat> W00 = WrightFisherElementary::Single(N, N, WF::NON_ABSORBING, s(0), h(0), u(0), v(0));
     W00.first *= switching(0, 0); W00.second *= switching(0, 0);
+
     std::pair<dmat, dmat> W01 = WrightFisherElementary::Single(N, N, WF::FIXATION_ONLY, s(1), h(1), u(1), v(1));
     W01.first *= switching(0, 1); W01.second *= switching(0, 1);
-    dvec last_row = WrightFisherElementary::binom_row(2 * N, psi_diploid(N, s(1), h(1), u(1), v(1))) * switching(0, 1);
+
+    dmat last_row(1, (2*N)+1);
+    last_row.row(0) = WrightFisherElementary::binom_row(2 * N, psi_diploid(2 * N, N, s(1), h(1), u(1), v(1))) * switching(0, 1);
+
     std::pair<dmat, dmat> W10 = WrightFisherElementary::Single(N, N, WF::NON_ABSORBING, s(1), h(1), u(1), v(1));
     W10.first *= switching(1, 0); W10.second *= switching(1, 0);
+
     std::pair<dmat, dmat> W11 = WrightFisherElementary::Single(N, N, WF::FIXATION_ONLY, s(1), h(1), u(1), v(1));
     W11.first *= switching(1, 1); W10.second *= switching(1, 1);
 
     // build matrix
+    Q.block(0,       0,       (2*N)+1, (2*N)+1) = W00.first;
+    Q.block(0,       (2*N)+1, (2*N),   (2*N))   = W01.first;
+    Q.block((2*N),   (2*N)+1, 1,       (2*N))   = last_row.row(0).head(2*N);
+    Q.block((2*N)+1, 0,       (2*N),   (2*N)+1) = W10.first.block(0,0,2*N,(2*N)+1);
+    Q.block((2*N)+1, (2*N)+1, (2*N),   (2*N))   = W11.first;
+
+    // R << W00.second, W01.second, W10.second, W11.second;
+
+    return std::make_pair(Q, R);
+}
+
+std::pair<dmat, dmat> WrightFisherElementary::NonAbsorbingToBothAbsorbing(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching) {
+
+
+    lvec sizes(2); sizes << (2 * N) + 1, (2 * N) - 1;
+    llong size = sizes.sum();
+
+    dmat Q = dmat::Constant(size, size, -1);
+    dmat R(size, 2);
+
+    std::pair<dmat, dmat> W00 = WrightFisherElementary::Single(N, N, WF::NON_ABSORBING, s(0), h(0), u(0), v(0));
+    W00.first *= switching(0, 0); W00.second *= switching(0, 0);
+    
+    std::pair<dmat, dmat> W01 = WrightFisherElementary::Single(N, N, WF::BOTH_ABSORBING, s(1), h(1), u(1), v(1));
+    W01.first *= switching(0, 1); W01.second *= switching(0, 1);
+    
+    dmat first_row(1, (2*N)+1);
+    first_row.row(0) = WrightFisherElementary::binom_row(2 * N, psi_diploid(0, N, s(1), h(1), u(1), v(1))) * switching(0, 1);
+    
+    dmat last_row(1, (2*N)+1);
+    last_row.row(0) = WrightFisherElementary::binom_row(2 * N, psi_diploid(2 * N, N, s(1), h(1), u(1), v(1))) * switching(0, 1);
+
+
+    std::pair<dmat, dmat> W10 = WrightFisherElementary::Single(N, N, WF::NON_ABSORBING, s(1), h(1), u(1), v(1));
+    W10.first *= switching(1, 0); W10.second *= switching(1, 0);
+    
+    std::pair<dmat, dmat> W11 = WrightFisherElementary::Single(N, N, WF::BOTH_ABSORBING, s(1), h(1), u(1), v(1));
+    W11.first *= switching(1, 1); W10.second *= switching(1, 1);
+
+    // build matrix
+    Q.block(0,       0,       (2*N)+1, (2*N)+1) = W00.first;
+    Q.block(0,       (2*N)+1, 1,       (2*N)-1) = first_row.row(0).segment(1, (2*N)-1);
+    Q.block(1,       (2*N)+1, (2*N)-1, (2*N)-1) = W01.first;
+    Q.block((2*N),   (2*N)+1, 1,       (2*N)-1) = last_row.row(0).segment(1, (2*N)-1);
+    
+    Q.block((2*N)+1, 0,       (2*N)-1, (2*N)+1) = W10.first.block(0,0,(2*N)-1,(2*N)+1);
+    Q.block((2*N)+1, (2*N)+1, (2*N)-1, (2*N)-1) = W11.first;
 
     return std::make_pair(Q, R);
 }

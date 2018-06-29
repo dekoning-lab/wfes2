@@ -15,5 +15,6 @@ namespace WrightFisherElementary {
     std::pair<dmat, dmat> Single(const llong Nx, const llong Ny, const WrightFisher::absorption_type a_t, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9);
     std::pair<dmat, dmat> Equilibrium(const llong N, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9);
     std::pair<dmat, dmat> NonAbsorbingToFixationOnly(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching);
+    std::pair<dmat, dmat> NonAbsorbingToBothAbsorbing(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching);
     std::pair<dmat, dmat> SwitchingTwoByTwo(const lvec& N, const WrightFisher::absorption_type a_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching);
 };
