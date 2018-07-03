@@ -349,3 +349,61 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, con
     }
     return W;
 }
+
+WrightFisher::Matrix WrightFisher::NonAbsorbingToBothAbsorbing(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha, const llong block_size) {
+    // TODO: proper error checking
+    assert(s.size() == 2);
+    // forward mutation rate should be above 0
+    for(llong i = 0; i < 2; i++) assert(v(i) > 0);
+
+    lvec sizes(2); sizes << (2 * N) + 1, (2 * N) - 1;
+    llong size = sizes.sum();
+
+    Matrix W(size, size, 2);
+    std::deque<std::pair<llong, llong>> index = submatrix_indeces(sizes);
+    
+    for(llong block_row = 0; block_row < size; block_row += block_size) {
+        llong block_length = (block_row + block_size) < size ? block_size : size - block_row;
+        std::deque<Row> buffer_1(block_length);
+        std::deque<Row> buffer_2(block_length);
+
+        #pragma omp parallel for
+        for(llong b = 0; b < block_length; b++) {
+            llong row = block_row + b;
+            llong i = index[row].first; // model index
+            llong im = index[row].second; // current index within model i
+            im = i == 1 ? im + 1 : im; // correct for non-absorbing extinction - ugly
+
+            Row r_1 = binom_row(2 * N, psi_diploid(im, N, s(0), h(0), u(0), v(0)), alpha);
+            r_1.Q *= switching(i, 0);
+            buffer_1[b] = r_1;
+
+            Row r_2 = binom_row(2 * N, psi_diploid(im, N, s(1), h(1), u(1), v(1)), alpha);
+            r_2.Q *= switching(i, 1);
+            buffer_2[b] = r_2;
+        }
+
+        for(llong b = 0; b < block_length; b++) {
+            llong row = block_row + b;
+            llong offset = (2 * N) + 1;
+
+            W.Q.append_data(buffer_1[b].Q, buffer_1[b].start, buffer_1[b].end, 0, buffer_1[b].size - 1, false);
+
+
+            if (buffer_2[b].start == 0 && buffer_2[b].end == 2*N) {
+                W.R(row, 0) = buffer_2[b].Q(0);
+                W.R(row, 1) = buffer_2[b].Q(buffer_2[b].size - 1);
+                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset - 2, 1, buffer_2[b].size - 2, true);
+            } else if (buffer_2[b].start == 0) {
+                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset - 1, 1, buffer_2[b].size - 1, true);
+                W.R(row, 0) = buffer_2[b].Q(0);
+            } else if (buffer_2[b].end == N * 2) {
+                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset - 1, 0, buffer_2[b].size - 2, true);
+                W.R(row, 1) = buffer_2[b].Q(buffer_2[b].size - 1);
+            } else {
+                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset,     0, buffer_2[b].size - 1, true);
+            }
+        }
+    }
+    return W;
+}

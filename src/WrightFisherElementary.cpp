@@ -153,7 +153,6 @@ std::pair<dmat, dmat> WrightFisherElementary::NonAbsorbingToBothAbsorbing(const 
     Q.block(0,       (2*N)+1, 1,       (2*N)-1) = first_row.row(0).segment(1, (2*N)-1);
     Q.block(1,       (2*N)+1, (2*N)-1, (2*N)-1) = W01.first;
     Q.block((2*N),   (2*N)+1, 1,       (2*N)-1) = last_row.row(0).segment(1, (2*N)-1);
-    
     Q.block((2*N)+1, 0,       (2*N)-1, (2*N)+1) = W10.first.block(0,0,(2*N)-1,(2*N)+1);
     Q.block((2*N)+1, (2*N)+1, (2*N)-1, (2*N)-1) = W11.first;
 

@@ -97,6 +97,6 @@ namespace WrightFisher {
     Matrix NonAbsorbingToFixationOnly(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha = 1e-20, const llong block_size = 100);
 
     // Two-model Switching: A is of type `NON_ABSORBING`, B is of type `BOTH_ABSORBING`
-    // Matrix NonAbsorbingToBothAbsorbing(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha = 1e-20, const llong block_size = 100);
+    Matrix NonAbsorbingToBothAbsorbing(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha = 1e-20, const llong block_size = 100);
 
 };
