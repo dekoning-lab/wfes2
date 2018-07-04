@@ -371,8 +371,7 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToBothAbsorbing(const llong N, co
         for(llong b = 0; b < block_length; b++) {
             llong row = block_row + b;
             llong i = index[row].first; // model index
-            llong im = index[row].second; // current index within model i
-            im = i == 1 ? im + 1 : im; // correct for non-absorbing extinction - ugly
+            llong im = index[row].second + i; // current index within model i, correct for non-absorbing starting state - ugly
 
             Row r_1 = binom_row(2 * N, psi_diploid(im, N, s(0), h(0), u(0), v(0)), alpha);
             r_1.Q *= switching(i, 0);
@@ -393,15 +392,15 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToBothAbsorbing(const llong N, co
             if (buffer_2[b].start == 0 && buffer_2[b].end == 2*N) {
                 W.R(row, 0) = buffer_2[b].Q(0);
                 W.R(row, 1) = buffer_2[b].Q(buffer_2[b].size - 1);
-                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset - 2, 1, buffer_2[b].size - 2, true);
+                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset,     buffer_2[b].end + offset - 2, 1, buffer_2[b].size - 2, true);
             } else if (buffer_2[b].start == 0) {
-                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset - 1, 1, buffer_2[b].size - 1, true);
+                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset,     buffer_2[b].end + offset - 1, 1, buffer_2[b].size - 1, true);
                 W.R(row, 0) = buffer_2[b].Q(0);
             } else if (buffer_2[b].end == N * 2) {
-                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset - 1, 0, buffer_2[b].size - 2, true);
+                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset - 1, buffer_2[b].end + offset - 2, 0, buffer_2[b].size - 2, true);
                 W.R(row, 1) = buffer_2[b].Q(buffer_2[b].size - 1);
             } else {
-                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset,     0, buffer_2[b].size - 1, true);
+                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset - 1, buffer_2[b].end + offset - 1, 0, buffer_2[b].size - 1, true);
             }
         }
     }

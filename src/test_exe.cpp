@@ -96,6 +96,13 @@ SCENARIO("Soft Selective Sweep model matrix is built correctly", "[soft]") {
 
 	WF::Matrix W1 = WF::NonAbsorbingToFixationOnly(100, s, h, mu, mu, sw, 0);
 	std::pair<dmat, dmat> W2 = WFE::NonAbsorbingToFixationOnly(100, s, h, mu, mu, sw);
+
+	// cout << W1.Q << endl;
+	// cout << "--" << endl;
+	// cout << W1.Q.dense() << endl;
+	// cout << "--" << endl;
+	// cout << W2.first << endl;
+
 	REQUIRE(approx_eq(W1.Q.dense(), W2.first));
 }
 
@@ -108,11 +115,18 @@ SCENARIO("Soft Selective Sweep Both Absorbing model matrix is built correctly", 
 	WF::Matrix W1 = WF::NonAbsorbingToBothAbsorbing(100, s, h, mu, mu, sw, 0);
 	std::pair<dmat, dmat> W2 = WFE::NonAbsorbingToBothAbsorbing(100, s, h, mu, mu, sw);
 
+	// cout << W1.Q << endl;
+	// cout << "--" << endl;
 	// cout << W1.Q.dense() << endl;
 	// cout << "--" << endl;
 	// cout << W2.first << endl;
 
 	REQUIRE(approx_eq(W1.Q.dense(), W2.first));
+
+	// cout << W1.R << endl;
+	// cout << "--" << endl;
+	// cout << W2.second << endl;
+	// REQUIRE(approx_eq(W1.R), W2.second);
 }
 
 SCENARIO("Switching Up matrix are built correctly", "[switch]") {
