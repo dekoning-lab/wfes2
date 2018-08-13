@@ -68,10 +68,10 @@ WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, co
         for(llong b = 0; b < block_length; b++) {
             Row& r = buffer[b];
             if (r.end == N2) {
-                r.Q(r.size - 1) += 1;
+                r.Q(r.size - 1) = 1;
                 W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
             } else {
-            // allocate one additional cell (slack = 1)
+                // allocate one additional cell (slack = 1)
                 W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1, false, 1);
                 W.Q.data[W.Q.non_zeros - 1] = 1;
                 W.Q.columns[W.Q.non_zeros - 1] = N2;

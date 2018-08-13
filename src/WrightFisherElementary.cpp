@@ -80,7 +80,7 @@ std::pair<dmat, dmat> WrightFisherElementary::Equilibrium(const llong N, const d
 	std::pair<dmat, dmat> W = WrightFisherElementary::Single(N, N, WF::NON_ABSORBING, s, h, u, v);
 	llong N2 = 2 * N;
 	W.first = dmat::Identity(N2 + 1, N2 + 1) - W.first;
-	W.first.col(2 * N) += dvec::Ones(N2 + 1);
+	W.first.col(2 * N) = dvec::Ones(N2 + 1);
 	return W;
 }
 
