@@ -145,18 +145,12 @@ int main(int argc, char const *argv[])
         }    
     }
     if(absorption_f) {
-        throw logic_error("Absorption for sweep models is not implemented");
-        // There is an issue here that we are including the extinction state in the pre-adaptive model here
-        // In comparison, for `single` models, we assume that the mutation has hapenned already (which we don't here)
-        // Thus the calculated statistics are different. This still works if we start with a given number of copies (e.g. -p 2)
+        // throw logic_error("Absorption for sweep models is not implemented");
 
-        /*
         WF::Matrix wf = WF::NonAbsorbingToBothAbsorbing(population_size, selection_coefficient, h, u, v, switching, a);
         if(output_Q_f) wf.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(wf.R, args::get(output_R_f));
         llong size = wf.Q.n_row;
-        llong s0 = (2 * population_size) + 1;
-        llong s1 = (2 * population_size) - 1;
 
         wf.Q.subtract_identity();
 
@@ -164,7 +158,6 @@ int main(int argc, char const *argv[])
         solver.analyze();
 
         dvec R_ext = wf.R.col(0);
-        // R_ext.tail(s1) = dvec::Zero(s1);
 
         dvec B_ext = solver.solve(R_ext, false);
         dvec B_fix = dvec::Ones(size) - B_ext;
@@ -177,45 +170,28 @@ int main(int argc, char const *argv[])
         double T_ext = 0;
         double T_fix = 0;
 
-        dmat N_mat(z, size);
-        if(!starting_copies_f) {
-            for(llong i = 0; i < z; i++) {
-                id.setZero();
-                id(i+1) = 1;
+        dvec N(size);
 
-                N_mat.row(i) = solver.solve(id, true);
+        id.setZero();
+        id(0) = 1;
+        N = solver.solve(id, true);
 
-                P_ext += B_ext(i+1) * starting_copies_p(i+1);
-                dvec E_ext = B_ext.transpose() * N_mat.row(i).transpose() / B_ext(i+1);
-                T_ext += E_ext.sum() * starting_copies_p(i+1);
 
-                P_fix += B_fix(i+1) * starting_copies_p(i);
-                dvec E_fix = B_fix.transpose() * N_mat.row(i).transpose() / B_fix(i+1);
-                T_fix += E_fix.sum() * starting_copies_p(i+1);
-            }    
-        } else {
-            id.setZero();
-            id(starting_copies) = 1;
-            N_mat.row(0) = solver.solve(id, true);
+        P_ext = B_ext(0);
+        dvec E_ext = B_ext.transpose() * N / B_ext(0);
+        T_ext = E_ext.sum();
 
-            P_ext = B_ext(starting_copies);
-            dvec E_ext = B_ext.transpose() * N_mat.row(0).transpose() / B_ext(starting_copies);
-            T_ext = E_ext.sum();
+        P_fix = B_fix(0);
+        dvec E_fix = B_fix.transpose() * N / B_fix(0);
+        T_fix = E_fix.sum();
 
-            P_fix = B_fix(starting_copies);
-            dvec E_fix = B_fix.transpose() * N_mat.row(0).transpose() / B_fix(starting_copies);
-            T_fix = E_fix.sum();
-
-        }
-
-        if(output_N_f) write_matrix_to_file(N_mat, args::get(output_N_f));
+        if(output_N_f) write_vector_to_file(N, args::get(output_N_f));
         if(output_B_f) {
             dmat B(size, 2);
             B.col(0) = B_ext;
             B.col(1) = B_fix;
             write_matrix_to_file(B, args::get(output_B_f));
         }
-
 
         if (csv_f) {
             printf("%lld, ", population_size);
@@ -242,7 +218,6 @@ int main(int argc, char const *argv[])
             printf("T_ext = " DPF "\n", T_ext);
             printf("T_fix = " DPF "\n", T_fix);
         }    
-        */
     }
 
 
