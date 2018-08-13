@@ -2130,7 +2130,7 @@ namespace args
                     if (child->IsGroup() && !child->Matched())
                     {
                         std::ostringstream problem;
-                        problem << "Group validation failed somewhere!";
+                        problem << "Could not parse command line.";
 #ifdef ARGS_NOEXCEPT
                         error = Error::Validation;
                         errorMsg = problem.str();
