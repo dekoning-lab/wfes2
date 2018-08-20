@@ -101,7 +101,7 @@ int main(int argc, char const *argv[])
     llong msg_level = verbose_f ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
 
     if(fixation_f) {
-        WF::Matrix wf = WF::NonAbsorbingToFixationOnly(population_size, selection_coefficient, h, u, v, switching, a);
+        WF::Matrix wf = WF::NonAbsorbingToFixationOnly(population_size, selection_coefficient, h, u, v, switching, a, verbose_f);
         if(output_Q_f) wf.Q.save_market(args::get(output_Q_f));
 
 
@@ -147,7 +147,7 @@ int main(int argc, char const *argv[])
     if(absorption_f) {
         // throw logic_error("Absorption for sweep models is not implemented");
 
-        WF::Matrix wf = WF::NonAbsorbingToBothAbsorbing(population_size, selection_coefficient, h, u, v, switching, a);
+        WF::Matrix wf = WF::NonAbsorbingToBothAbsorbing(population_size, selection_coefficient, h, u, v, switching, a, verbose_f);
         if(output_Q_f) wf.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(wf.R, args::get(output_R_f));
         llong size = wf.Q.n_row;

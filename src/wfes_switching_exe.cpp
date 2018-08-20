@@ -111,7 +111,7 @@ int main(int argc, char const *argv[])
 
     if(fixation_f) // BEGIN SWITCHING FIXATION {{{
     {
-        WF::Matrix W = WF::Switching(population_sizes, WF::FIXATION_ONLY, s, h, u, v, switching, a);
+        WF::Matrix W = WF::Switching(population_sizes, WF::FIXATION_ONLY, s, h, u, v, switching, a, verbose_f);
 
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
@@ -184,7 +184,7 @@ int main(int argc, char const *argv[])
 
     if(absorption_f) // BEGIN SWITCHING ABSORPTION {{{
     {
-        WF::Matrix W = WF::Switching(population_sizes, WF::BOTH_ABSORBING, s, h, u, v, switching, a);
+        WF::Matrix W = WF::Switching(population_sizes, WF::BOTH_ABSORBING, s, h, u, v, switching, a, verbose_f);
 
         // start and end states for every model
         lvec start_state_index(n_models);

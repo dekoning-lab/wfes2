@@ -115,7 +115,7 @@ int main(int argc, char const *argv[])
 
     if(fixation_f) // BEGIN SINGLE FIXATION
     {
-        WF::Matrix W = WF::Single(population_size, population_size, WF::FIXATION_ONLY, s, h, u, v, rem, a);
+        WF::Matrix W = WF::Single(population_size, population_size, WF::FIXATION_ONLY, s, h, u, v, rem, a, verbose_f);
 
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
@@ -165,7 +165,7 @@ int main(int argc, char const *argv[])
 
     if(absorption_f) // BEGIN SINGLE ABSORPTION
     {
-        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a);
+        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f);
 
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
@@ -253,7 +253,7 @@ int main(int argc, char const *argv[])
     if (fundamental_f) 
     {
         llong size = (2 * population_size) - 1;
-        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a);
+        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f);
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
 
@@ -280,7 +280,7 @@ int main(int argc, char const *argv[])
 
     if (equilibrium_f) {
         llong size = (2 * population_size) + 1;
-        WF::Matrix W = WF::Equilibrium(population_size, s, h, u, v, a); 
+        WF::Matrix W = WF::Equilibrium(population_size, s, h, u, v, a, verbose_f); 
         PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
         solver.analyze();
         dvec O = dvec::Zero(size);
@@ -310,7 +310,7 @@ int main(int argc, char const *argv[])
         llong x = args::get(observed_copies_f) - 1;
 
         llong size = (2 * population_size) - 1;
-        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a);
+        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f);
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
         dvec Q_x = W.Q.col(x);
