@@ -12,6 +12,7 @@
 
 #include <deque>
 #include <sstream>
+#include <chrono>
 
 #include <mkl.h>
 
@@ -22,6 +23,9 @@
 #define IPF "%d" // Int print format
 
 typedef long long int llong;
+
+typedef std::chrono::time_point<std::chrono::system_clock> time_point;
+typedef std::chrono::duration<double> time_diff;
 
 template<typename T>
 void print_buffer(T* buffer, size_t size, std::ostream& os = std::cout, bool newline = true) {

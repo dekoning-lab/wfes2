@@ -46,7 +46,9 @@ WrightFisher::Row WrightFisher::binom_row(const llong size, const double p, cons
 
 }
 
-WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, const double h, const double u, const double v, const double alpha, const llong block_size) {
+WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, const double h, const double u, const double v, const double alpha, const bool verbose, const llong block_size) {
+    time_point t_start, t_end;
+    if (verbose) t_start = std::chrono::system_clock::now();
     llong N2 = 2 * N;
     llong size = N2 + 1;
     WrightFisher::Matrix W(size, size, n_absorbing(WrightFisher::NON_ABSORBING));
@@ -79,12 +81,19 @@ WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, co
             }
         }
     }
+    if (verbose) {
+        t_end = std::chrono::system_clock::now();
+        time_diff dt = t_end - t_start;
+        std::cout << "Time to build matrix: " << dt.count() << " s" << std::endl;
+    }
     return W;
 }
 
 
-WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const absorption_type abs_t, const double s, const double h, const double u, const double v, bool recurrent_mutation, const double alpha, const llong block_size) 
+WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const absorption_type abs_t, const double s, const double h, const double u, const double v, bool recurrent_mutation, const double alpha, const bool verbose, const llong block_size) 
 {
+    time_point t_start, t_end;
+    if (verbose) t_start = std::chrono::system_clock::now();
     llong Nx2 = 2 * Nx; 
     llong Ny2 = 2 * Ny; 
     llong size = Nx2 + 1;
@@ -163,6 +172,11 @@ WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const 
             }
         }
     }
+    if (verbose) {
+        t_end = std::chrono::system_clock::now();
+        time_diff dt = t_end - t_start;
+        std::cout << "Time to build matrix: " << dt.count() << " s" << std::endl;
+    }
     return W;
 }
 
@@ -186,7 +200,10 @@ std::deque<std::pair<llong, llong>> submatrix_indeces(const lvec& sizes) {
     return idx;
 }
 
-WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_type abs_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, double alpha, llong block_size) {
+WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_type abs_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, double alpha, const bool verbose, const llong block_size) {
+    time_point t_start, t_end;
+    if (verbose) t_start = std::chrono::system_clock::now();
+
     llong k = N.size();
 
     if (abs_t == EXTINCTION_ONLY) {
@@ -297,11 +314,19 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
 
 
     }
-
+    
+    if (verbose) {
+        t_end = std::chrono::system_clock::now();
+        time_diff dt = t_end - t_start;
+        std::cout << "Time to build matrix: " << dt.count() << " s" << std::endl;
+    }
     return W;
 }
 
-WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha, const llong block_size) {
+WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha, const bool verbose, const llong block_size) {
+    time_point t_start, t_end;
+    if (verbose) t_start = std::chrono::system_clock::now();
+
     // TODO: proper error checking
     assert(s.size() == 2);
     // forward mutation rate should be above 0
@@ -347,10 +372,18 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, con
             }
         }
     }
+    if (verbose) {
+        t_end = std::chrono::system_clock::now();
+        time_diff dt = t_end - t_start;
+        std::cout << "Time to build matrix: " << dt.count() << " s" << std::endl;
+    }
     return W;
 }
 
-WrightFisher::Matrix WrightFisher::NonAbsorbingToBothAbsorbing(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha, const llong block_size) {
+WrightFisher::Matrix WrightFisher::NonAbsorbingToBothAbsorbing(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha, const bool verbose, const llong block_size) {
+    time_point t_start, t_end;
+    if (verbose) t_start = std::chrono::system_clock::now();
+
     // TODO: proper error checking
     assert(s.size() == 2);
     // forward mutation rate should be above 0
@@ -403,6 +436,11 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToBothAbsorbing(const llong N, co
                 W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset - 1, buffer_2[b].end + offset - 1, 0, buffer_2[b].size - 1, true);
             }
         }
+    }
+    if (verbose) {
+        t_end = std::chrono::system_clock::now();
+        time_diff dt = t_end - t_start;
+        std::cout << "Time to build matrix: " << dt.count() << " s" << std::endl;
     }
     return W;
 }

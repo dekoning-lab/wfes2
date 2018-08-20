@@ -85,18 +85,23 @@ namespace WrightFisher {
     Row binom_row(const llong size, const double p, const double alpha = 1e-20);
 
     // Harrod matrix to solve for equilibrium distribution
-    Matrix Equilibrium(const llong N, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, const double alpha = 1e-20, const llong block_size = 100);
+    Matrix Equilibrium(const llong N, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, 
+        const double alpha = 1e-20, const bool verbose = false, const llong block_size = 100);
 
     // Single - one matrix of a given absorption type
-    Matrix Single(const llong Nx, const llong Ny, const absorption_type a_t, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, const bool recurrent_mutation = true, const double alpha = 1e-20, const llong block_size = 100);
+    Matrix Single(const llong Nx, const llong Ny, const absorption_type a_t, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, 
+        const bool recurrent_mutation = true, const double alpha = 1e-20, const bool verbose = false, const llong block_size = 100);
 
     // Switching - each sub-model is of the same absorbing type
-    Matrix Switching(const lvec& N, const absorption_type a_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha = 1e-20, const llong block_size = 100);
+    Matrix Switching(const lvec& N, const absorption_type a_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, 
+        const dmat& switching, const double alpha = 1e-20, const bool verbose = false, const llong block_size = 100);
 
     // Two-model Switching: A is of type `NON_ABSORBING`, B is of type `FIXATION_ONLY`
-    Matrix NonAbsorbingToFixationOnly(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha = 1e-20, const llong block_size = 100);
+    Matrix NonAbsorbingToFixationOnly(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, 
+        const dmat& switching, const double alpha = 1e-20, const bool verbose = false, const llong block_size = 100);
 
     // Two-model Switching: A is of type `NON_ABSORBING`, B is of type `BOTH_ABSORBING`
-    Matrix NonAbsorbingToBothAbsorbing(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha = 1e-20, const llong block_size = 100);
+    Matrix NonAbsorbingToBothAbsorbing(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, 
+        const dmat& switching, const double alpha = 1e-20, const bool verbose = false, const llong block_size = 100);
 
 };
