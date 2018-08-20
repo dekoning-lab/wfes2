@@ -59,6 +59,9 @@ int main(int argc, char const *argv[])
         return EXIT_FAILURE;
     }
 
+    time_point t_start, t_end;
+    if (verbose_f) t_start = std::chrono::system_clock::now();
+
     if(model_f.MatchedChildren() != 1) {
         throw args::Error("Should have exactly one of the 'Model type' options");
     }
@@ -278,6 +281,12 @@ int main(int argc, char const *argv[])
         }
 
     } // END SWITCHING ABSORPTION }}}
+
+    if (verbose_f) {
+        t_end = std::chrono::system_clock::now();
+        time_diff dt = t_end - t_start;
+        std::cout << "Total runtime: " << dt.count() << " s" << std::endl;
+    }
 
     return EXIT_SUCCESS;
 }

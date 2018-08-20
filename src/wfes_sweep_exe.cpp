@@ -50,6 +50,9 @@ int main(int argc, char const *argv[])
         return EXIT_FAILURE;
     }
 
+    time_point t_start, t_end;
+    if (verbose_f) t_start = std::chrono::system_clock::now();
+
     dvec selection_coefficient(args::get(selection_coefficient_f));
     llong population_size = args::get(population_size_f);
     dvec h = dominance_f ? args::get(dominance_f) : dvec::Constant(2, 0.5);
@@ -220,6 +223,11 @@ int main(int argc, char const *argv[])
         }    
     }
 
+    if (verbose_f) {
+        t_end = std::chrono::system_clock::now();
+        time_diff dt = t_end - t_start;
+        std::cout << "Total runtime: " << dt.count() << " s" << std::endl;
+    }
 
-    return 0;
+    return EXIT_SUCCESS;
 }

@@ -53,6 +53,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> backward_mutation_f(parser, "float[k]", "Backward mutation rates", {'u', "backward-mu"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> forward_mutation_f(parser, "float[k]", "Forward mutation rates", {'v', "forward-mu"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
+    args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
 
     try {
         parser.ParseCLI(argc, argv);
@@ -64,6 +65,9 @@ int main(int argc, char const *argv[])
         cerr << parser;
         return EXIT_FAILURE;
     }
+
+    time_point t_start, t_end;
+    if (verbose_f) t_start = std::chrono::system_clock::now();
 
     lvec pop_sizes(args::get(population_sizes_f));
     lvec epoch_gens(args::get(epoch_lengths_f));
@@ -78,16 +82,22 @@ int main(int argc, char const *argv[])
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
 
     deque<dvec> d;
-    d.push_back(equilibrium(pop_sizes(0), s(0), h(0), u(0), v(0), a));
+    d.push_back(equilibrium(pop_sizes(0), s(0), h(0), u(0), v(0), a, verbose_f));
 
     for(llong i = 0; i < k - 1; i++) {
-        iterate_generations(d[i], pop_sizes(i), epoch_gens(i), s(i), h(i), u(i), v(i), a);
+        iterate_generations(d[i], pop_sizes(i), epoch_gens(i), s(i), h(i), u(i), v(i), a, verbose_f);
         d.push_back(switch_population_size(d[i], pop_sizes(i), pop_sizes(i + 1), s(i + 1), h(i + 1), u(i + 1), v(i + 1), a));
     }
 
-    iterate_generations(d[k - 1], pop_sizes(k - 1), epoch_gens(k - 1), s(k - 1), h(k - 1), u(k - 1), v(k - 1), a);
+    iterate_generations(d[k - 1], pop_sizes(k - 1), epoch_gens(k - 1), s(k - 1), h(k - 1), u(k - 1), v(k - 1), a, verbose_f);
 
     write_vector_to_file(d[k - 1], "stdout");
+
+    if (verbose_f) {
+        t_end = std::chrono::system_clock::now();
+        time_diff dt = t_end - t_start;
+        std::cout << "Total runtime: " << dt.count() << " s" << std::endl;
+    }
 
     return EXIT_SUCCESS;
 }
