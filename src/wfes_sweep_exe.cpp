@@ -93,7 +93,7 @@ int main(int argc, char const *argv[])
 
     llong z = 0;
 
-    if(integration_cutoff == -1) { // no integration
+    if(integration_cutoff <= 0) { // no integration
         z = 1;
         starting_copies_p[0] = 1;
     } else {
