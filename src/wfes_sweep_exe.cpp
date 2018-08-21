@@ -16,7 +16,7 @@ int main(int argc, char const *argv[])
     parser.helpParams.flagindent = 2;
 
     args::Group model_f(parser, "Model type - specify one", args::Group::Validators::Xor, args::Options::Required);
-    args::Flag absorption_f(model_f, "absorption", "Both fixation and extinction states are absorbing (NOT IMPLEMENTED)", {"absorption"});
+    // args::Flag absorption_f(model_f, "absorption", "Both fixation and extinction states are absorbing (NOT IMPLEMENTED)", {"absorption"});
     args::Flag fixation_f(model_f, "fixation", "Only fixation state is absorbing", {"fixation"});
 
     args::ValueFlag<llong> population_size_f(parser, "int", "Size of the population", {'N', "pop-size"}, args::Options::Required);
@@ -147,7 +147,8 @@ int main(int argc, char const *argv[])
             printf("Rate = " DPF "\n", rate);
         }    
     }
-    if(absorption_f) {
+    
+    /*if(absorption_f) {
         // throw logic_error("Absorption for sweep models is not implemented");
 
         WF::Matrix wf = WF::NonAbsorbingToBothAbsorbing(population_size, selection_coefficient, h, u, v, switching, a, verbose_f);
@@ -221,7 +222,7 @@ int main(int argc, char const *argv[])
             printf("T_ext = " DPF "\n", T_ext);
             printf("T_fix = " DPF "\n", T_fix);
         }    
-    }
+    }*/
 
     if (verbose_f) {
         t_end = std::chrono::system_clock::now();
