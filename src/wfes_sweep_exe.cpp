@@ -74,7 +74,7 @@ int main(int argc, char const *argv[])
         if (4 * population_size * max_mu > 1) {
             throw args::Error("The mutation rate might violate the Wright-Fisher assumptions. Use --force to ignore");
         }
-        if (2 * population_size * selection_coefficient.minCoeff() < -10) {
+        if (selection_coefficient.minCoeff() <= -1) {
             throw args::Error("The selection coefficient is quite negative. Fixations might be impossible. Use --force to ignore");
         }
         if (a > 1e-5) {

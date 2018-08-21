@@ -93,7 +93,7 @@ int main(int argc, char const *argv[])
     		throw args::Error("The mutation rate might violate the Wright-Fisher assumptions. Use --force to ignore");
     	}
     	dvec gamma = dvec::Constant(n_models, 2).array() * N.array() * s.array();
-    	if (gamma.minCoeff() < -10) {
+    	if (s.minCoeff() <= -1) {
     		throw args::Error("The selection coefficient is quite negative. Fixations might be impossible. Use --force to ignore");
     	}
     	if (a > 1e-5) {
