@@ -326,8 +326,8 @@ int main(int argc, char const *argv[])
         Q_I_x(x) += 1;
         dvec A_x = W.Q.multiply(Q_I_x);
 
-        double first_moment = 0;
-        double second_moment = 0;
+        double E_allele_age = 0;
+        double S_allele_age = 0;
         if(!starting_copies_f) {
             // Iterate over starting states
             for(llong i = 0; i < z; i++) {
@@ -343,8 +343,8 @@ int main(int argc, char const *argv[])
 
                 double mu2 = sqrt((M3.dot(A_x) / M1(x)) - pow(mu1, 2));
 
-                first_moment += mu1 * starting_copies_p(i);
-                second_moment += mu2 * starting_copies_p(i);
+                E_allele_age += mu1 * starting_copies_p(i);
+                S_allele_age += mu2 * starting_copies_p(i);
             }    
         } else {
             dvec e_p = dvec::Zero(size);
@@ -353,17 +353,17 @@ int main(int argc, char const *argv[])
             dvec M1 = solver.solve(e_p, true);
             dvec M2 = solver.solve(M1, true);
 
-            first_moment = M2.dot(Q_x) / M1(x);
+            E_allele_age = M2.dot(Q_x) / M1(x);
 
             dvec M3 = solver.solve(M2, true);
 
-            second_moment = sqrt((M3.dot(A_x) / M1(x)) - pow(first_moment, 2));
+            S_allele_age = sqrt((M3.dot(A_x) / M1(x)) - pow(E_allele_age, 2));
         }
 
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
                            DPF ", " DPF "\n",
-                   population_size, s, h, u, v, a, first_moment, second_moment);
+                   population_size, s, h, u, v, a, E_allele_age, S_allele_age);
 
         } else {
             printf("N = " LPF "\n", population_size);
@@ -372,8 +372,8 @@ int main(int argc, char const *argv[])
             printf("u = " DPF "\n", u);
             printf("v = " DPF "\n", v);
             printf("a = " DPF "\n", a);
-            printf("mu_1 = " DPF "\n", first_moment);
-            printf("mu_2 = " DPF "\n", second_moment);
+            printf("E(A) = " DPF "\n", E_allele_age);
+            printf("S(A) = " DPF "\n", S_allele_age);
         }
     } // END SINGLE ALLELE AGE
 
