@@ -33,6 +33,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<double> forward_mutation_f(parser, "float", "Forward mutation rate", {'v', "forward-mu"});
     args::ValueFlag<bool>   recurrent_mutation_f(parser, "bool", "Recurrent mutation", {'m', "recurrent-mu"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
+    args::ValueFlag<llong>  block_size_f(parser, "int", "Block size", {'b', "block-size"});
     args::ValueFlag<double> integration_cutoff_f(parser, "float", "Starting number of copies integration cutoff", {'c', "integration-cutoff"});
     args::ValueFlag<llong>  starting_copies_f(parser, "int", "Starting number of copies - no integration", {'p', "starting-copies"});
     args::ValueFlag<llong>  observed_copies_f(parser, "int", "Observed number of copies (--allele-age only)", {'x', "observed-copies"});
@@ -78,6 +79,7 @@ int main(int argc, char const *argv[])
     double v = forward_mutation_f ? args::get(forward_mutation_f) : 1e-9;
     bool rem = recurrent_mutation_f ? args::get(recurrent_mutation_f) : true;
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
+    double b = block_size_f ? args::get(block_size_f) : 100;
     double integration_cutoff = integration_cutoff_f ? args::get(integration_cutoff_f) : 1e-10;
     // translate starting number of copies into model state (p - 1)
     llong starting_copies = starting_copies_f ? (args::get(starting_copies_f) - 1) : 0;
@@ -118,7 +120,7 @@ int main(int argc, char const *argv[])
 
     if(fixation_f) // BEGIN SINGLE FIXATION
     {
-        WF::Matrix W = WF::Single(population_size, population_size, WF::FIXATION_ONLY, s, h, u, v, rem, a, verbose_f);
+        WF::Matrix W = WF::Single(population_size, population_size, WF::FIXATION_ONLY, s, h, u, v, rem, a, verbose_f, b);
 
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
@@ -168,7 +170,7 @@ int main(int argc, char const *argv[])
 
     if(absorption_f) // BEGIN SINGLE ABSORPTION
     {
-        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f);
+        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f, b);
 
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
@@ -256,7 +258,7 @@ int main(int argc, char const *argv[])
     if (fundamental_f) 
     {
         llong size = (2 * population_size) - 1;
-        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f);
+        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f, b);
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
 
@@ -283,7 +285,7 @@ int main(int argc, char const *argv[])
 
     if (equilibrium_f) {
         llong size = (2 * population_size) + 1;
-        WF::Matrix W = WF::Equilibrium(population_size, s, h, u, v, a, verbose_f); 
+        WF::Matrix W = WF::Equilibrium(population_size, s, h, u, v, a, verbose_f, b); 
         PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
         solver.analyze();
         dvec O = dvec::Zero(size);
@@ -313,7 +315,7 @@ int main(int argc, char const *argv[])
         llong x = args::get(observed_copies_f) - 1;
 
         llong size = (2 * population_size) - 1;
-        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f);
+        WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f, b);
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
         dvec Q_x = W.Q.col(x);
