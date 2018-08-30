@@ -1,30 +1,53 @@
 cmake_minimum_required(VERSION 2.6)
 
-project(WFAFLE)
+project(WFES)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(INTEL_ROOT "$ENV{HOME}/intel/")
-
-if(UNIX AND NOT APPLE) #linux
-    set(LIB_SUFFIX "/intel64")
-endif()
-if(APPLE)
-    cmake_policy(SET CMP0042 NEW)
+# CONDA installation
+if(NOT DEFINED CONDA_ROOT)
+    set(CONDA_ROOT "$ENV{HOME}/miniconda3")
 endif()
 
-set(MKL_ROOT_DIR "${INTEL_ROOT}/mkl")
-set(MKL_LIB_DIR "${MKL_ROOT_DIR}/lib${LIB_SUFFIX}")
-set(MKL_INCLUDE_DIR "${MKL_ROOT_DIR}/include")
+if(CONDA)
+    message(STATUS "Using ${CONDA_ROOT}")
+
+    set(MKL_LIB_DIR "${CONDA_ROOT}/lib")
+    set(MKL_INCLUDE_DIR "${CONDA_ROOT}/include")
+    set(INTEL_OMP_LIB_DIRS "${CONDA_ROOT}/lib")
+endif()
+
+# INTEL installation
+if(NOT DEFINED INTEL_ROOT)
+    set(INTEL_ROOT "/opt/intel")
+endif()
+
+if(INTEL)
+    message(STATUS "Using ${INTEL_ROOT}")
+    if(UNIX AND NOT APPLE) #linux
+        set(LIB_SUFFIX "/intel64")
+    endif()
+    if(APPLE)
+        cmake_policy(SET CMP0042 NEW)
+    endif()
+
+    set(MKL_ROOT_DIR "${INTEL_ROOT}/mkl")
+    set(MKL_LIB_DIR "${MKL_ROOT_DIR}/lib${LIB_SUFFIX}")
+    set(MKL_INCLUDE_DIR "${MKL_ROOT_DIR}/include")
+
+    set(INTEL_OMP_LIB_DIRS "${INTEL_ROOT}/lib${LIB_SUFFIX}")
+endif()
+
 set(MKL_LIBS "-lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core")
-
-set(INTEL_OMP_LIB_DIRS "${INTEL_ROOT}/lib${LIB_SUFFIX}")
 set(INTEL_OMP_LIBS "-liomp5 -lpthread")
-
 set(OTHER_LIBS "-lm -ldl")
 
-# add -fopenmp
 set(CMAKE_CXX_FLAGS "-DMKL_ILP64 -m64 -Wall -Wformat -Wno-deprecated-declarations")
+
+if(OMP)
+    message(STATUS "Using OpenMP")
+    string(APPEND CMAKE_CXX_FLAGS " -fopenmp")
+endif()
 
 file(GLOB LIB_SOURCES "src/*.cpp")
 list(FILTER LIB_SOURCES EXCLUDE REGEX "src/.*_exe.cpp")
