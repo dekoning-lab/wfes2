@@ -46,7 +46,7 @@ set(CMAKE_CXX_FLAGS "-DMKL_ILP64 -m64 -Wall -Wformat -Wno-deprecated-declaration
 
 if(OMP)
     message(STATUS "Using OpenMP")
-    string(APPEND CMAKE_CXX_FLAGS " -fopenmp")
+    string(APPEND CMAKE_CXX_FLAGS " -fopenmp -DOMP")
 endif()
 
 file(GLOB LIB_SOURCES "src/*.cpp")

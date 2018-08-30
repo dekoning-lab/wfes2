@@ -1,4 +1,4 @@
-#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_RUNNER
 #include "catch.hpp"
 #include "WrightFisherElementary.hpp"
 #include "WrightFisher.hpp"
@@ -167,4 +167,18 @@ SCENARIO("Switching Down matrix are built correctly", "[switch]") {
 			}	
 		}
 	}
+}
+
+int main( int argc, char* argv[] ) {
+	#ifdef OMP
+		cout << "Using OMP" << endl;
+		omp_set_num_threads(2);
+	#endif
+
+	mkl_set_num_threads(2);
+
+	int result = Catch::Session().run( argc, argv );
+
+
+	return result;
 }

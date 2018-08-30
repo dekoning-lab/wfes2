@@ -53,6 +53,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> backward_mutation_f(parser, "float[k]", "Backward mutation rates", {'u', "backward-mu"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> forward_mutation_f(parser, "float[k]", "Forward mutation rates", {'v', "forward-mu"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
+    args::ValueFlag<llong>  n_threads_f(parser, "int", "Number of threads", {'t', "num-threads"});
     args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
 
     try {
@@ -80,6 +81,12 @@ int main(int argc, char const *argv[])
     dvec u = backward_mutation_f ? args::get(backward_mutation_f) : dvec::Constant(k, 1e-9);
     dvec v = forward_mutation_f ? args::get(forward_mutation_f) : dvec::Constant(k, 1e-9);
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
+    llong n_threads = n_threads_f ? args::get(n_threads_f) : 1;
+
+    #ifdef OMP
+        omp_set_num_threads(n_threads);
+    #endif
+    mkl_set_num_threads(n_threads);
 
     deque<dvec> d;
     d.push_back(equilibrium(pop_sizes(0), s(0), h(0), u(0), v(0), a, verbose_f));

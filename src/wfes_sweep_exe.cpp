@@ -32,6 +32,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<string> output_B_f(parser, "path", "Output B vectors to file", {"output-B"});
     args::ValueFlag<string> output_I_f(parser, "path", "Output Initial probability distribution", {"output-I"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
+    args::ValueFlag<llong>  n_threads_f(parser, "int", "Number of threads", {'t', "num-threads"});
     args::Flag force_f(parser, "force", "Do not perform parameter checks", {"force"});
     args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
     args::Flag csv_f(parser, "csv", "Output results in CSV format", {"csv"});
@@ -59,6 +60,13 @@ int main(int argc, char const *argv[])
     dvec u = backward_mutation_f ? args::get(backward_mutation_f) : dvec::Constant(2, 1e-9);
     dvec v = forward_mutation_f ? args::get(forward_mutation_f) : dvec::Constant(2, 1e-9);
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
+
+    llong n_threads = n_threads_f ? args::get(n_threads_f) : 1;
+
+    #ifdef OMP
+        omp_set_num_threads(n_threads);
+    #endif
+    mkl_set_num_threads(n_threads);
 
     double integration_cutoff = integration_cutoff_f ? args::get(integration_cutoff_f) : 1e-10;
     // translate starting number of copies into model state (p - 1)

@@ -32,6 +32,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> starting_prob_f(parser, "float[k]", "Starting probabilities", {'p', "starting-prob"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>, NumericMatrixReader<double>> switching_f(parser, "float[k][k]", "Switching parameters over models", {'r', "switching"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
+    args::ValueFlag<llong>  n_threads_f(parser, "int", "Number of threads", {'t', "num-threads"});
 
     // TODO: add integration cutoff
 
@@ -78,6 +79,12 @@ int main(int argc, char const *argv[])
     dmat switching = switching_f ? args::get(switching_f) : dmat::Ones(n_models, n_models);
 
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
+    llong n_threads = n_threads_f ? args::get(n_threads_f) : 1;
+
+    #ifdef OMP
+        omp_set_num_threads(n_threads);
+    #endif
+    mkl_set_num_threads(n_threads);
 
     llong msg_level = verbose_f ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
 

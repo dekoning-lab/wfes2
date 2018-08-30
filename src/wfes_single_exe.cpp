@@ -34,6 +34,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<bool>   recurrent_mutation_f(parser, "bool", "Recurrent mutation", {'m', "recurrent-mu"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
     args::ValueFlag<llong>  block_size_f(parser, "int", "Block size", {'b', "block-size"});
+    args::ValueFlag<llong>  n_threads_f(parser, "int", "Number of threads", {'t', "num-threads"});
     args::ValueFlag<double> integration_cutoff_f(parser, "float", "Starting number of copies integration cutoff", {'c', "integration-cutoff"});
     args::ValueFlag<llong>  starting_copies_f(parser, "int", "Starting number of copies - no integration", {'p', "starting-copies"});
     args::ValueFlag<llong>  observed_copies_f(parser, "int", "Observed number of copies (--allele-age only)", {'x', "observed-copies"});
@@ -80,6 +81,7 @@ int main(int argc, char const *argv[])
     bool rem = recurrent_mutation_f ? args::get(recurrent_mutation_f) : true;
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
     double b = block_size_f ? args::get(block_size_f) : 100;
+    double n_threads = n_threads_f ? args::get(n_threads_f) : 1;
     double integration_cutoff = integration_cutoff_f ? args::get(integration_cutoff_f) : 1e-10;
     // translate starting number of copies into model state (p - 1)
     llong starting_copies = starting_copies_f ? (args::get(starting_copies_f) - 1) : 0;
@@ -101,6 +103,11 @@ int main(int argc, char const *argv[])
     }
 
     llong msg_level = verbose_f ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
+
+    #ifdef OMP
+        omp_set_num_threads(n_threads);
+    #endif
+    mkl_set_num_threads(n_threads);
 
     dvec first_row = WF::binom_row(2 * population_size, WF::psi_diploid(0, population_size, s, h, u, v), a).Q;
     dvec starting_copies_p = first_row.tail(first_row.size() - 1); // renormalize
