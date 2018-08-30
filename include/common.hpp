@@ -11,6 +11,7 @@
 #include <limits>
 
 #include <deque>
+#include <vector>
 #include <sstream>
 #include <chrono>
 

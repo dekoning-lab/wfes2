@@ -53,6 +53,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> backward_mutation_f(parser, "float[k]", "Backward mutation rates", {'u', "backward-mu"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> forward_mutation_f(parser, "float[k]", "Forward mutation rates", {'v', "forward-mu"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
+    args::ValueFlag<string> initial_f(parser, "path", "Path to initial probability distribution CSV", {'i', "initial"});
     args::ValueFlag<llong>  n_threads_f(parser, "int", "Number of threads", {'t', "num-threads"});
     args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
 
@@ -89,7 +90,13 @@ int main(int argc, char const *argv[])
     mkl_set_num_threads(n_threads);
 
     deque<dvec> d;
-    d.push_back(equilibrium(pop_sizes(0), s(0), h(0), u(0), v(0), a, verbose_f));
+    dvec initial;
+    if (initial_f) {
+        initial = load_csv_vector(args::get(initial_f));
+    } else {
+        initial = equilibrium(pop_sizes(0), s(0), h(0), u(0), v(0), a, verbose_f);
+    }
+    d.push_back(initial);
 
     for(llong i = 0; i < k - 1; i++) {
         iterate_generations(d[i], pop_sizes(i), epoch_gens(i), s(i), h(i), u(i), v(i), a, verbose_f);

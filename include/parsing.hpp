@@ -47,3 +47,5 @@ struct NumericMatrixReader : TokenReader
 template<typename T>
 const char* string_format();
 
+dvec load_csv_vector(const std::string file, llong rows = -1);
+dmat load_csv_matrix(const std::string file, llong rows = -1, llong cols = -1);
