@@ -6,6 +6,20 @@ Currently, `wfes2` is supported on `linux` and `macos` systems.
 
 ## Dependencies
 
+### Compilation
+
+You will need `cmake` in order to compile the code.
+
+#### Setting the compiler
+
+On some systems, it might be necessary to specify the compiler before running `cmake`. The preferred way to do this is with `CC` and `CXX` variables:
+
+```bash
+export CC=$(which gcc)
+export CXX=$(which g++)
+cmake ...
+```
+
 ### Runtime
 
 `WFES` depends on the INTEL `MKL` and `omp` libraries. They can be isntalled with the free installer from INTEL, or through the `conda` package manager.
