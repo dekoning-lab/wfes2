@@ -31,7 +31,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<double> dominance_f(parser, "float", "Dominance coefficient", {'h', "dominance"});
     args::ValueFlag<double> backward_mutation_f(parser, "float", "Backward mutation rate", {'u', "backward-mu"});
     args::ValueFlag<double> forward_mutation_f(parser, "float", "Forward mutation rate", {'v', "forward-mu"});
-    args::ValueFlag<bool>   recurrent_mutation_f(parser, "bool", "Recurrent mutation", {'m', "recurrent-mu"});
+    args::Flag no_recurrent_mutation_f(parser, "bool", "Exclude recurrent mutation", {'m', "no-recurrent-mu"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
     args::ValueFlag<llong>  block_size_f(parser, "int", "Block size", {'b', "block-size"});
     args::ValueFlag<llong>  n_threads_f(parser, "int", "Number of threads", {'t', "num-threads"});
@@ -78,7 +78,8 @@ int main(int argc, char const *argv[])
     double h = dominance_f ? args::get(dominance_f) : 0.5;
     double u = backward_mutation_f ? args::get(backward_mutation_f) : 1e-9;
     double v = forward_mutation_f ? args::get(forward_mutation_f) : 1e-9;
-    bool rem = recurrent_mutation_f ? args::get(recurrent_mutation_f) : true;
+    bool no_rem = no_recurrent_mutation_f ? args::get(no_recurrent_mutation_f) : false;
+    bool rem = !no_rem;
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
     double b = block_size_f ? args::get(block_size_f) : 100;
     double n_threads = n_threads_f ? args::get(n_threads_f) : 1;
