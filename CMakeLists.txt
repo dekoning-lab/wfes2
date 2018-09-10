@@ -4,6 +4,10 @@ project(WFES)
 
 set(CMAKE_CXX_STANDARD 11)
 
+if(APPLE)
+    cmake_policy(SET CMP0042 NEW)
+endif()
+
 # CONDA installation
 if(NOT DEFINED CONDA_ROOT)
     set(CONDA_ROOT "$ENV{HOME}/miniconda3")
@@ -26,9 +30,6 @@ if(INTEL)
     message(STATUS "Using ${INTEL_ROOT}")
     if(UNIX AND NOT APPLE) #linux
         set(LIB_SUFFIX "/intel64")
-    endif()
-    if(APPLE)
-        cmake_policy(SET CMP0042 NEW)
     endif()
 
     set(MKL_ROOT_DIR "${INTEL_ROOT}/mkl")

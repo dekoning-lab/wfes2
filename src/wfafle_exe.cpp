@@ -41,13 +41,13 @@ dvec switch_population_size(dvec& x, llong Nx, llong Ny, double s, double h, dou
 
 int main(int argc, char const *argv[])
 {
-    args::ArgumentParser parser("WFAFLE");
+    args::ArgumentParser parser("WFAFLE - Wright-Fisher Allele Frequency calculation");
     parser.helpParams.width = 120;
     parser.helpParams.helpindent = 50;
     parser.helpParams.flagindent = 2;
 
     args::ValueFlag<Eigen::Matrix<llong, Eigen::Dynamic, 1>, NumericVectorReader<llong>> population_sizes_f(parser, "k", "Population sizes", {'N', "pop-sizes"}, args::Options::Required);
-    args::ValueFlag<Eigen::Matrix<llong, Eigen::Dynamic, 1>, NumericVectorReader<llong>> epoch_lengths_f(parser, "k", "Epoch lengths", {'E', "epochs"}, args::Options::Required);
+    args::ValueFlag<Eigen::Matrix<llong, Eigen::Dynamic, 1>, NumericVectorReader<llong>> epoch_lengths_f(parser, "k", "Number of generations for each epoch", {'G', "generations"}, args::Options::Required);
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> selection_coefficient_f(parser, "float[k]", "Selection coefficients", {'s', "selection"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> dominance_f(parser, "float[k]", "Dominance coefficients", {'h', "dominance"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> backward_mutation_f(parser, "float[k]", "Backward mutation rates", {'u', "backward-mu"});
