@@ -20,9 +20,10 @@ dvec equilibrium(llong N, double s, double h, double u, double v, double alpha, 
     id(wf_eq.Q.n_row - 1) = 1;
 
     dvec eq = solver.solve(id, true);
-    // eq = eq.abs();
+    eq = eq.array().abs();
+    eq /= eq.sum();
 
-    return eq;
+    return eq.matrix();
 }
 
 void iterate_generations(dvec& x, llong N, llong t, double s, double h, double u, double v, double alpha, bool verbose = false) {
@@ -31,11 +32,13 @@ void iterate_generations(dvec& x, llong N, llong t, double s, double h, double u
     for(llong i = 0; i < t; i ++) {
         wf.Q.multiply_inplace(x, true);
     }
+    x /= x.sum();
 }
 
 dvec switch_population_size(dvec& x, llong Nx, llong Ny, double s, double h, double u, double v, double alpha, bool verbose = false) {
     WF::Matrix wf = WF::Single(Nx, Ny, WF::NON_ABSORBING, s, h, u, v, true, alpha, verbose);
     dvec next = wf.Q.multiply(x, true);
+    next /= next.sum();
     return next;
 }
 
