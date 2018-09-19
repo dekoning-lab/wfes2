@@ -10,5 +10,5 @@ Please see [INSTALL.md](INSTALL.md) for installation instructions.
 
 # Usage
 
-Please consult the [manual](doc/manual.pdf) for information on usage and models.
+Please consult the [manual](https://github.com/dekoning-lab/wfes2/raw/master/doc/manual.pdf) for information on usage and models.
 
