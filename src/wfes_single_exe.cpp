@@ -22,6 +22,7 @@ int main(int argc, char const *argv[])
     args::Flag fixation_f(model_f, "fixation", "Only fixation state is absorbing", {"fixation"});
     args::Flag fundamental_f(model_f, "fundamental", "Calculate the entire fundamental matrix (slow)", {"fundamental"});
     args::Flag equilibrium_f(model_f, "equilibrium", "Calculate the equilibrium distribtion of allele states", {"equilibrium"});
+    args::Flag non_absorbing_f(model_f, "non-absorbing", "Build a non-absorbing WF matrix", {"non-absorbing"});
     args::Flag allele_age_f(model_f, "allele-age", "Calculate age of an allele", {"allele-age"});
 
     args::ValueFlag<llong> population_size_f(parser, "int", "Size of the population", {'N', "pop-size"}, args::Options::Required);
@@ -386,6 +387,11 @@ int main(int argc, char const *argv[])
             printf("S(A) = " DPF "\n", S_allele_age);
         }
     } // END SINGLE ALLELE AGE
+
+    if (non_absorbing_f) {
+        WF::Matrix W = WF::Single(population_size, population_size, WF::NON_ABSORBING, s, h, u, v, rem, a, verbose_f, b);
+        if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
+    }
 
     if (verbose_f) {
         t_end = std::chrono::system_clock::now();
