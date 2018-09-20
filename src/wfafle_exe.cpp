@@ -28,10 +28,7 @@ dvec equilibrium(llong N, double s, double h, double u, double v, double alpha, 
 
 void iterate_generations(dvec& x, llong N, llong t, double s, double h, double u, double v, double alpha, bool verbose = false) {
     WF::Matrix wf = WF::Single(N, N, WF::NON_ABSORBING, s, h, u, v, true, alpha, verbose);
-
-    for(llong i = 0; i < t; i ++) {
-        wf.Q.multiply_inplace(x, true);
-    }
+    wf.Q.multiply_inplace_rep(x, t, true);
     x /= x.sum();
 }
 

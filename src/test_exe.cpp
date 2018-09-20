@@ -27,6 +27,21 @@ TEST_CASE("Sparse Matrix add_identity is inverse of subtract_identity", "[sparse
 	REQUIRE(W1.Q.approx_eq(W2.Q));	
 }
 
+TEST_CASE("Sparse Matrix vector multiplication", "[sparse]") {
+    llong N = 10;
+	WF::Matrix W = WF::Single(N, N, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, true, 0);
+
+    dvec a = dvec::Ones((2*N)-1).array().abs();
+    dvec b = a;
+
+    W.Q.multiply_inplace_rep(a, 100, true);
+
+    for(llong i = 0; i < 100; i++) {
+        b = W.Q.multiply(b, true);
+    }
+    REQUIRE(approx_eq(a, b));
+}
+
 TEST_CASE("Psi Calculations", "[binom]") {
 	REQUIRE(WF::psi_diploid(0, 100) == WFE::psi_diploid(0, 100));
 }

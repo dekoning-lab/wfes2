@@ -36,7 +36,7 @@ public:
     void debug_print();
     dmat dense();
     dvec multiply(dvec& x, bool transpose = false);
-    void multiply_inplace(dvec& x, bool transpose = false);
+    void multiply_inplace_rep(dvec& x, llong times, bool transpose = false);
 
     // friend ostream& operator<< (ostream& os, const SparseMatrix& M);
     void save_market(std::string path);

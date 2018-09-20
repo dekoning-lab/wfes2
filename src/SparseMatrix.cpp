@@ -20,7 +20,6 @@ SparseMatrix::SparseMatrix(dmat& dense): current_row(0), full(true), non_zeros(0
     j[0] = 0; j[1] = 0; j[2] = 0;
     j[3] = 2; j[4] = non_zeros; j[5] = 1;
 
-    std::cout << "converting" << std::endl;
     mkl_ddnscsr(j, &n_row, &n_col, dense.data(), &n_col, data, columns, row_index, &info);
 
     free(j);
@@ -125,9 +124,8 @@ dvec SparseMatrix::multiply(dvec& x, bool transpose) {
     return y;
 }
 
-void SparseMatrix::multiply_inplace(dvec& x, bool transpose) {
-    assert(x.size() == n_row); 
-    assert(x.size() == n_col);
+// Note that inpt and output dimensions should be the same
+void SparseMatrix::multiply_inplace_rep(dvec& x, llong times, bool transpose) {
     transpose ? assert(x.size() == n_row) : assert(x.size() == n_col);
     dvec workspace(x.size());
 
@@ -136,9 +134,13 @@ void SparseMatrix::multiply_inplace(dvec& x, bool transpose) {
     struct matrix_descr A_descr = {.type = SPARSE_MATRIX_TYPE_GENERAL};
     sparse_operation_t op = transpose ? SPARSE_OPERATION_TRANSPOSE : SPARSE_OPERATION_NON_TRANSPOSE;
 
-    mkl_sparse_d_mv(op, 1, A, A_descr, x.data(), 0, workspace.data());
+    for(llong i = 0; i < times; i++) {
+        // it's not safe to write into the same memory - need to swap
+        mkl_sparse_d_mv(op, 1, A, A_descr, x.data(), 0, workspace.data());
+        x = workspace;
+    }
 
-    for(llong i = 0; i < x.size(); i++) x(i) = workspace(i);
+    mkl_sparse_destroy(A);
 }
 
 std::ostream& operator<<(std::ostream& os, const SparseMatrix& M) {
