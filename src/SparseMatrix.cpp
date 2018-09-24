@@ -5,7 +5,6 @@ SparseMatrix::SparseMatrix(llong n_row, llong n_col): current_row(0), full(false
     data = (double*)malloc(sizeof(double));
     columns = (llong*)malloc(sizeof(llong));
     row_index = (llong*)malloc((n_row + 1) * sizeof(llong));
-    row_index[0] = 0;
 }
 
 SparseMatrix::SparseMatrix(dmat& dense): current_row(0), full(true), non_zeros(0), n_row(dense.rows()), n_col(dense.cols()), data(nullptr), columns(nullptr), row_index(nullptr) {
@@ -40,36 +39,65 @@ lvec closed_range(llong start, llong stop) {
     return r;
 }
 
+//       r0 = 1;   r1 = 4;
+// r: a  b  c  d  e  f  g  h 
+//      /        /
+//     /        /
+// m: b  c  d  e
+//    m0 = 0;  m1 = 3;  
+// insert row from r0 to r1 (row index) into matrix from m0 to m1 (matrix index)
 void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row, llong slack) {
     
     assert((m1 - m0) == (r1 - r0));
 
-    llong size = r1 - r0 + 1;
-    llong nnz = non_zeros + size + slack;
-
-    // row index
-    // if(new_row) row_index[current_row + 1] = nnz;
+    llong vec_size = r1 - r0 + 1;
+    llong add_size = vec_size;
+    bool diag_left  = current_row < m0;
+    bool diag_right = current_row > m1;
+    if(diag_left || diag_right) add_size += 1;
 
     // columns
-    llong* columns_new = (llong*)realloc(columns, nnz * sizeof(llong));
+    llong* columns_new = (llong*)realloc(columns, (non_zeros + add_size + slack) * sizeof(llong));
     if (columns_new != NULL) columns = columns_new;
     else throw std::runtime_error("SparseMatrix::append_data(): Reallocation failed - columns");
 
     lvec range = closed_range(m0, m1);
 
-    // is accessing data() like this ok?
-    memcpy(&columns[non_zeros], range.data(), size * sizeof(llong));
+    llong start_offset = diag_left ? 1 : 0;
+    memcpy(&columns[non_zeros + start_offset], range.data(), vec_size * sizeof(llong));
+    llong first_entry = non_zeros;
+
+    if (diag_left) {
+        first_entry = current_row;
+        columns[non_zeros] = current_row;
+    } else if (diag_right) {
+        columns[non_zeros + vec_size] = current_row;
+    }
 
     // data
-    double* data_new = (double*)realloc(data, nnz * sizeof(double));
+    double* data_new = (double*)realloc(data, (non_zeros + add_size + slack) * sizeof(double));
     if (data_new != NULL) data = data_new;
     else throw std::runtime_error("SparseMatrix::append_data(): Reallocation failed - data");
+    
+    memcpy(&(data[non_zeros + start_offset]), &(row.data()[r0]), vec_size * sizeof(double));
+    if (current_row < m0) {
+        data[non_zeros] = 0;
+    } else if (current_row > m1) {
+        data[non_zeros + add_size] = 0;
+    }
 
-    memcpy(&(data[non_zeros]), &(row.data()[r0]), size * sizeof(double));
+    non_zeros += (add_size + slack);
 
-    non_zeros += (size + slack);
+    if (new_row) {
+        row_index[current_row] = first_entry;
+        current_row ++;
 
-    if (new_row) finalize_row();
+        // last row
+        if (current_row == n_row) {
+            full = true;
+            row_index[n_row] = non_zeros;
+        }
+    }
 }
 
 void SparseMatrix::finalize_row() {

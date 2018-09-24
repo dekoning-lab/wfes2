@@ -63,7 +63,7 @@ WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, co
             Row& r = buffer[b];
             // I - Q
             for(llong j = 0; j < r.Q.size(); j++) r.Q(j) = -r.Q(j);
-            // r.Q = -r.Q;
+            // diagonal
             r.Q(i - r.start) += 1;
         }
 
