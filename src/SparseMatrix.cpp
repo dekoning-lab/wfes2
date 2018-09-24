@@ -1,13 +1,13 @@
 #include "SparseMatrix.hpp"
 
-SparseMatrix::SparseMatrix(llong n_row, llong n_col): current_row(0), full(false), non_zeros(0), n_row(n_row), n_col(n_col), data(nullptr), columns(nullptr), row_index(nullptr) {
+SparseMatrix::SparseMatrix(llong n_row, llong n_col): current_row(0), starting_entry(0), full(false), non_zeros(0), n_row(n_row), n_col(n_col), data(nullptr), columns(nullptr), row_index(nullptr) {
 
     data = (double*)malloc(sizeof(double));
     columns = (llong*)malloc(sizeof(llong));
     row_index = (llong*)malloc((n_row + 1) * sizeof(llong));
 }
 
-SparseMatrix::SparseMatrix(dmat& dense): current_row(0), full(true), non_zeros(0), n_row(dense.rows()), n_col(dense.cols()), data(nullptr), columns(nullptr), row_index(nullptr) {
+SparseMatrix::SparseMatrix(dmat& dense): current_row(0), starting_entry(0), full(true), non_zeros(0), n_row(dense.rows()), n_col(dense.cols()), data(nullptr), columns(nullptr), row_index(nullptr) {
     llong nnz = (dense.array() != 0.0).count();
     non_zeros = nnz;
     data = (double*)malloc(nnz * sizeof(double));
@@ -46,7 +46,7 @@ lvec closed_range(llong start, llong stop) {
 // m: b  c  d  e
 //    m0 = 0;  m1 = 3;  
 // insert row from r0 to r1 (row index) into matrix from m0 to m1 (matrix index)
-void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row, llong slack) {
+void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row, llong slack, double diag_val) {
     
     assert((m1 - m0) == (r1 - r0));
 
@@ -65,10 +65,10 @@ void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1
 
     llong start_offset = diag_left ? 1 : 0;
     memcpy(&columns[non_zeros + start_offset], range.data(), vec_size * sizeof(llong));
-    llong first_entry = non_zeros;
+    starting_entry = non_zeros;
 
     if (diag_left) {
-        first_entry = current_row;
+        starting_entry = current_row;
         columns[non_zeros] = current_row;
     } else if (diag_right) {
         columns[non_zeros + vec_size] = current_row;
@@ -81,27 +81,18 @@ void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1
     
     memcpy(&(data[non_zeros + start_offset]), &(row.data()[r0]), vec_size * sizeof(double));
     if (current_row < m0) {
-        data[non_zeros] = 0;
+        data[non_zeros] = diag_val;
     } else if (current_row > m1) {
-        data[non_zeros + add_size] = 0;
+        data[non_zeros + vec_size] = diag_val;
     }
 
     non_zeros += (add_size + slack);
 
-    if (new_row) {
-        row_index[current_row] = first_entry;
-        current_row ++;
-
-        // last row
-        if (current_row == n_row) {
-            full = true;
-            row_index[n_row] = non_zeros;
-        }
-    }
+    if (new_row) finalize_row();
 }
 
 void SparseMatrix::finalize_row() {
-    row_index[current_row + 1] = non_zeros;
+    row_index[current_row] = starting_entry;
     current_row ++;
 
     // last row

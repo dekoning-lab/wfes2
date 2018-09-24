@@ -55,6 +55,7 @@ WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, co
     for(llong block_row = 0; block_row < size; block_row += block_size) {
         llong block_length = (block_row + block_size) < size ? block_size : size - block_row;
         std::deque<Row> buffer(block_length);
+        std::vector<bool> diag_missing(block_length);
 
         #pragma omp parallel for
         for(llong b = 0; b < block_length; b++) {
@@ -64,20 +65,23 @@ WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, co
             // I - Q
             for(llong j = 0; j < r.Q.size(); j++) r.Q(j) = -r.Q(j);
             // diagonal
-            r.Q(i - r.start) += 1;
+            if (i < r.start || i > r.end) diag_missing[b] = true;
+            else r.Q(i - r.start) += 1;
         }
 
         for(llong b = 0; b < block_length; b++) {
             Row& r = buffer[b];
+            double diag_val = diag_missing[b] ? 1 : 0;
             if (r.end == N2) {
                 r.Q(r.size - 1) = 1;
-                W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
+                W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1, true, 0, diag_val);
             } else {
                 // allocate one additional cell (slack = 1)
-                W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1, false, 1);
+                W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1, false, 1, diag_val);
                 W.Q.data[W.Q.non_zeros - 1] = 1;
                 W.Q.columns[W.Q.non_zeros - 1] = N2;
                 W.Q.finalize_row();
+
             }
         }
     }
