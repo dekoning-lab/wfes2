@@ -81,7 +81,7 @@ WrightFisher::Matrix WrightFisher::Equilibrium(
                 // allocate one additional cell (slack = 1)
                 W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1, false, 1);
                 W.Q.data[W.Q.non_zeros - 1] = 1;
-                W.Q.columns[W.Q.non_zeros - 1] = N2;
+                W.Q.cols[W.Q.non_zeros - 1] = N2;
                 W.Q.finalize_row();
             }
         }

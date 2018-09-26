@@ -38,7 +38,7 @@ void PardisoSolver::analyze()
 
     pardiso_64(internal.data(), &max_factors, &matrix_number,
                &matrix_type, &phase, &size,
-               m.data, m.row_index, m.columns,
+               m.data, m.row_index, m.cols,
                nullptr, &n_right_hand_sides, control.data(),
                &message_level, nullptr, nullptr, &error);
 
@@ -47,7 +47,7 @@ void PardisoSolver::analyze()
     phase = MKL_PARDISO_SOLVER_PHASE_NUMERICAL_FACTORIZATION;
     pardiso_64(internal.data(), &max_factors, &matrix_number,
                &matrix_type, &phase, &size,
-               m.data, m.row_index, m.columns,
+               m.data, m.row_index, m.cols,
                nullptr, &n_right_hand_sides, control.data(),
                &message_level, nullptr, nullptr, &error);
 
@@ -62,7 +62,7 @@ dvec PardisoSolver::solve(dvec& b, bool transpose)
 
     pardiso_64(internal.data(), &max_factors, &matrix_number,
                &matrix_type, &phase, &size,
-               m.data, m.row_index, m.columns,
+               m.data, m.row_index, m.cols,
                nullptr, &n_right_hand_sides, control.data(),
                &message_level, b.data(), workspace.data(), &error);
 
@@ -90,7 +90,7 @@ PardisoSolver::~PardisoSolver()
     phase = MKL_PARDISO_SOLVER_PHASE_RELEASE_MEMORY_ALL;
     pardiso_64(internal.data(), &max_factors, &matrix_number,
                &matrix_type, &phase, &size,
-               nullptr, m.row_index, m.columns,
+               nullptr, m.row_index, m.cols,
                nullptr, &n_right_hand_sides, control.data(),
                &message_level, nullptr, nullptr, &error);
 

@@ -14,7 +14,8 @@ public:
     llong n_col;
 
     double* data;
-    llong* columns;
+    llong* cols;
+    llong* rows;
     llong* row_index;
 
 
@@ -43,7 +44,9 @@ public:
     void subtract_identity(); // I - Q
     void add_identity(); // -(Q + I)
     double operator() (llong i, llong j);
-    dvec col(llong j);
+    dvec col_copy(llong j);
+    dvec row(llong i);
+
     bool approx_eq(const SparseMatrix& rhs, double tol = 1e-10, bool verbose = false);
 };
 

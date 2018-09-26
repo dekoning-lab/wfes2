@@ -11,9 +11,9 @@ using namespace std;
 
 TEST_CASE("Sparse Matrix Column accessor", "[sparse]") {
 	WF::Matrix W = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, true, 0);
-	REQUIRE(approx_eq(W.Q.dense().col(10), W.Q.col(10)));
-	REQUIRE(approx_eq(W.Q.dense().col(0), W.Q.col(0)));
-	REQUIRE(approx_eq(W.Q.dense().col(198), W.Q.col(198)));
+	REQUIRE(approx_eq(W.Q.dense().col(10), W.Q.col_copy(10)));
+	REQUIRE(approx_eq(W.Q.dense().col(0), W.Q.col_copy(0)));
+	REQUIRE(approx_eq(W.Q.dense().col(198), W.Q.col_copy(198)));
 }
 
 TEST_CASE("Sparse Matrix add_identity is inverse of subtract_identity", "[sparse]") {

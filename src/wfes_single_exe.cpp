@@ -327,13 +327,13 @@ int main(int argc, char const *argv[])
         WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f, b);
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
-        dvec Q_x = W.Q.col(x);
+        dvec Q_x = W.Q.col_copy(x);
         W.Q.subtract_identity();
         PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
         solver.analyze();
 
         W.Q.add_identity();
-        dvec Q_I_x = W.Q.col(x);
+        dvec Q_I_x = W.Q.col_copy(x);
         Q_I_x(x) += 1;
         dvec A_x = W.Q.multiply(Q_I_x);
 
