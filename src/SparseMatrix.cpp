@@ -1,6 +1,10 @@
 #include "SparseMatrix.hpp"
 
-SparseMatrix::SparseMatrix(llong n_row, llong n_col): current_row(0), full(false), non_zeros(0), n_row(n_row), n_col(n_col), data(nullptr), columns(nullptr), row_index(nullptr) {
+SparseMatrix::SparseMatrix(llong n_row, llong n_col): 
+    current_row(0), full(false), non_zeros(0), 
+    n_row(n_row), n_col(n_col), 
+    data(nullptr), columns(nullptr), row_index(nullptr) 
+{
 
     data = (double*)malloc(sizeof(double));
     columns = (llong*)malloc(sizeof(llong));
@@ -8,7 +12,11 @@ SparseMatrix::SparseMatrix(llong n_row, llong n_col): current_row(0), full(false
     row_index[0] = 0;
 }
 
-SparseMatrix::SparseMatrix(dmat& dense): current_row(0), full(true), non_zeros(0), n_row(dense.rows()), n_col(dense.cols()), data(nullptr), columns(nullptr), row_index(nullptr) {
+SparseMatrix::SparseMatrix(dmat& dense): 
+    current_row(0), full(true), non_zeros(0), 
+    n_row(dense.rows()), n_col(dense.cols()), 
+    data(nullptr), columns(nullptr), row_index(nullptr) 
+{
     llong nnz = (dense.array() != 0.0).count();
     non_zeros = nnz;
     data = (double*)malloc(nnz * sizeof(double));
@@ -27,19 +35,22 @@ SparseMatrix::SparseMatrix(dmat& dense): current_row(0), full(true), non_zeros(0
     if(info != 0) throw std::runtime_error("SparseMatrix::dense(): Error processing row " + std::to_string(info));
 }
 
-SparseMatrix::~SparseMatrix() {
+SparseMatrix::~SparseMatrix() 
+{
     free(data);
     free(columns);
     free(row_index);
 }
 
-lvec closed_range(llong start, llong stop) {
+lvec closed_range(llong start, llong stop) 
+{
     lvec r(stop - start + 1);
     for(llong i = start; i <= stop; i++) r(i - start) = i;
     return r;
 }
 
-void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row, llong slack) {
+void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row, llong slack) 
+{
     
     assert((m1 - m0) == (r1 - r0));
 
@@ -71,7 +82,8 @@ void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1
     if (new_row) finalize_row();
 }
 
-void SparseMatrix::finalize_row() {
+void SparseMatrix::finalize_row() 
+{
     row_index[current_row + 1] = non_zeros;
     current_row ++;
 
@@ -92,7 +104,8 @@ void SparseMatrix::debug_print()
     print_buffer(row_index, (size_t)(n_row + 1));
 }
 
-dmat SparseMatrix::dense() {
+dmat SparseMatrix::dense() 
+{
     dmat dns(n_row, n_col);
 
     llong info = 0;
@@ -109,7 +122,8 @@ dmat SparseMatrix::dense() {
     return dns;
 }
 
-dvec SparseMatrix::multiply(dvec& x, bool transpose) {
+dvec SparseMatrix::multiply(dvec& x, bool transpose) 
+{
     llong v_size = transpose ? n_col : n_row;
     transpose ? assert(x.size() == n_row) : assert(x.size() == n_col);
     dvec y(v_size);
@@ -125,7 +139,8 @@ dvec SparseMatrix::multiply(dvec& x, bool transpose) {
 }
 
 // Note that inpt and output dimensions should be the same
-void SparseMatrix::multiply_inplace_rep(dvec& x, llong times, bool transpose) {
+void SparseMatrix::multiply_inplace_rep(dvec& x, llong times, bool transpose) 
+{
     transpose ? assert(x.size() == n_row) : assert(x.size() == n_col);
     dvec workspace(x.size());
 
@@ -143,7 +158,8 @@ void SparseMatrix::multiply_inplace_rep(dvec& x, llong times, bool transpose) {
     mkl_sparse_destroy(A);
 }
 
-std::ostream& operator<<(std::ostream& os, const SparseMatrix& M) {
+std::ostream& operator<<(std::ostream& os, const SparseMatrix& M) 
+{
     os << "%%MatrixMarket matrix coordinate real general" << std::endl;
     os << M.n_row << "\t" << M.n_col << "\t" << M.non_zeros << std::endl;
 
@@ -156,7 +172,8 @@ std::ostream& operator<<(std::ostream& os, const SparseMatrix& M) {
     return os;
 }
 
-void SparseMatrix::save_market(const std::string path) {
+void SparseMatrix::save_market(const std::string path) 
+{
     FILE* out = fopen(path.c_str(), "w");
     fprintf(out, "%%%%MatrixMarket matrix coordinate real general\n");
     fprintf(out, LPF "\t" LPF "\t" LPF "\n", n_row, n_col, non_zeros);
@@ -169,7 +186,8 @@ void SparseMatrix::save_market(const std::string path) {
     fclose(out);
 }
 
-double SparseMatrix::operator() (llong row, llong col) {
+double SparseMatrix::operator() (llong row, llong col) 
+{
     if(row >= current_row) return NAN;
     for(llong j = row_index[row]; j < row_index[row + 1]; j++) {
         if (columns[j] == col) {
@@ -179,7 +197,8 @@ double SparseMatrix::operator() (llong row, llong col) {
     return 0; // was not found
 }
 
-dvec SparseMatrix::col(llong c) {
+dvec SparseMatrix::col(llong c) 
+{
     dvec column = dvec::Zero(n_row);
     for(llong i = 0; i < n_row; i++) {
         for(llong j = row_index[i]; j < row_index[i + 1]; j++) {
@@ -193,7 +212,8 @@ dvec SparseMatrix::col(llong c) {
 }
 
 // calculates I - Q
-void SparseMatrix::subtract_identity() {
+void SparseMatrix::subtract_identity() 
+{
     for (llong i = 0; i < n_row; ++i) {
         for (llong j = row_index[i]; j < row_index[i + 1]; ++j) {
             if (i == columns[j]) data[j] = 1.0 - data[j];
@@ -203,7 +223,8 @@ void SparseMatrix::subtract_identity() {
 }
 
 // calculates - Q + I
-void SparseMatrix::add_identity() {
+void SparseMatrix::add_identity() 
+{
     for (llong i = 0; i < n_row; ++i) {
         for (llong j = row_index[i]; j < row_index[i + 1]; ++j) {
             if (i == columns[j]) data[j] = 1.0 - data[j];
@@ -212,7 +233,8 @@ void SparseMatrix::add_identity() {
     }
 }
 
-bool SparseMatrix::approx_eq(const SparseMatrix& rhs, double tol, bool verbose) {
+bool SparseMatrix::approx_eq(const SparseMatrix& rhs, double tol, bool verbose) 
+{
     if(n_row != rhs.n_row) return false;
     if(n_col != rhs.n_col) return false;
     if(non_zeros != rhs.non_zeros) return false;

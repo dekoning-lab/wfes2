@@ -1,6 +1,7 @@
 #include "WrightFisher.hpp"
 
-double WrightFisher::psi_diploid(const llong i, const llong N, const double s, const double h, const double u, const double v) {
+double WrightFisher::psi_diploid(const llong i, const llong N, const double s, const double h, const double u, const double v) 
+{
 
     llong j = (2 * N) - i;
     double w_11 = 1 + s;
@@ -13,7 +14,8 @@ double WrightFisher::psi_diploid(const llong i, const llong N, const double s, c
     return (((a + b) * (1 - u)) + ((b + c) * v)) / w_bar;
 }
 
-WrightFisher::Row WrightFisher::binom_row(const llong size, const double p, const double alpha) {
+WrightFisher::Row WrightFisher::binom_row(const llong size, const double p, const double alpha) 
+{
 
     // start and end quantiles for covering 1 - alpha weight of the probability mass
     llong start = (llong)binom_tail_cover(alpha / 2, size, p, true);
@@ -46,7 +48,10 @@ WrightFisher::Row WrightFisher::binom_row(const llong size, const double p, cons
 
 }
 
-WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, const double h, const double u, const double v, const double alpha, const bool verbose, const llong block_size) {
+WrightFisher::Matrix WrightFisher::Equilibrium(
+        const llong N, const double s, const double h, const double u, const double v, 
+        const double alpha, const bool verbose, const llong block_size) 
+{
     time_point t_start, t_end;
     if (verbose) t_start = std::chrono::system_clock::now();
     llong N2 = 2 * N;
@@ -90,7 +95,9 @@ WrightFisher::Matrix WrightFisher::Equilibrium(const llong N, const double s, co
 }
 
 
-WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const absorption_type abs_t, const double s, const double h, const double u, const double v, bool recurrent_mutation, const double alpha, const bool verbose, const llong block_size) 
+WrightFisher::Matrix WrightFisher::Single(
+        const llong Nx, const llong Ny, const absorption_type abs_t, const double s, const double h, const double u, const double v, 
+        bool recurrent_mutation, const double alpha, const bool verbose, const llong block_size) 
 {
     time_point t_start, t_end;
     if (verbose) t_start = std::chrono::system_clock::now();
@@ -180,7 +187,8 @@ WrightFisher::Matrix WrightFisher::Single(const llong Nx, const llong Ny, const 
     return W;
 }
 
-std::deque<std::pair<llong, llong>> submatrix_indeces(const lvec& sizes) {
+std::deque<std::pair<llong, llong>> submatrix_indeces(const lvec& sizes) 
+{
     llong i = 0;
     llong j = 0;
 
@@ -200,7 +208,10 @@ std::deque<std::pair<llong, llong>> submatrix_indeces(const lvec& sizes) {
     return idx;
 }
 
-WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_type abs_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, double alpha, const bool verbose, const llong block_size) {
+WrightFisher::Matrix WrightFisher::Switching(
+        const lvec& N, const absorption_type abs_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, 
+        double alpha, const bool verbose, const llong block_size) 
+{
     time_point t_start, t_end;
     if (verbose) t_start = std::chrono::system_clock::now();
 
@@ -323,7 +334,10 @@ WrightFisher::Matrix WrightFisher::Switching(const lvec& N, const absorption_typ
     return W;
 }
 
-WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha, const bool verbose, const llong block_size) {
+WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(
+        const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, 
+        const double alpha, const bool verbose, const llong block_size) 
+{
     time_point t_start, t_end;
     if (verbose) t_start = std::chrono::system_clock::now();
 
@@ -380,7 +394,10 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(const llong N, con
     return W;
 }
 
-WrightFisher::Matrix WrightFisher::NonAbsorbingToBothAbsorbing(const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, const double alpha, const bool verbose, const llong block_size) {
+WrightFisher::Matrix WrightFisher::NonAbsorbingToBothAbsorbing(
+        const llong N, const dvec& s, const dvec& h, const dvec& u, const dvec& v, const dmat& switching, 
+        const double alpha, const bool verbose, const llong block_size) 
+{
     time_point t_start, t_end;
     if (verbose) t_start = std::chrono::system_clock::now();
 
