@@ -332,7 +332,7 @@ int main(int argc, char const *argv[])
         PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
         solver.analyze();
 
-        W.Q.add_identity();
+        W.Q.subtract_identity();
         dvec Q_I_x = W.Q.col_copy(x);
         Q_I_x(x) += 1;
         dvec A_x = W.Q.multiply(Q_I_x);

@@ -36,8 +36,9 @@ public:
     void finalize_row();
 
     void append_row(dvec& row, llong col_start = 0, llong col_end = -1);
-    void push_row(dvec& row, llong mat_col_start, llong mat_col_end, llong row_col_start, llong row_col_end, bool finish_row = true);
-    void push_value(double value, llong i, llong j, bool finish_row);
+    void append_chunk(dvec& row, llong m0, llong m1, llong r0, llong r1);
+    void next_row();
+    void append_value(double value, llong i, llong j);
     void compress_csr();
 
     void debug_print();
@@ -47,15 +48,14 @@ public:
 
     // friend ostream& operator<< (ostream& os, const SparseMatrix& M);
     void save_market(std::string path);
+    dvec get_diag_copy();
     void subtract_identity(); // I - Q
-    void add_identity(); // -(Q + I)
     double operator() (llong i, llong j);
     dvec col_copy(llong j);
     dvec row(llong i);
 
     bool approx_eq(const SparseMatrix& rhs, double tol = 1e-10, bool verbose = false);
 private:
-    void append_chunk(dvec& row, llong m0, llong m1, llong r0, llong r1);
 };
 
 std::ostream& operator<<(std::ostream& os, const SparseMatrix& M);

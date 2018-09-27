@@ -74,18 +74,16 @@ WrightFisher::Matrix WrightFisher::Equilibrium(
 
         for(llong b = 0; b < block_length; b++) {
             Row& r = buffer[b];
-            if (r.end == N2) {
-                r.Q(r.size - 1) = 1;
-                W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1);
-            } else {
-                // allocate one additional cell (slack = 1)
-                W.Q.append_data(r.Q, r.start, r.end, 0, r.size - 1, false, 1);
-                W.Q.data[W.Q.non_zeros - 1] = 1;
-                W.Q.cols[W.Q.non_zeros - 1] = N2;
-                W.Q.finalize_row();
-            }
+            llong i = b + block_row;
+
+            W.Q.append_chunk(r.Q, r.start, r.end, 0, r.size - 1);
+
+            if (r.end == N2) r.Q(r.size - 1) = 1;
+            else W.Q.append_value(i, N2, 1);
+            W.Q.next_row();
         }
     }
+    W.Q.compress_csr();
     if (verbose) {
         t_end = std::chrono::system_clock::now();
         time_diff dt = t_end - t_start;
@@ -101,6 +99,7 @@ WrightFisher::Matrix WrightFisher::Single(
 {
     time_point t_start, t_end;
     if (verbose) t_start = std::chrono::system_clock::now();
+    bool verify_diagonal = (Nx == Ny);
     llong Nx2 = 2 * Nx; 
     llong Ny2 = 2 * Ny; 
     llong size = Nx2 + 1;
@@ -129,56 +128,69 @@ WrightFisher::Matrix WrightFisher::Single(
             llong i = b + block_row;
             llong r_last = r.size - 1;
 
+            // diagonal is left of inserted chunk
+            if (verify_diagonal && (i < r.start)) W.Q.append_value(0, i, i);
+
             switch(abs_t) {
                 case NON_ABSORBING:
-                    W.Q.append_data(r.Q, r.start, r.end, 0, r_last);
+                    // Include full row
+                    W.Q.append_chunk(r.Q, r.start, r.end, 0, r_last);
                 break;
 
                 case EXTINCTION_ONLY:
+                    // Do not include 0th row and column
                     if (i == 0) continue;
                     else {
                         if (r.start == 0) {
-                            W.Q.append_data(r.Q, r.start, r.end - 1, 1, r_last);
+                            W.Q.append_chunk(r.Q, r.start, r.end - 1, 1, r_last);
                             W.R(i - 1, 0) = r.Q(0);
                         } else {
-                            W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r_last);
+                            W.Q.append_chunk(r.Q, r.start - 1, r.end - 1, 0, r_last);
                         }
                     }
                 break;
 
                 case FIXATION_ONLY:
+                    // Do not include Nx2th row and column
                     if (i == Nx2) continue;
                     else {
                         if (r.end == Ny2) {
-                            W.Q.append_data(r.Q, r.start, r.end - 1, 0, r_last - 1);
+                            W.Q.append_chunk(r.Q, r.start, r.end - 1, 0, r_last - 1);
                             W.R(i, 0) = r.Q(r_last);
                         } else {
-                            W.Q.append_data(r.Q, r.start, r.end, 0, r_last);
+                            W.Q.append_chunk(r.Q, r.start, r.end, 0, r_last);
                         }
                     }
                 break;
 
                 case BOTH_ABSORBING:
+                    // Do not include 0th and Nx2th row and column
                     if (i == 0 || i == Nx2) continue;
                     else {
                         if (r.start == 0 && r.end == Ny2) {
-                            W.Q.append_data(r.Q, r.start, r.end - 2, 1, r_last - 1);
+                            W.Q.append_chunk(r.Q, r.start, r.end - 2, 1, r_last - 1);
                             W.R(i - 1, 0) = r.Q(0);
                             W.R(i - 1, 1) = r.Q(r_last);
                         } else if (r.start == 0) {
-                            W.Q.append_data(r.Q, r.start, r.end - 1, 1, r_last);
+                            W.Q.append_chunk(r.Q, r.start, r.end - 1, 1, r_last);
                             W.R(i - 1, 0) = r.Q(0);
                         } else if (r.end == Ny2) {
-                            W.Q.append_data(r.Q, r.start - 1, r.end - 2, 0, r_last - 1);
+                            W.Q.append_chunk(r.Q, r.start - 1, r.end - 2, 0, r_last - 1);
                             W.R(i - 1, 1) = r.Q(r_last);
                         } else {
-                            W.Q.append_data(r.Q, r.start - 1, r.end - 1, 0, r_last);
+                            W.Q.append_chunk(r.Q, r.start - 1, r.end - 1, 0, r_last);
                         }
                     }
                 break;
             }
+
+            // diagonal on the right
+            if (verify_diagonal && (i > r.end)) W.Q.append_value(0, i, i);
+            W.Q.next_row();
         }
     }
+
+    W.Q.compress_csr();
     if (verbose) {
         t_end = std::chrono::system_clock::now();
         time_diff dt = t_end - t_start;

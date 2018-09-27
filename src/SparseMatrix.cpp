@@ -112,41 +112,39 @@ void SparseMatrix::append_chunk(dvec& row, llong m0, llong m1, llong r0, llong r
     non_zeros += insert_size;
 }
 
+void SparseMatrix::next_row()
+{
+    current_row += 1;
+}
+
 void SparseMatrix::append_row(dvec& row, llong col_start, llong col_end)
 {
     // if col_end has default value `-1`, insert whole row
     col_end = col_end==-1 ? n_col-1 : col_end;
     append_chunk(row, col_start, col_end, col_start, col_end);
-    current_row += 1;
+    next_row();
 }
 
-void SparseMatrix::push_row(dvec& row, llong mat_col_start, llong mat_col_end, llong row_col_start, llong row_col_end, bool finish_row)
-{
-    append_chunk(row, mat_col_start, mat_col_end, row_col_start, row_col_end);
-    if (finish_row) current_row += 1;
-}
-
-void SparseMatrix::push_value(double v, llong i, llong j, bool finish_row)
+void SparseMatrix::append_value(double v, llong i, llong j)
 {
     llong new_size = non_zeros + 1;
 
     // Rows
     llong* rows_new = (llong*) realloc(rows, new_size * sizeof(llong));
     assert(rows_new != NULL); rows = rows_new;
-    rows[non_zeros] = i;
+    rows[new_size - 1] = i;
 
     // Columns
     llong* cols_new = (llong*) realloc(cols, new_size * sizeof(llong));
     assert(cols_new != NULL); cols = cols_new;
-    cols[non_zeros] = j;
+    cols[new_size - 1] = j;
 
     // Data
     double* data_new = (double*) realloc(data, new_size * sizeof(double));
     assert(data_new != NULL); data = data_new;
-    data[non_zeros] = v;
+    data[new_size - 1] = v;
 
     non_zeros += 1;
-    if (finish_row) current_row += 1;
 }
 
 void SparseMatrix::compress_csr()
@@ -283,6 +281,24 @@ double SparseMatrix::operator() (llong row, llong col)
     return 0; // was not found
 }
 
+dvec SparseMatrix::get_diag_copy() 
+{
+    assert(n_row == n_col);
+
+    dvec diag(n_row);
+    llong next_diag = 0;
+    for(llong i = 0; i < non_zeros; i++) {
+        if (cols[i] == rows[i]) {
+            if (cols[i] != next_diag) throw std::runtime_error("Diagonal entry uninitialized " + std::to_string(next_diag));
+            else {
+                next_diag += 1;
+                diag[cols[i]] = data[i];
+            }
+        }
+    }
+    return diag;
+}
+
 dvec SparseMatrix::col_copy(llong c) 
 {
     dvec column = dvec::Zero(n_row);
@@ -299,17 +315,6 @@ dvec SparseMatrix::col_copy(llong c)
 
 // calculates I - Q
 void SparseMatrix::subtract_identity() 
-{
-    for (llong i = 0; i < n_row; ++i) {
-        for (llong j = row_index[i]; j < row_index[i + 1]; ++j) {
-            if (i == cols[j]) data[j] = 1.0 - data[j];
-            else data[j] = -data[j];
-        }
-    }
-}
-
-// calculates - Q + I
-void SparseMatrix::add_identity() 
 {
     for (llong i = 0; i < n_row; ++i) {
         for (llong j = row_index[i]; j < row_index[i + 1]; ++j) {

@@ -16,14 +16,14 @@ TEST_CASE("Sparse Matrix Column accessor", "[sparse]") {
 	REQUIRE(approx_eq(W.Q.dense().col(198), W.Q.col_copy(198)));
 }
 
-TEST_CASE("Sparse Matrix add_identity is inverse of subtract_identity", "[sparse]") {
+TEST_CASE("Sparse Matrix subtract_identity is inverse of itself", "[sparse]") {
 	WF::Matrix W1 = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, true, 0);
 	WF::Matrix W2 = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, true, 0);
 
 	W1.Q.subtract_identity();
 	REQUIRE(!W1.Q.approx_eq(W2.Q));	
 
-	W1.Q.add_identity();
+	W1.Q.subtract_identity();
 	REQUIRE(W1.Q.approx_eq(W2.Q));	
 }
 
@@ -60,7 +60,29 @@ TEST_CASE("Sparse Matrix in COO format converts to CSR", "[sparse]")
 TEST_CASE("Runs with very small selection coefficient", "[selection]") 
 {
     llong N = 100;
-    WF::Matrix W = WF::Equilibrium(N, N, -0.9, 1e-9, 1e-9);
+    WF::Matrix W = WF::Single(N, N, WF::NON_ABSORBING, -0.99, 1e-9, 1e-9);
+    W.Q.get_diag_copy();
+}
+
+TEST_CASE("Runs with small selection coefficient", "[selection]") 
+{
+    llong N = 100;
+    WF::Matrix W = WF::Single(N, N, WF::NON_ABSORBING, -0.7, 1e-9, 1e-9);
+    W.Q.get_diag_copy();
+}
+
+TEST_CASE("Runs with very large selection coefficient", "[selection]") 
+{
+    llong N = 100;
+    WF::Matrix W = WF::Single(N, N, WF::NON_ABSORBING, 10.99, 1e-9, 1e-9);
+    W.Q.get_diag_copy();
+}
+
+TEST_CASE("Runs with large selection coefficient", "[selection]") 
+{
+    llong N = 100;
+    WF::Matrix W = WF::Single(N, N, WF::NON_ABSORBING, 5.7, 1e-9, 1e-9);
+    W.Q.get_diag_copy();
 }
 
 TEST_CASE("Psi Calculations", "[binom]") {
