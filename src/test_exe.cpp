@@ -28,7 +28,7 @@ TEST_CASE("Sparse Matrix add_identity is inverse of subtract_identity", "[sparse
 }
 
 TEST_CASE("Sparse Matrix vector multiplication", "[sparse]") {
-    llong N = 10;
+    llong N = 100;
 	WF::Matrix W = WF::Single(N, N, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, true, 0);
 
     dvec a = dvec::Ones((2*N)-1).array().abs();
@@ -42,8 +42,9 @@ TEST_CASE("Sparse Matrix vector multiplication", "[sparse]") {
     REQUIRE(approx_eq(a, b));
 }
 
-TEST_CASE("Sparse Matrix in COO format converts to CSR", "[sparse]") {
-    llong k = 4;
+TEST_CASE("Sparse Matrix in COO format converts to CSR", "[sparse]") 
+{
+    llong k = 100;
     SparseMatrix A(k, k);
     dmat B(k, k);
     for(llong i = 0; i < k; i++) {
@@ -54,7 +55,12 @@ TEST_CASE("Sparse Matrix in COO format converts to CSR", "[sparse]") {
     A.compress_csr();
 
     REQUIRE(approx_eq(A.dense(), B));
-    REQUIRE(A.approx_eq(SparseMatrix(B)));
+}
+
+TEST_CASE("Runs with very small selection coefficient", "[selection]") 
+{
+    llong N = 100;
+    WF::Matrix W = WF::Equilibrium(N, N, -0.9, 1e-9, 1e-9);
 }
 
 TEST_CASE("Psi Calculations", "[binom]") {

@@ -120,12 +120,33 @@ void SparseMatrix::append_row(dvec& row, llong col_start, llong col_end)
     current_row += 1;
 }
 
-void SparseMatrix::insert_value(double v, llong i, llong j)
+void SparseMatrix::push_row(dvec& row, llong mat_col_start, llong mat_col_end, llong row_col_start, llong row_col_end, bool finish_row)
 {
-    data[non_zeros] = v;
+    append_chunk(row, mat_col_start, mat_col_end, row_col_start, row_col_end);
+    if (finish_row) current_row += 1;
+}
+
+void SparseMatrix::push_value(double v, llong i, llong j, bool finish_row)
+{
+    llong new_size = non_zeros + 1;
+
+    // Rows
+    llong* rows_new = (llong*) realloc(rows, new_size * sizeof(llong));
+    assert(rows_new != NULL); rows = rows_new;
     rows[non_zeros] = i;
+
+    // Columns
+    llong* cols_new = (llong*) realloc(cols, new_size * sizeof(llong));
+    assert(cols_new != NULL); cols = cols_new;
     cols[non_zeros] = j;
+
+    // Data
+    double* data_new = (double*) realloc(data, new_size * sizeof(double));
+    assert(data_new != NULL); data = data_new;
+    data[non_zeros] = v;
+
     non_zeros += 1;
+    if (finish_row) current_row += 1;
 }
 
 void SparseMatrix::compress_csr()

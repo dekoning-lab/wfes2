@@ -36,9 +36,8 @@ public:
     void finalize_row();
 
     void append_row(dvec& row, llong col_start = 0, llong col_end = -1);
-    // what should be the interface for this?
-    void append_rows(std::vector<dvec&> rows);
-    void insert_value(double value, llong i, llong j);
+    void push_row(dvec& row, llong mat_col_start, llong mat_col_end, llong row_col_start, llong row_col_end, bool finish_row = true);
+    void push_value(double value, llong i, llong j, bool finish_row);
     void compress_csr();
 
     void debug_print();
