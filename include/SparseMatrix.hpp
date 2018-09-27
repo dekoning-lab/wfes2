@@ -20,6 +20,7 @@ public:
 
 
     SparseMatrix(llong n_row, llong n_col);
+    // Copy constructor
     SparseMatrix(dmat& dense);
 
     ~SparseMatrix();
@@ -33,6 +34,12 @@ public:
     // insert row from r0 to r1 (row index) into matrix from m0 to m1 (matrix index)
     void append_data(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row = true, llong slack = 0);
     void finalize_row();
+
+    void append_row(dvec& row, llong col_start = 0, llong col_end = -1);
+    // what should be the interface for this?
+    void append_rows(std::vector<dvec&> rows);
+    void insert_value(double value, llong i, llong j);
+    void compress_csr();
 
     void debug_print();
     dmat dense();
@@ -48,6 +55,8 @@ public:
     dvec row(llong i);
 
     bool approx_eq(const SparseMatrix& rhs, double tol = 1e-10, bool verbose = false);
+private:
+    void append_chunk(dvec& row, llong m0, llong m1, llong r0, llong r1);
 };
 
 std::ostream& operator<<(std::ostream& os, const SparseMatrix& M);

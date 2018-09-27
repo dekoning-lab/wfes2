@@ -3,12 +3,13 @@
 SparseMatrix::SparseMatrix(llong n_row, llong n_col): 
     current_row(0), full(false), non_zeros(0), 
     n_row(n_row), n_col(n_col), 
-    data(nullptr), cols(nullptr), row_index(nullptr) 
+    data(nullptr), cols(nullptr), row_index(nullptr)
 {
-
     data = (double*)malloc(sizeof(double));
-    cols = (llong*)malloc(sizeof(llong));
+    cols = (llong*) malloc(sizeof(llong));
+    rows = (llong*) malloc(sizeof(llong));
     row_index = (llong*)malloc((n_row + 1) * sizeof(llong));
+
     row_index[0] = 0;
 }
 
@@ -39,6 +40,7 @@ SparseMatrix::~SparseMatrix()
 {
     free(data);
     free(cols);
+    free(rows);
     free(row_index);
 }
 
@@ -82,6 +84,67 @@ void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1
     if (new_row) finalize_row();
 }
 
+void SparseMatrix::append_chunk(dvec& row, llong m0, llong m1, llong r0, llong r1) 
+{
+    assert((m1-m0)==(r1-r0));
+
+    llong insert_size = r1 - r0 + 1; 
+
+    llong new_size = non_zeros + insert_size;
+
+    // Rows
+    llong* rows_new = (llong*) realloc(rows, new_size * sizeof(llong));
+    assert(rows_new != NULL); rows = rows_new;
+    lvec row_idx = lvec::Constant(insert_size, current_row);
+    memcpy(&rows[non_zeros], row_idx.data(), insert_size * sizeof(llong));
+
+    // Columns
+    llong* cols_new = (llong*) realloc(cols, new_size * sizeof(llong));
+    assert(cols_new != NULL); cols = cols_new;
+    lvec col_idx = lvec::LinSpaced(insert_size, m0, m1);
+    memcpy(&cols[non_zeros], col_idx.data(), insert_size * sizeof(llong));
+
+    // Data
+    double* data_new = (double*) realloc(data, new_size * sizeof(double));
+    assert(data_new != NULL); data = data_new;
+    memcpy(&(data[non_zeros]), &(row.data()[r0]), insert_size * sizeof(double));
+
+    non_zeros += insert_size;
+}
+
+void SparseMatrix::append_row(dvec& row, llong col_start, llong col_end)
+{
+    // if col_end has default value `-1`, insert whole row
+    col_end = col_end==-1 ? n_col-1 : col_end;
+    append_chunk(row, col_start, col_end, col_start, col_end);
+    current_row += 1;
+}
+
+void SparseMatrix::insert_value(double v, llong i, llong j)
+{
+    data[non_zeros] = v;
+    rows[non_zeros] = i;
+    cols[non_zeros] = j;
+    non_zeros += 1;
+}
+
+void SparseMatrix::compress_csr()
+{
+    llong c_row = -1;
+    llong r;
+    for(llong i = 0; i < non_zeros; i++) {
+        r = rows[i];
+        if (r == c_row) { } 
+        else if (r == (c_row + 1)) {
+            row_index[r] = i;
+            c_row += 1;
+        } 
+        else { throw std::runtime_error("SparseMatrix::compress_csr(): Row index is not in-order"); }
+    }
+    row_index[n_row] = non_zeros;
+}
+
+
 void SparseMatrix::finalize_row() 
 {
     row_index[current_row + 1] = non_zeros;
@@ -100,6 +163,8 @@ void SparseMatrix::debug_print()
     print_buffer(data, (size_t)non_zeros);
     std::cout << "cols:   " << std::endl;
     print_buffer(cols, (size_t)non_zeros);
+    std::cout << "rows:   " << std::endl;
+    print_buffer(rows, (size_t)non_zeros);
     std::cout << "row_index:  " << std::endl;
     print_buffer(row_index, (size_t)(n_row + 1));
 }

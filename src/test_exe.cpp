@@ -42,6 +42,21 @@ TEST_CASE("Sparse Matrix vector multiplication", "[sparse]") {
     REQUIRE(approx_eq(a, b));
 }
 
+TEST_CASE("Sparse Matrix in COO format converts to CSR", "[sparse]") {
+    llong k = 4;
+    SparseMatrix A(k, k);
+    dmat B(k, k);
+    for(llong i = 0; i < k; i++) {
+        dvec range = dvec::LinSpaced(k, 1, 100);
+        A.append_row(range, 0, k-1);
+        B.row(i) = range;
+    }
+    A.compress_csr();
+
+    REQUIRE(approx_eq(A.dense(), B));
+    REQUIRE(A.approx_eq(SparseMatrix(B)));
+}
+
 TEST_CASE("Psi Calculations", "[binom]") {
 	REQUIRE(WF::psi_diploid(0, 100) == WFE::psi_diploid(0, 100));
 }
