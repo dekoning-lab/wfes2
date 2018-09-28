@@ -57,32 +57,25 @@ TEST_CASE("Sparse Matrix in COO format converts to CSR", "[sparse]")
     REQUIRE(approx_eq(A.dense(), B));
 }
 
-TEST_CASE("Runs with very small selection coefficient", "[selection]") 
+SCENARIO("Runs with large magnitude selection", "[selection]") 
 {
     llong N = 100;
-    WF::Matrix W = WF::Single(N, N, WF::NON_ABSORBING, -0.99, 1e-9, 1e-9);
-    W.Q.get_diag_copy();
-}
+    dvec sel(4); sel << -0.99, -0.9, 5.7, 10.99;
+    for (int i = 0; i < 4; i++) {
+        GIVEN("Selection coefficient is " + to_string(sel(i))) {
+            WF::Matrix W = WF::Single(N, N, WF::NON_ABSORBING, sel(i));
 
-TEST_CASE("Runs with small selection coefficient", "[selection]") 
-{
-    llong N = 100;
-    WF::Matrix W = WF::Single(N, N, WF::NON_ABSORBING, -0.7, 1e-9, 1e-9);
-    W.Q.get_diag_copy();
-}
+            WHEN("Building a Single model matrix") {
+                W.Q.get_diag_copy();
+                REQUIRE(W.Q.get_diag_copy().size() == (2 * N) + 1);
+            }
 
-TEST_CASE("Runs with very large selection coefficient", "[selection]") 
-{
-    llong N = 100;
-    WF::Matrix W = WF::Single(N, N, WF::NON_ABSORBING, 10.99, 1e-9, 1e-9);
-    W.Q.get_diag_copy();
-}
-
-TEST_CASE("Runs with large selection coefficient", "[selection]") 
-{
-    llong N = 100;
-    WF::Matrix W = WF::Single(N, N, WF::NON_ABSORBING, 5.7, 1e-9, 1e-9);
-    W.Q.get_diag_copy();
+            WHEN("Building an equilibrium matrix") {
+                WF::Matrix E = WF::Equilibrium(N, sel(i));
+                REQUIRE(E.Q.get_diag_copy().size() == (2 * N) + 1);
+            }
+        }
+    }
 }
 
 TEST_CASE("Psi Calculations", "[binom]") {

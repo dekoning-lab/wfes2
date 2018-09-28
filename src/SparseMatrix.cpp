@@ -65,7 +65,7 @@ void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1
     // cols
     llong* cols_new = (llong*)realloc(cols, nnz * sizeof(llong));
     if (cols_new != NULL) cols = cols_new;
-    else throw std::runtime_error("SparseMatrix::append_data(): Reallocation failed - cols");
+    else throw std::runtime_error("SparseMatrix::append_data_csr(): Reallocation failed - cols");
 
     lvec range = closed_range(m0, m1);
 
@@ -75,7 +75,7 @@ void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1
     // data
     double* data_new = (double*)realloc(data, nnz * sizeof(double));
     if (data_new != NULL) data = data_new;
-    else throw std::runtime_error("SparseMatrix::append_data(): Reallocation failed - data");
+    else throw std::runtime_error("SparseMatrix::append_data_csr(): Reallocation failed - data");
 
     memcpy(&(data[non_zeros]), &(row.data()[r0]), size * sizeof(double));
 

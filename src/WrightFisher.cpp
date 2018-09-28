@@ -69,17 +69,27 @@ WrightFisher::Matrix WrightFisher::Equilibrium(
             // I - Q
             for(llong j = 0; j < r.Q.size(); j++) r.Q(j) = -r.Q(j);
             // r.Q = -r.Q;
-            r.Q(i - r.start) += 1;
+            // diagonal is set in the sequential block - since it may require a structural change to the matrix
+            //r.Q(i - r.start) += 1;
         }
 
         for(llong b = 0; b < block_length; b++) {
             Row& r = buffer[b];
             llong i = b + block_row;
 
-            W.Q.append_chunk(r.Q, r.start, r.end, 0, r.size - 1);
-
+            // diagnoal is left of chunk - insert new entry before chunk
+            if (i < r.start) W.Q.append_value(1, i, i);
+            // diagonal overlaps chunk - increment element
+            if (i >= r.start && i <= r.end) r.Q(i-r.start) += 1;
+            // update chunk if it contains last column
             if (r.end == N2) r.Q(r.size - 1) = 1;
-            else W.Q.append_value(i, N2, 1);
+            // append large chunk
+            W.Q.append_chunk(r.Q, r.start, r.end, 0, r.size - 1);
+            // diagonal is right of chunk - insert new entry after chunk
+            if (i > r.end)   W.Q.append_value(1, i, i);
+            // add a column of 1s on the end
+            if (r.end != N2) W.Q.append_value(1, i, N2);
+
             W.Q.next_row();
         }
     }
