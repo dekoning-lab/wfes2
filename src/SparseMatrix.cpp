@@ -51,7 +51,7 @@ lvec closed_range(llong start, llong stop)
     return r;
 }
 
-void SparseMatrix::append_data(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row, llong slack) 
+void SparseMatrix::append_data_csr(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row, llong slack) 
 {
     
     assert((m1 - m0) == (r1 - r0));
@@ -150,15 +150,18 @@ void SparseMatrix::append_value(double v, llong i, llong j)
 void SparseMatrix::compress_csr()
 {
     llong c_row = -1;
-    llong r;
     for(llong i = 0; i < non_zeros; i++) {
-        r = rows[i];
+        llong r = rows[i];
         if (r == c_row) { } 
         else if (r == (c_row + 1)) {
             row_index[r] = i;
             c_row += 1;
         } 
-        else { throw std::runtime_error("SparseMatrix::compress_csr(): Row index is not in-order"); }
+        else { 
+            throw std::runtime_error(
+                    "SparseMatrix::compress_csr(): Row index is not in-order - error on row " + 
+                    std::to_string(c_row + 1)); 
+        }
     }
     row_index[n_row] = non_zeros;
 }

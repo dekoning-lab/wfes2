@@ -130,7 +130,6 @@ WrightFisher::Matrix WrightFisher::Single(
             } else {
                 buffer[b] = binom_row(2 * Ny, psi_diploid(i, Nx, s, h, u, v), alpha);    
             }
-            
         }
 
         for(llong b = 0; b < block_length; b++) {
@@ -252,9 +251,8 @@ WrightFisher::Matrix WrightFisher::Switching(
     }
 
     llong n_abs_total = n_absorbing(abs_t) * k;
-
-    lvec sizes = 2 * N + lvec::Ones(k);
-    llong size = sizes.sum();
+    lvec sizes        = 2 * N + lvec::Ones(k);
+    llong size        = sizes.sum();
 
     Matrix W(size - n_abs_total, size - n_abs_total, n_abs_total);
     std::deque<std::pair<llong, llong>> index = submatrix_indeces(sizes);
@@ -266,44 +264,49 @@ WrightFisher::Matrix WrightFisher::Switching(
 
         #pragma omp parallel for
         for(llong b = 0; b < block_length; b++) {
+
             llong row = b + block_row;
-            llong i = index[row].first; // model index
-            llong im = index[row].second; // current index within model i
+            llong i   = index[row].first; // model index
+            llong im  = index[row].second; // current index within model i
 
             for(llong j = 0; j < k; j++) {
-                double p = psi_diploid(im, N(i), s(j), h(j), u(j), v(j));
-                buffer[b][j] = binom_row(2 * N(j), p, alpha);
+                double p        = psi_diploid(im, N(i), s(j), h(j), u(j), v(j));
+                buffer[b][j]    = binom_row(2 * N(j), p, alpha);
                 buffer[b][j].Q *= switching(i, j);
             }
         }
 
 
         for(llong b = 0; b < block_length; b++) {
-            llong row = b + block_row;
-            llong i = index[row].first; // model index
-            llong im = index[row].second; // current index within model i
+            llong row    = b + block_row;
+            llong i      = index[row].first; // model index
+            llong im     = index[row].second; // current index within model i
             llong offset = 0; // coordinate of the submodel start
 
+            // BEGIN ITERATOR ROW
             for(llong j = 0; j < k; j++) {
-                Row& r = buffer[b][j];
-                bool row_complete = (j == (k - 1));
-                llong m_start = r.start + offset;
-                llong m_end = r.end + offset;
-                llong r_last = r.size - 1;
+                Row& r               = buffer[b][j];
+                bool row_complete    = (j == (k - 1));
+                llong m_start        = r.start + offset;
+                llong m_end          = r.end + offset;
+                llong r_last         = r.size - 1;
+                bool verify_diagonal = (i == j);
+
+                if (verify_diagonal && (im < r.start)) W.Q.append_value(0, im + offset, im + offset);
 
                 switch(abs_t) {
                     case NON_ABSORBING:
-                        W.Q.append_data(r.Q, m_start, m_end, 0, r_last, row_complete);
+                        W.Q.append_chunk(r.Q, m_start, m_end, 0, r_last);
                     break;
 
                     case EXTINCTION_ONLY:
                         if (im == 0) continue;
                         else {
                             if (r.start == 0) {
-                                W.Q.append_data(r.Q, m_start, m_end - 1, 1, r_last, row_complete);
+                                W.Q.append_chunk(r.Q, m_start, m_end - 1, 1, r_last);
                                 W.R(row - (i + 1), j) = r.Q(0);
                             } else {
-                                W.Q.append_data(r.Q, m_start - 1, m_end - 1, 0, r_last, row_complete);
+                                W.Q.append_chunk(r.Q, m_start - 1, m_end - 1, 0, r_last);
                             }
                         }
                     break;
@@ -312,10 +315,10 @@ WrightFisher::Matrix WrightFisher::Switching(
                         if (im == N(i) * 2) continue;
                         else {
                             if (r.end == N(j) * 2) {
-                                W.Q.append_data(r.Q, m_start, m_end - 1, 0, r_last - 1, row_complete);
+                                W.Q.append_chunk(r.Q, m_start, m_end - 1, 0, r_last - 1);
                                 W.R(row - i, j) = r.Q(r_last);
                             } else {
-                                W.Q.append_data(r.Q, m_start, m_end, 0, r_last, row_complete);
+                                W.Q.append_chunk(r.Q, m_start, m_end, 0, r_last);
                             }
                         }
                     break;
@@ -324,30 +327,32 @@ WrightFisher::Matrix WrightFisher::Switching(
                         if (im == 0 || im == N(i) * 2) continue;
                         else {
                             if (r.start == 0 && r.end == N(j) * 2) {
-                                W.Q.append_data(r.Q, m_start, m_end - 2, 1, r_last - 1, row_complete);
+                                W.Q.append_chunk(r.Q, m_start, m_end - 2, 1, r_last - 1);
                                 // TODO: why is this not `row` ?
                                 W.R(row - i - i - 1, 2 * j) = r.Q(0);
                                 W.R(row - i - i - 1, (2 * j) + 1) = r.Q(r_last);
                             } else if (r.start == 0) {
-                                W.Q.append_data(r.Q, m_start, m_end - 1, 1, r_last, row_complete);
+                                W.Q.append_chunk(r.Q, m_start, m_end - 1, 1, r_last);
                                 W.R(row - i - i - 1, 2 * j) = r.Q(0);
                             } else if (r.end == N(j) * 2) {
-                                W.Q.append_data(r.Q, m_start - 1, m_end - 2, 0, r_last - 1, row_complete);
+                                W.Q.append_chunk(r.Q, m_start - 1, m_end - 2, 0, r_last - 1);
                                 W.R(row - i - i - 1, (2 * j) + 1) = r.Q(r_last);
                             } else {
-                                W.Q.append_data(r.Q, m_start - 1, m_end - 1, 0, r_last, row_complete);
+                                W.Q.append_chunk(r.Q, m_start - 1, m_end - 1, 0, r_last);
                             }
                         }
                     break;
                 }
+                if (verify_diagonal && (im > r.end)) W.Q.append_value(0, im + offset, im + offset);
                 // Increment row offset
                 offset += (sizes(j) - n_absorbing(abs_t));
-            }
+                // This needs to be inside in case block_sizes are unbalanced
+                if (row_complete) W.Q.next_row();
+            } // END ROW
         }
-
-
     }
     
+    W.Q.compress_csr();
     if (verbose) {
         t_end = std::chrono::system_clock::now();
         time_diff dt = t_end - t_start;
@@ -398,16 +403,19 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(
             llong row = block_row + b;
             llong offset = (2 * N) + 1;
 
-            W.Q.append_data(buffer_1[b].Q, buffer_1[b].start, buffer_1[b].end, 0, buffer_1[b].size - 1, false);
+            W.Q.append_chunk(buffer_1[b].Q, buffer_1[b].start, buffer_1[b].end, 0, buffer_1[b].size - 1);
 
             if (buffer_2[b].end == N * 2) {
-                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset - 1, 0, buffer_2[b].size - 2, true);
+                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset - 1, 0, buffer_2[b].size - 2);
                 W.R(row, 0) = buffer_2[b].Q(buffer_2[b].size - 1);
             } else {
-                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset, 0, buffer_2[b].size - 1, true);
+                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset, 0, buffer_2[b].size - 1);
             }
+            W.Q.next_row();
         }
     }
+
+    W.Q.compress_csr();
     if (verbose) {
         t_end = std::chrono::system_clock::now();
         time_diff dt = t_end - t_start;
@@ -458,24 +466,27 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToBothAbsorbing(
             llong row = block_row + b;
             llong offset = (2 * N) + 1;
 
-            W.Q.append_data(buffer_1[b].Q, buffer_1[b].start, buffer_1[b].end, 0, buffer_1[b].size - 1, false);
+            W.Q.append_chunk(buffer_1[b].Q, buffer_1[b].start, buffer_1[b].end, 0, buffer_1[b].size - 1);
 
 
             if (buffer_2[b].start == 0 && buffer_2[b].end == 2*N) {
                 W.R(row, 0) = buffer_2[b].Q(0);
                 W.R(row, 1) = buffer_2[b].Q(buffer_2[b].size - 1);
-                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset,     buffer_2[b].end + offset - 2, 1, buffer_2[b].size - 2, true);
+                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset,     buffer_2[b].end + offset - 2, 1, buffer_2[b].size - 2);
             } else if (buffer_2[b].start == 0) {
-                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset,     buffer_2[b].end + offset - 1, 1, buffer_2[b].size - 1, true);
+                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset,     buffer_2[b].end + offset - 1, 1, buffer_2[b].size - 1);
                 W.R(row, 0) = buffer_2[b].Q(0);
             } else if (buffer_2[b].end == N * 2) {
-                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset - 1, buffer_2[b].end + offset - 2, 0, buffer_2[b].size - 2, true);
+                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset - 1, buffer_2[b].end + offset - 2, 0, buffer_2[b].size - 2);
                 W.R(row, 1) = buffer_2[b].Q(buffer_2[b].size - 1);
             } else {
-                W.Q.append_data(buffer_2[b].Q, buffer_2[b].start + offset - 1, buffer_2[b].end + offset - 1, 0, buffer_2[b].size - 1, true);
+                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset - 1, buffer_2[b].end + offset - 1, 0, buffer_2[b].size - 1);
             }
+            W.Q.next_row();
         }
     }
+
+    W.Q.compress_csr();
     if (verbose) {
         t_end = std::chrono::system_clock::now();
         time_diff dt = t_end - t_start;

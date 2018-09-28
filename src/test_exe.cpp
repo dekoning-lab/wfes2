@@ -188,14 +188,16 @@ SCENARIO("Switching Up matrix are built correctly", "[switch]") {
 	dmat sw(2,2); sw << 1, 1, 1, 1;
 
 	for(int i = WF::NON_ABSORBING; i <= WF::BOTH_ABSORBING; i ++) {
+
 		WF::absorption_type a_t = WF::absorption_type(i);
+
 		GIVEN(absorption_type_desc(a_t)) {
-			WF::Matrix W1 = WF::Switching(N, a_t, s, h, mu, mu, sw, 0);
+
+			WF::Matrix W1            = WF::Switching(N, a_t, s, h, mu, mu, sw, 0);
 			std::pair<dmat, dmat> W2 = WFE::SwitchingTwoByTwo(N, a_t, s, h, mu, mu, sw);
+
 			REQUIRE(approx_eq(W1.Q.dense(), W2.first));
-			if(a_t != WF::NON_ABSORBING) {
-				REQUIRE(approx_eq(W1.R, W2.second));
-			}
+			if(a_t != WF::NON_ABSORBING) REQUIRE(approx_eq(W1.R, W2.second));
 		}
 	}
 }
@@ -218,6 +220,29 @@ SCENARIO("Switching Down matrix are built correctly", "[switch]") {
 			}	
 		}
 	}
+}
+
+SCENARIO("Switching runs with large magnitude selection", "[switching-selection]") 
+{
+	lvec N(2); N << 200, 100;
+    llong size = (2 * N(0) + 1) + (2 * N(1) + 1);
+    dvec sel(4); sel << -0.99, -0.9, 5.7, 10.99;
+	dvec h(2); h << 0.5, 0.5;
+	dvec mu(2); mu << 1e-9, 1e-9;
+	dmat sw(2,2); sw << 1, 1, 1, 1;
+
+    for (int i = 0; i < 4; i++) {
+        GIVEN("Selection coefficient is " + to_string(sel(i))) {
+
+            dvec s(2); s << sel(i), sel(i);
+            WF::Matrix W = WF::Switching(N, WF::NON_ABSORBING, s, h, mu, mu, sw);
+
+            WHEN("Building a Switching model matrix") {
+                W.Q.get_diag_copy();
+                REQUIRE(W.Q.get_diag_copy().size() == size);
+            }
+        }
+    }
 }
 
 int main( int argc, char* argv[] ) {
