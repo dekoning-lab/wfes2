@@ -245,6 +245,39 @@ SCENARIO("Switching runs with large magnitude selection", "[switching-selection]
     }
 }
 
+SCENARIO("Switching non-standard models with large magnitude selection", "[switching-selection]") 
+{
+    llong N = 100;
+    dvec sel(4); sel << -0.99, -0.9, 5.7, 10.99;
+	dvec h(2); h << 0.5, 0.5;
+	dvec mu(2); mu << 1e-9, 1e-9;
+	dmat sw(2,2); sw << 1, 1, 1, 1;
+
+    for (int i = 0; i < 4; i++) {
+        GIVEN("Selection coefficient is " + to_string(sel(i))) {
+
+            dvec s(2); s << sel(i), sel(i);
+            WF::Matrix W1 = WF::NonAbsorbingToFixationOnly(100, s, h, mu, mu, sw, 0);
+            WHEN("Building a N->F model matrix") {
+                W1.Q.get_diag_copy();
+                REQUIRE(W1.Q.get_diag_copy().size() == 4*N+1);
+            }
+        }
+    }
+
+    for (int i = 0; i < 4; i++) {
+        GIVEN("Selection coefficient is " + to_string(sel(i))) {
+
+            dvec s(2); s << sel(i), sel(i);
+            WF::Matrix W2 = WF::NonAbsorbingToBothAbsorbing(100, s, h, mu, mu, sw, 0);
+            WHEN("Building a N->B model matrix") {
+                W2.Q.get_diag_copy();
+                REQUIRE(W2.Q.get_diag_copy().size() == 4*N);
+            }
+        }
+    }
+}
+
 int main( int argc, char* argv[] ) {
 	#ifdef OMP
 		cout << "Using OMP" << endl;

@@ -381,8 +381,8 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(
     
     for(llong block_row = 0; block_row < size; block_row += block_size) {
         llong block_length = (block_row + block_size) < size ? block_size : size - block_row;
-        std::deque<Row> buffer_1(block_length);
-        std::deque<Row> buffer_2(block_length);
+        std::deque<Row> b_1(block_length);
+        std::deque<Row> b_2(block_length);
 
         #pragma omp parallel for
         for(llong b = 0; b < block_length; b++) {
@@ -392,24 +392,24 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(
 
             Row r_1 = binom_row(2 * N, psi_diploid(im, N, s(0), h(0), u(0), v(0)), alpha);
             r_1.Q *= switching(i, 0);
-            buffer_1[b] = r_1;
+            b_1[b] = r_1;
 
             Row r_2 = binom_row(2 * N, psi_diploid(im, N, s(1), h(1), u(1), v(1)), alpha);
             r_2.Q *= switching(i, 1);
-            buffer_2[b] = r_2;
+            b_2[b] = r_2;
         }
 
         for(llong b = 0; b < block_length; b++) {
             llong row = block_row + b;
             llong offset = (2 * N) + 1;
 
-            W.Q.append_chunk(buffer_1[b].Q, buffer_1[b].start, buffer_1[b].end, 0, buffer_1[b].size - 1);
+            W.Q.append_chunk(b_1[b].Q, b_1[b].start, b_1[b].end, 0, b_1[b].size - 1);
 
-            if (buffer_2[b].end == N * 2) {
-                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset - 1, 0, buffer_2[b].size - 2);
-                W.R(row, 0) = buffer_2[b].Q(buffer_2[b].size - 1);
+            if (b_2[b].end == N * 2) {
+                W.Q.append_chunk(b_2[b].Q, b_2[b].start + offset, b_2[b].end + offset - 1, 0, b_2[b].size - 2);
+                W.R(row, 0) = b_2[b].Q(b_2[b].size - 1);
             } else {
-                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset, buffer_2[b].end + offset, 0, buffer_2[b].size - 1);
+                W.Q.append_chunk(b_2[b].Q, b_2[b].start + offset, b_2[b].end + offset, 0, b_2[b].size - 1);
             }
             W.Q.next_row();
         }
@@ -467,7 +467,6 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToBothAbsorbing(
             llong offset = (2 * N) + 1;
 
             W.Q.append_chunk(buffer_1[b].Q, buffer_1[b].start, buffer_1[b].end, 0, buffer_1[b].size - 1);
-
 
             if (buffer_2[b].start == 0 && buffer_2[b].end == 2*N) {
                 W.R(row, 0) = buffer_2[b].Q(0);
