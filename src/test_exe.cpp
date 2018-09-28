@@ -57,6 +57,7 @@ TEST_CASE("Sparse Matrix in COO format converts to CSR", "[sparse]")
     REQUIRE(approx_eq(A.dense(), B));
 }
 
+
 SCENARIO("Runs with large magnitude selection", "[selection]") 
 {
     llong N = 100;

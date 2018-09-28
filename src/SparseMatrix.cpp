@@ -1,7 +1,7 @@
 #include "SparseMatrix.hpp"
 
 SparseMatrix::SparseMatrix(llong n_row, llong n_col): 
-    current_row(0), full(false), non_zeros(0), 
+    current_row(0), full(false), compressed(false), non_zeros(0), 
     n_row(n_row), n_col(n_col), 
     data(nullptr), cols(nullptr), row_index(nullptr)
 {
@@ -14,7 +14,7 @@ SparseMatrix::SparseMatrix(llong n_row, llong n_col):
 }
 
 SparseMatrix::SparseMatrix(dmat& dense): 
-    current_row(0), full(true), non_zeros(0), 
+    current_row(0), full(true), compressed(true), non_zeros(0), 
     n_row(dense.rows()), n_col(dense.cols()), 
     data(nullptr), cols(nullptr), row_index(nullptr) 
 {
@@ -40,8 +40,8 @@ SparseMatrix::~SparseMatrix()
 {
     free(data);
     free(cols);
-    free(rows);
     free(row_index);
+    if (!compressed) { free(rows); }
 }
 
 lvec closed_range(llong start, llong stop) 
@@ -147,7 +147,7 @@ void SparseMatrix::append_value(double v, llong i, llong j)
     non_zeros += 1;
 }
 
-void SparseMatrix::compress_csr()
+void SparseMatrix::compress_csr(bool cleanup)
 {
     llong c_row = -1;
     for(llong i = 0; i < non_zeros; i++) {
@@ -164,6 +164,10 @@ void SparseMatrix::compress_csr()
         }
     }
     row_index[n_row] = non_zeros;
+    if (cleanup) {
+        compressed = true;
+        free(rows);
+    }
 }
 
 
@@ -290,15 +294,24 @@ dvec SparseMatrix::get_diag_copy()
 
     dvec diag(n_row);
     llong next_diag = 0;
-    for(llong i = 0; i < non_zeros; i++) {
-        if (cols[i] == rows[i]) {
-            if (cols[i] != next_diag) throw std::runtime_error("Diagonal entry uninitialized " + std::to_string(next_diag));
-            else {
-                next_diag += 1;
-                diag[cols[i]] = data[i];
+    if (!compressed) {
+        for(llong i = 0; i < non_zeros; i++) {
+            if (cols[i] == rows[i]) {
+                if (cols[i] != next_diag) throw std::runtime_error("Diagonal entry uninitialized " + std::to_string(next_diag));
+                else {
+                    next_diag += 1;
+                    diag[cols[i]] = data[i];
+                }
+            }
+        }
+    } else {
+        for (llong i = 0; i < n_row; ++i) {
+            for (llong j = row_index[i]; j < row_index[i + 1]; ++j) {
+                if (cols[j] == i) diag[i] = data[j];
             }
         }
     }
+
     return diag;
 }
 
