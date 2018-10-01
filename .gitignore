@@ -2,3 +2,7 @@ build/
 build/CMakeFiles
 .DS_Store
 .*swp
+static_build/wfes_single
+static_build/wfes_switching
+static_build/wfes_sweep
+static_build/wfafle

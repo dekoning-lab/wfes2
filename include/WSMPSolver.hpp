@@ -3,6 +3,9 @@
 #include "MKL_Const.hpp"
 #include "SparseMatrix.hpp"
 
+extern void wgsmp(llong *n, llong *ia, llong *ja, double *avals,  double *b, double *ldb, int *nrhs, double *rmisc, llong *iparm, llong *dparm);
+extern double wsmprtc();
+
 class WSMPSolver {
 
 	llong size;
