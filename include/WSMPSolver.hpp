@@ -3,8 +3,10 @@
 #include "MKL_Const.hpp"
 #include "SparseMatrix.hpp"
 
-extern void wgsmp(llong *n, llong *ia, llong *ja, double *avals,  double *b, double *ldb, int *nrhs, double *rmisc, llong *iparm, llong *dparm);
-extern double wsmprtc();
+extern "C" {
+	void wgsmp_(llong *n, llong *ia, llong *ja, double *avals,  double *b, llong *ldb, llong *nrhs, double *rmisc, llong *iparm, double *dparm);
+	void wsetmaxthrds_(llong* nthrds);
+}
 
 class WSMPSolver {
 
@@ -21,6 +23,6 @@ class WSMPSolver {
 	WSMPSolver(SparseMatrix& A, llong nrhs = 1);
 	~WSMPSolver();
 	void analyze();
-	dvec solve(dvec& b, bool transpose = false);
+	dvec solve(const dvec& b, bool transpose = false);
 };
 

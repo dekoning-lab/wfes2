@@ -23,7 +23,7 @@ public:
 
     SparseMatrix(llong n_row, llong n_col);
     // Copy constructor
-    SparseMatrix(dmat& dense);
+    //SparseMatrix(dmat& dense);
 
     ~SparseMatrix();
 
@@ -41,7 +41,7 @@ public:
     void append_value(double value, llong i, llong j);
 
     void debug_print();
-    dmat dense();
+    //dmat dense();
     dvec multiply(dvec& x, bool transpose = false);
     void multiply_inplace_rep(dvec& x, llong times, bool transpose = false);
 

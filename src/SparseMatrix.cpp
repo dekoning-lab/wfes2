@@ -15,7 +15,7 @@ SparseMatrix::SparseMatrix(llong n_row, llong n_col):
     row_index[0] = 0;
 }
 
-SparseMatrix::SparseMatrix(dmat& dense): 
+/*SparseMatrix::SparseMatrix(dmat& dense): 
     current_row(0), full(true), 
     row_index_start(-1),
     non_zeros(0), 
@@ -38,7 +38,7 @@ SparseMatrix::SparseMatrix(dmat& dense):
     free(j);
 
     if(info != 0) throw std::runtime_error("SparseMatrix::dense(): Error processing row " + std::to_string(info));
-}
+}*/
 
 SparseMatrix::~SparseMatrix() 
 {
@@ -153,7 +153,7 @@ void SparseMatrix::debug_print()
     print_buffer(row_index, (size_t)(n_row + 1));
 }
 
-dmat SparseMatrix::dense() 
+/*dmat SparseMatrix::dense() 
 {
     dmat dns(n_row, n_col);
 
@@ -169,7 +169,7 @@ dmat SparseMatrix::dense()
     if(info != 0) throw std::runtime_error("SparseMatrix::dense(): Error processing row " + std::to_string(info));
 
     return dns;
-}
+}*/
 
 dvec SparseMatrix::multiply(dvec& x, bool transpose) 
 {

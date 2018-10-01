@@ -9,7 +9,7 @@ MKL_INC := $(MKL_HOME)/include
 
 SRC_PATH := ../src
 INC_PATH := ../include
-DEP := PardisoSolver.cpp SparseMatrix.cpp WrightFisher.cpp parsing.cpp rdist.cpp util.cpp
+DEP := PardisoSolver.cpp SparseMatrix.cpp WrightFisher.cpp parsing.cpp rdist.cpp util.cpp WSMPSolver.cpp
 SRC := $(addprefix $(SRC_PATH)/, $(DEP))
 
 TARGETS := wfes_single wfes_switching wfes_sweep wfafle
@@ -20,4 +20,4 @@ all: $(TARGETS)
 	g++ -o $@ $^ --std=c++11 -I$(INC_PATH) -I$(MKL_INC) -Wl,--start-group $(MKL_LIBS) $(WSMP_HOME)/libwsmp8_8.a -Wl,--end-group $(LIBS) -m64 -DMKL_ILP64
 
 clean: 
-	rm -rf wfes_single
+	rm -rf $(TARGETS)
