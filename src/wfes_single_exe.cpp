@@ -1,6 +1,6 @@
 #include "common.hpp"
 #include "WrightFisher.hpp"
-#include "PardisoSolver.hpp"
+#include "WSMPSolver.hpp"
 #include "parsing.hpp"
 #include "util.hpp"
 #include "args.hpp"
@@ -138,7 +138,7 @@ int main(int argc, char const *argv[])
 
         llong size = (2 * population_size);
 
-        PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+        WSMPSolver solver(W.Q);
         solver.analyze();
 
         dvec id(size);
@@ -188,7 +188,7 @@ int main(int argc, char const *argv[])
 
         llong size = (2 * population_size) - 1;
 
-        PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+        WSMPSolver solver(W.Q);
         solver.analyze();
 
         dvec R_ext = W.R.col(0);
@@ -272,7 +272,7 @@ int main(int argc, char const *argv[])
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
 
         W.Q.subtract_identity();   
-        PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+        WSMPSolver solver(W.Q);
         solver.analyze();
         dmat N(size, size);
         dvec id(size);
@@ -295,7 +295,7 @@ int main(int argc, char const *argv[])
     if (equilibrium_f) {
         llong size = (2 * population_size) + 1;
         WF::Matrix W = WF::Equilibrium(population_size, s, h, u, v, a, verbose_f, b); 
-        PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+        WSMPSolver solver(W.Q);
         solver.analyze();
         dvec O = dvec::Zero(size);
         O(size - 1) = 1;
@@ -329,7 +329,7 @@ int main(int argc, char const *argv[])
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
         dvec Q_x = W.Q.col_copy(x);
         W.Q.subtract_identity();
-        PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+        WSMPSolver solver(W.Q);
         solver.analyze();
 
         W.Q.subtract_identity();

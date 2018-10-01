@@ -85,3 +85,10 @@ dvec WSMPSolver::solve(const dvec& x, bool transpose)
 	return sol;
 
 }
+
+/*
+WSMPSolver::~WSMPSolver()
+{
+	// Should there be cleanup?
+}
+*/

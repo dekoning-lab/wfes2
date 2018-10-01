@@ -21,7 +21,7 @@ class WSMPSolver {
 
 	public:
 	WSMPSolver(SparseMatrix& A, llong nrhs = 1);
-	~WSMPSolver();
+	//~WSMPSolver();
 	void analyze();
 	dvec solve(const dvec& b, bool transpose = false);
 };
