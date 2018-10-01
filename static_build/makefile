@@ -17,7 +17,7 @@ TARGETS := wfes_single wfes_switching wfes_sweep wfafle
 all: $(TARGETS)
 
 %: $(SRC) $(SRC_PATH)/%_exe.cpp
-	g++ -o $@ $^ --std=c++11 -I$(INC_PATH) -I$(MKL_INC) -Wl,--start-group $(MKL_LIBS) $(WSMP_HOME)/libwsmp8_8.a -Wl,--end-group $(LIBS) -m64 -DMKL_ILP64
+	g++ -o $@ $^ --std=c++11 -I$(INC_PATH) -I$(MKL_INC) -Wl,--start-group $(MKL_LIBS) $(WSMP_HOME)/libwsmp8_8.a -Wl,--end-group $(LIBS) -m64 -DMKL_ILP64 -fopenmp
 
 clean: 
 	rm -rf $(TARGETS)

@@ -5,7 +5,7 @@
 
 extern "C" {
 	void wgsmp_(llong *n, llong *ia, llong *ja, double *avals,  double *b, llong *ldb, llong *nrhs, double *rmisc, llong *iparm, double *dparm);
-	void wsetmaxthrds_(llong* nthrds);
+	void wsetmaxthrds_(int* nthrds);
 }
 
 class WSMPSolver {
@@ -20,7 +20,7 @@ class WSMPSolver {
 	dvec workspace;
 
 	public:
-	WSMPSolver(SparseMatrix& A, llong nrhs = 1);
+	WSMPSolver(SparseMatrix& A, llong nrhs = 1, int n_threads = 16);
 	//~WSMPSolver();
 	void analyze();
 	dvec solve(const dvec& b, bool transpose = false);

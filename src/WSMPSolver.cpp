@@ -1,6 +1,6 @@
 #include "WSMPSolver.hpp"
 
-WSMPSolver::WSMPSolver(SparseMatrix& A, llong n_rhs):
+WSMPSolver::WSMPSolver(SparseMatrix& A, llong n_rhs, int n_threads):
 	size(A.n_row),
 	n_right_hand_sides(n_rhs),
 	m(A),
@@ -8,6 +8,7 @@ WSMPSolver::WSMPSolver(SparseMatrix& A, llong n_rhs):
 	dparm(dvec::Zero(64)),
 	workspace(dvec::Zero(size * n_rhs))
 {
+	wsetmaxthrds_(&n_threads);
 	iparm[0] = 0;  // default iparm
 	iparm[4] = 0;  // C-style indexing
 }
