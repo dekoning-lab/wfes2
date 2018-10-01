@@ -36,7 +36,7 @@ void WSMPSolver::analyze()
 		printf("The following ERROR was detected in S1: %lld\n", iparm[63]);
 		exit(1);
 	}
-	printf("NNZ 1000x%lld; FLOPS: %f\n", iparm[23], dparm[23]);
+	// printf("NNZ 1000x%lld; FLOPS: %f\n", iparm[23], dparm[23]);
 	// }}}
 
 	// --- Factorization {{{
