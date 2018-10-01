@@ -93,7 +93,6 @@ WrightFisher::Matrix WrightFisher::Equilibrium(
             W.Q.next_row();
         }
     }
-    W.Q.compress_csr();
     if (verbose) {
         t_end = std::chrono::system_clock::now();
         time_diff dt = t_end - t_start;
@@ -199,7 +198,6 @@ WrightFisher::Matrix WrightFisher::Single(
         }
     }
 
-    W.Q.compress_csr();
     if (verbose) {
         t_end = std::chrono::system_clock::now();
         time_diff dt = t_end - t_start;
@@ -352,7 +350,6 @@ WrightFisher::Matrix WrightFisher::Switching(
         }
     }
     
-    W.Q.compress_csr();
     if (verbose) {
         t_end = std::chrono::system_clock::now();
         time_diff dt = t_end - t_start;
@@ -415,7 +412,6 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(
         }
     }
 
-    W.Q.compress_csr();
     if (verbose) {
         t_end = std::chrono::system_clock::now();
         time_diff dt = t_end - t_start;
@@ -485,7 +481,6 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToBothAbsorbing(
         }
     }
 
-    W.Q.compress_csr();
     if (verbose) {
         t_end = std::chrono::system_clock::now();
         time_diff dt = t_end - t_start;

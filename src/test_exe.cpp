@@ -9,6 +9,16 @@ namespace WFE = WrightFisherElementary;
 
 using namespace std;
 
+TEST_CASE("Positive min", "[util]")
+{
+    REQUIRE(positive_min(-1,0) == 0);
+    REQUIRE(positive_min(0,-1) == 0);
+    REQUIRE(positive_min(3,-1) == 3);
+    REQUIRE(positive_min(-1,7) == 7);
+    REQUIRE(positive_min(2,4)  == 2);
+    REQUIRE(positive_min(8,9)  == 8);
+}
+
 TEST_CASE("Sparse Matrix Column accessor", "[sparse]") {
 	WF::Matrix W = WF::Single(100, 100, WF::BOTH_ABSORBING, 0, 0.5, 1e-9, 1e-9, true, 0);
 	REQUIRE(approx_eq(W.Q.dense().col(10), W.Q.col_copy(10)));
@@ -44,7 +54,7 @@ TEST_CASE("Sparse Matrix vector multiplication", "[sparse]") {
 
 TEST_CASE("Sparse Matrix in COO format converts to CSR", "[sparse]") 
 {
-    llong k = 100;
+    llong k = 4;
     SparseMatrix A(k, k);
     dmat B(k, k);
     for(llong i = 0; i < k; i++) {
@@ -52,7 +62,6 @@ TEST_CASE("Sparse Matrix in COO format converts to CSR", "[sparse]")
         A.append_row(range, 0, k-1);
         B.row(i) = range;
     }
-    A.compress_csr();
 
     REQUIRE(approx_eq(A.dense(), B));
 }

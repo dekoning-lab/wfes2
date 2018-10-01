@@ -1,5 +1,13 @@
 #include "util.hpp"
 
+llong positive_min(llong a, llong b)
+{
+    if (a == 0 && b == 0) return 0;
+    if (a >= 0 && b <  0) return a;
+    if (a <  0 && b >= 0) return b;
+    if (a <= b) return a;
+    else return b;
+}
 bool approx_eq(const dvec& a, const dvec& b, double tol) {
 	return ((a - b).array().abs() < tol).all();
 }

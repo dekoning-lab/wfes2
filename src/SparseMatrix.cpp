@@ -1,20 +1,24 @@
 #include "SparseMatrix.hpp"
 
 SparseMatrix::SparseMatrix(llong n_row, llong n_col): 
-    current_row(0), full(false), compressed(false), non_zeros(0), 
+    current_row(0), full(false), 
+    row_index_start(-1),
+    non_zeros(0), 
     n_row(n_row), n_col(n_col), 
     data(nullptr), cols(nullptr), row_index(nullptr)
 {
     data = (double*)malloc(sizeof(double));
     cols = (llong*) malloc(sizeof(llong));
-    rows = (llong*) malloc(sizeof(llong));
+    //rows = (llong*) malloc(sizeof(llong));
     row_index = (llong*)malloc((n_row + 1) * sizeof(llong));
 
     row_index[0] = 0;
 }
 
 SparseMatrix::SparseMatrix(dmat& dense): 
-    current_row(0), full(true), compressed(true), non_zeros(0), 
+    current_row(0), full(true), 
+    row_index_start(-1),
+    non_zeros(0), 
     n_row(dense.rows()), n_col(dense.cols()), 
     data(nullptr), cols(nullptr), row_index(nullptr) 
 {
@@ -41,7 +45,7 @@ SparseMatrix::~SparseMatrix()
     free(data);
     free(cols);
     free(row_index);
-    if (!compressed) { free(rows); }
+    //if (!compressed) { free(rows); }
 }
 
 lvec closed_range(llong start, llong stop) 
@@ -49,39 +53,6 @@ lvec closed_range(llong start, llong stop)
     lvec r(stop - start + 1);
     for(llong i = start; i <= stop; i++) r(i - start) = i;
     return r;
-}
-
-void SparseMatrix::append_data_csr(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row, llong slack) 
-{
-    
-    assert((m1 - m0) == (r1 - r0));
-
-    llong size = r1 - r0 + 1;
-    llong nnz = non_zeros + size + slack;
-
-    // row index
-    // if(new_row) row_index[current_row + 1] = nnz;
-
-    // cols
-    llong* cols_new = (llong*)realloc(cols, nnz * sizeof(llong));
-    if (cols_new != NULL) cols = cols_new;
-    else throw std::runtime_error("SparseMatrix::append_data_csr(): Reallocation failed - cols");
-
-    lvec range = closed_range(m0, m1);
-
-    // is accessing data() like this ok?
-    memcpy(&cols[non_zeros], range.data(), size * sizeof(llong));
-
-    // data
-    double* data_new = (double*)realloc(data, nnz * sizeof(double));
-    if (data_new != NULL) data = data_new;
-    else throw std::runtime_error("SparseMatrix::append_data_csr(): Reallocation failed - data");
-
-    memcpy(&(data[non_zeros]), &(row.data()[r0]), size * sizeof(double));
-
-    non_zeros += (size + slack);
-
-    if (new_row) finalize_row();
 }
 
 void SparseMatrix::append_chunk(dvec& row, llong m0, llong m1, llong r0, llong r1) 
@@ -92,16 +63,13 @@ void SparseMatrix::append_chunk(dvec& row, llong m0, llong m1, llong r0, llong r
 
     llong new_size = non_zeros + insert_size;
 
-    // Rows
-    llong* rows_new = (llong*) realloc(rows, new_size * sizeof(llong));
-    assert(rows_new != NULL); rows = rows_new;
-    lvec row_idx = lvec::Constant(insert_size, current_row);
-    memcpy(&rows[non_zeros], row_idx.data(), insert_size * sizeof(llong));
+    row_index_start = positive_min(row_index_start, non_zeros);
 
     // Columns
     llong* cols_new = (llong*) realloc(cols, new_size * sizeof(llong));
     assert(cols_new != NULL); cols = cols_new;
-    lvec col_idx = lvec::LinSpaced(insert_size, m0, m1);
+    lvec col_idx = closed_range(m0, m1);
+    //lvec col_idx = lvec::LinSpaced(insert_size, m0, m1);
     memcpy(&cols[non_zeros], col_idx.data(), insert_size * sizeof(llong));
 
     // Data
@@ -114,7 +82,13 @@ void SparseMatrix::append_chunk(dvec& row, llong m0, llong m1, llong r0, llong r
 
 void SparseMatrix::next_row()
 {
+    row_index[current_row] = row_index_start;
     current_row += 1;
+    row_index_start = -1; // special value - will be reset to min of row_index on next row
+    if(current_row == n_row) {
+        full = true;
+        row_index[n_row] = non_zeros;
+    }
 }
 
 void SparseMatrix::append_row(dvec& row, llong col_start, llong col_end)
@@ -129,10 +103,7 @@ void SparseMatrix::append_value(double v, llong i, llong j)
 {
     llong new_size = non_zeros + 1;
 
-    // Rows
-    llong* rows_new = (llong*) realloc(rows, new_size * sizeof(llong));
-    assert(rows_new != NULL); rows = rows_new;
-    rows[new_size - 1] = i;
+    row_index_start = positive_min(row_index_start, non_zeros);
 
     // Columns
     llong* cols_new = (llong*) realloc(cols, new_size * sizeof(llong));
@@ -147,7 +118,7 @@ void SparseMatrix::append_value(double v, llong i, llong j)
     non_zeros += 1;
 }
 
-void SparseMatrix::compress_csr(bool cleanup)
+/*void SparseMatrix::compress_csr(bool cleanup)
 {
     llong c_row = -1;
     for(llong i = 0; i < non_zeros; i++) {
@@ -168,20 +139,7 @@ void SparseMatrix::compress_csr(bool cleanup)
         compressed = true;
         free(rows);
     }
-}
-
-
-void SparseMatrix::finalize_row() 
-{
-    row_index[current_row + 1] = non_zeros;
-    current_row ++;
-
-    // last row
-    if (current_row == n_row) {
-        full = true;
-        row_index[n_row] = non_zeros;
-    }
-}
+}*/
 
 void SparseMatrix::debug_print()
 {
@@ -189,8 +147,8 @@ void SparseMatrix::debug_print()
     print_buffer(data, (size_t)non_zeros);
     std::cout << "cols:   " << std::endl;
     print_buffer(cols, (size_t)non_zeros);
-    std::cout << "rows:   " << std::endl;
-    print_buffer(rows, (size_t)non_zeros);
+    //std::cout << "rows:   " << std::endl;
+    //print_buffer(rows, (size_t)non_zeros);
     std::cout << "row_index:  " << std::endl;
     print_buffer(row_index, (size_t)(n_row + 1));
 }
@@ -293,24 +251,29 @@ dvec SparseMatrix::get_diag_copy()
     assert(n_row == n_col);
 
     dvec diag(n_row);
-    llong next_diag = 0;
-    if (!compressed) {
-        for(llong i = 0; i < non_zeros; i++) {
-            if (cols[i] == rows[i]) {
-                if (cols[i] != next_diag) throw std::runtime_error("Diagonal entry uninitialized " + std::to_string(next_diag));
-                else {
-                    next_diag += 1;
-                    diag[cols[i]] = data[i];
+    //llong next_diag = 0;
+    //if (!compressed) {
+        //for(llong i = 0; i < non_zeros; i++) {
+            //if (cols[i] == rows[i]) {
+                //if (cols[i] != next_diag) throw std::runtime_error("Diagonal entry uninitialized " + std::to_string(next_diag));
+                //else {
+                    //next_diag += 1;
+                    //diag[cols[i]] = data[i];
+                //}
+            //}
+        //}
+    //} else {
+        for (llong i = 0; i < n_row; ++i) {
+            bool diag_found = false;
+            for (llong j = row_index[i]; j < row_index[i + 1]; ++j) {
+                if (cols[j] == i) {
+                    diag[i] = data[j];
+                    diag_found = true;
                 }
             }
+            if (!diag_found) throw std::runtime_error("Diagonal entry uninitialized " + std::to_string(i));
         }
-    } else {
-        for (llong i = 0; i < n_row; ++i) {
-            for (llong j = row_index[i]; j < row_index[i + 1]; ++j) {
-                if (cols[j] == i) diag[i] = data[j];
-            }
-        }
-    }
+    //}
 
     return diag;
 }

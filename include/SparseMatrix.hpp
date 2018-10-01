@@ -1,13 +1,14 @@
 #pragma once
 
 #include "common.hpp"
+#include "util.hpp"
 
 class SparseMatrix
 {
 protected:
     llong current_row;
     bool full;
-    bool compressed;
+    llong row_index_start;
 
 public:
     llong non_zeros;
@@ -16,7 +17,7 @@ public:
 
     double* data;
     llong* cols;
-    llong* rows;
+    //llong* rows;
     llong* row_index;
 
 
@@ -34,15 +35,10 @@ public:
     //    m0 = 0;  m1 = 3;  
     // insert row from r0 to r1 (row index) into matrix from m0 to m1 (matrix index)
 
-    // old interface
-    void append_data_csr(dvec& row, llong m0, llong m1, llong r0, llong r1, bool new_row = true, llong slack = 0);
-    void finalize_row();
-
     void append_row(dvec& row, llong col_start = 0, llong col_end = -1);
     void append_chunk(dvec& row, llong m0, llong m1, llong r0, llong r1);
     void next_row();
     void append_value(double value, llong i, llong j);
-    void compress_csr(bool cleanup = true);
 
     void debug_print();
     dmat dense();
