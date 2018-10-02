@@ -43,7 +43,7 @@ set(MKL_LIBS "-lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core")
 set(INTEL_OMP_LIBS "-liomp5 -lpthread")
 set(OTHER_LIBS "-lm -ldl")
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -DMKL_ILP64 -m64 -Wall -Wformat -Wno-deprecated-declarations")
+set(CMAKE_CXX_FLAGS "-DMKL_ILP64 -m64 -Wall -Wformat -Wno-deprecated-declarations")
 
 if(OMP)
     message(STATUS "Using OpenMP")
