@@ -14,6 +14,7 @@
 #include <vector>
 #include <sstream>
 #include <chrono>
+#include <stdexcept>
 
 #include <mkl.h>
 
