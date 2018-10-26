@@ -43,15 +43,14 @@ set(MKL_LIBS "-lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core")
 set(INTEL_OMP_LIBS "-liomp5 -lpthread")
 set(OTHER_LIBS "-lm -ldl")
 
-set(CMAKE_CXX_FLAGS "-DMKL_ILP64 -m64 -Wall -Wformat -Wno-deprecated-declarations")
+set(CMAKE_CXX_FLAGS "-std=c++11 -DMKL_ILP64 -m64 -Wall -Wformat -Wno-deprecated-declarations")
 
 if(OMP)
     message(STATUS "Using OpenMP")
-    string(APPEND CMAKE_CXX_FLAGS " -fopenmp -DOMP")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -DOMP")
 endif()
 
-file(GLOB LIB_SOURCES "src/*.cpp")
-list(FILTER LIB_SOURCES EXCLUDE REGEX "src/.*_exe.cpp")
+file(GLOB LIB_SOURCES "src/lib/*.cpp")
 
 link_directories(${INTEL_OMP_LIB_DIRS} ${MKL_LIB_DIR})
 include_directories(${MKL_INCLUDE_DIR})
