@@ -302,7 +302,14 @@ int main(int argc, char const *argv[])
 
         dvec pi = solver.solve(O, true);
         write_vector_to_file(pi, args::get(output_E_f));
-        if (csv_f) {
+
+	double eFreq = 0.0;
+	for (llong i=0; i<size; i++) {
+		eFreq += i * pi[i];
+	}
+	eFreq /= (size-1);
+
+	if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
                     population_size, s, h, u, v, a);
 
@@ -313,7 +320,9 @@ int main(int argc, char const *argv[])
             printf("u = " DPF "\n", u);
             printf("v = " DPF "\n", v);
             printf("a = " DPF "\n", a);
-        }
+            printf("E[freq mut] = " DPF "\n", eFreq);
+            printf("E[freq  wt] = " DPF "\n", (1.0 - eFreq) );
+	}
     }
 
     if(allele_age_f) // BEGIN SINGLE ALLELE AGE
