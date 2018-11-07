@@ -748,7 +748,7 @@ namespace args
         const size_t min;
         const size_t max;
 
-        Nargs(size_t min_, size_t max_) : min(min_), max(max_)
+        Nargs(size_t min_, size_t max_) : min{min_}, max{max_}
         {
 #ifndef ARGS_NOEXCEPT
             if (max < min)
@@ -758,7 +758,7 @@ namespace args
 #endif
         }
 
-        Nargs(size_t num_) : min(num_), max(num_)
+        Nargs(size_t num_) : min{num_}, max{num_}
         {
         }
 
@@ -1761,7 +1761,7 @@ namespace args
                     {
                         parserCoroutine(coro.Parser());
                     }
-                    catch (args::SubparserError)
+                    catch (args::SubparserError&)
                     {
                     }
 #else
@@ -2130,7 +2130,7 @@ namespace args
                     if (child->IsGroup() && !child->Matched())
                     {
                         std::ostringstream problem;
-                        problem << "Could not parse command line.";
+                        problem << "Group validation failed somewhere!";
 #ifdef ARGS_NOEXCEPT
                         error = Error::Validation;
                         errorMsg = problem.str();
