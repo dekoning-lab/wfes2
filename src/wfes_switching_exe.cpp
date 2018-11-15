@@ -121,7 +121,7 @@ int main(int argc, char const *argv[])
 	}
     }
 
-    if(fixation_f) // BEGIN SWITCHING FIXATION {{{
+    if(fixation_f) // BEGIN SWITCHING FIXATION
     {
         WF::Matrix W = WF::Switching(population_sizes, WF::FIXATION_ONLY, s, h, u, v, switching, a, verbose_f);
 
@@ -192,18 +192,13 @@ int main(int argc, char const *argv[])
             printf("Rate = " DPF "\n", rate);
         }
 
-    } // END SWITCHING FIXATION }}}
+    } // END SWITCHING FIXATION
 
-    if(absorption_f) // BEGIN SWITCHING ABSORPTION {{{
+    if(absorption_f) // BEGIN SWITCHING ABSORPTION
     {
         WF::Matrix W = WF::Switching(population_sizes, WF::BOTH_ABSORBING, s, h, u, v, switching, a, verbose_f);
 
-        // start and end states for every model
-        lvec start_state_index(n_models);
-        start_state_index(0) = 0;
-        for(llong i = 1; i < n_models; i++) {
-            start_state_index(i) = start_state_index(i - 1) + ((2 * population_sizes(i - 1)) - 1);
-        }
+	lvec si = start_indeces(2 * population_sizes - lvec::Ones(n_models));
 
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
@@ -211,53 +206,79 @@ int main(int argc, char const *argv[])
         W.Q.subtract_identity();
 
         llong size = (2 * population_sizes.sum()) - n_models;
-        dvec id(size);
 
         PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
         solver.analyze();
 
+	// Get initial probabilities of mu within each model
+	lvec nnz_p0(n_models);
+	vector<dvec> p0(n_models);
+	for (llong i = 0; i < n_models; i++) {
+	    llong pop_size = population_sizes(i);
+	    dvec first_row = WF::binom_row(2 * pop_size, WF::psi_diploid(0, pop_size, s(i), h(i), u(i), v(i)), a).Q;
+	    p0[i] = first_row.tail(first_row.size() - 1) / (1 - first_row(0)); // renormalize
+	    nnz_p0[i] = (p0[i].array() > integration_cutoff).count();
+	}
+
         // extinction and fixation column for each submodel
         dmat B(size, n_models * 2);
-        for(llong i = 0; i < n_models * 2; i++) {
+        for (llong i = 0; i < n_models * 2; i++) {
             dvec R_col = W.R.col(i);
             B.col(i) = solver.solve(R_col, false);
         }
-        dvec B_ext = dvec::Zero(size);
-        dvec B_fix = dvec::Zero(size);
 
-        for(llong i = 0; i < n_models; i++) {
-            B_ext += B.col(i * 2);
-            B_fix += B.col((i * 2) + 1);
-        }
+	map<llong, Eigen::ArrayXd> N_rows;
+        dvec id(size);
+	for (llong i_ = 0; i_ < si.size(); i_++) {
+	    llong i = si[i_];
+	    for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
+		llong idx = i + o_;
+		id.setZero();
+		id(idx) = 1;
+		N_rows[idx] = solver.solve(id, true);
+	    }
+	}
 
-        double P_ext = 0;
-        double P_fix = 0;
+	// absorbing extinction columns of B
+	lvec ke = range_step(0, 2*n_models, 2);
+	// absorbing fixation columns of B
+	lvec kf = range_step(1, 2*n_models, 2);
 
-        for(llong i = 0; i < n_models; i++) {
-            P_ext += p(i) * B_ext(start_state_index(i));
-            P_fix += p(i) * B_fix(start_state_index(i));
-        }
+	double P_ext = 0, P_fix = 0;
+	for (llong i_ = 0; i_ < si.size(); i_++) {
+	    llong i = si[i_];
+	    for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
+		double o = p0[i_](o_);
+		llong idx = i + o_;
 
-        dmat N(n_models, size);
+		for (llong k_ = 0; k_ < ke.size(); k_++) {
+		    P_ext += o * p[i_] * B(idx, ke[k_]);
+		}
 
-        for(llong i = 0; i < n_models; i++) {
-            id.setZero();
-            id(start_state_index(i)) = 1;
-            N.row(i) = solver.solve(id, true);
-            N.row(i) *= p(i);
-        }
+		for (llong k_ = 0; k_ < kf.size(); k_++) {
+		    P_fix += o * p[i_] * B(idx, kf[k_]);
+		}
+	    }
+	}
 
-        dvec N_1 = N.colwise().sum();
+	double T_ext = 0, T_fix = 0;
+	for (llong i_ = 0; i_ < si.size(); i_++) {
+	    llong i = si[i_];
+	    for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
+		double o = p0[i_](o_);
+		llong idx = i + o_;
 
-        dvec E_ext = B_ext.transpose() * N_1;
-        E_ext /= P_ext;
-        double T_ext = E_ext.sum();
+		for (llong k_ = 0; k_ < ke.size(); k_++) {
+		    T_ext += ((o * p[i_] / P_ext) * (B.col(ke[k_]).array() * N_rows[idx])).sum();
+		}
 
-        dvec E_fix = B_fix.transpose() * N_1;
-        E_fix /= P_fix;
-        double T_fix = E_fix.sum();
+		for (llong k_ = 0; k_ < kf.size(); k_++) {
+		    T_fix += ((o * p[i_] / P_fix) * (B.col(kf[k_]).array() * N_rows[idx])).sum();
+		}
+	    }
+	}
 
-        if(output_N_f) write_matrix_to_file(N, args::get(output_N_f));
+        // if(output_N_f) write_matrix_to_file(N, args::get(output_N_f));
         if(output_B_f) write_matrix_to_file(B, args::get(output_B_f));
 
         if (csv_f) {
@@ -289,7 +310,7 @@ int main(int argc, char const *argv[])
             printf("T_fix = " DPF "\n", T_fix);
         }
 
-    } // END SWITCHING ABSORPTION }}}
+    } // END SWITCHING ABSORPTION
 
     if (verbose_f) {
         t_end = std::chrono::system_clock::now();
