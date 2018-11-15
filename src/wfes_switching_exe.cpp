@@ -11,8 +11,8 @@ using namespace std;
 
 int main(int argc, char const *argv[])
 {
-	args::ArgumentParser parser("WFES-SWITCHING");
-	parser.helpParams.width = 120;
+    args::ArgumentParser parser("WFES-SWITCHING");
+    parser.helpParams.width = 120;
     parser.helpParams.helpindent = 50;
     parser.helpParams.flagindent = 2;
 
@@ -31,6 +31,7 @@ int main(int argc, char const *argv[])
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> forward_mutation_f(parser, "float[k]", "Forward mutation rates", {'v', "forward-mu"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> starting_prob_f(parser, "float[k]", "Starting probabilities", {'p', "starting-prob"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>, NumericMatrixReader<double>> switching_f(parser, "float[k][k]", "Switching parameters over models", {'r', "switching"});
+    args::ValueFlag<double> integration_cutoff_f(parser, "float", "Starting number of copies integration cutoff", {'c', "integration-cutoff"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
     args::ValueFlag<llong>  n_threads_f(parser, "int", "Number of threads", {'t', "num-threads"});
 
@@ -79,6 +80,7 @@ int main(int argc, char const *argv[])
     dmat switching = switching_f ? args::get(switching_f) : dmat::Ones(n_models, n_models);
 
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
+    double integration_cutoff = integration_cutoff_f ? args::get(integration_cutoff_f) : 1e-10;
     llong n_threads = n_threads_f ? args::get(n_threads_f) : 1;
 
     #ifdef OMP
@@ -90,22 +92,22 @@ int main(int argc, char const *argv[])
 
     if (!force_f) {
     	if (population_sizes.maxCoeff() > 500000) {
-    		throw args::Error("Population size is quite large - the computations will take a long time. Use --force to ignore");   
-    	}
+	    throw args::Error("Population size is quite large - the computations will take a long time. Use --force to ignore");   
+	}
     	dvec N = population_sizes.cast<double>();
     	dvec theta_f = dvec::Constant(n_models, 4).array() * N.array() * v.array();
     	dvec theta_b = dvec::Constant(n_models, 4).array() * N.array() * u.array();
     	double max_theta = max(theta_b.maxCoeff(), theta_f.maxCoeff());
     	if (max_theta > 1) {
-    		throw args::Error("The mutation rate might violate the Wright-Fisher assumptions. Use --force to ignore");
-    	}
+	    throw args::Error("The mutation rate might violate the Wright-Fisher assumptions. Use --force to ignore");
+	}
     	dvec gamma = dvec::Constant(n_models, 2).array() * N.array() * s.array();
     	if (s.minCoeff() <= -1) {
-    		throw args::Error("The selection coefficient is quite negative. Fixations might be impossible. Use --force to ignore");
-    	}
+	    throw args::Error("The selection coefficient is quite negative. Fixations might be impossible. Use --force to ignore");
+	}
     	if (a > 1e-5) {
-    		throw args::Error("Zero cutoff value is quite high. This might produce inaccurate results. Use --force to ignore");   
-    	}
+	    throw args::Error("Zero cutoff value is quite high. This might produce inaccurate results. Use --force to ignore");   
+	}
     }
 
     // dmat switching = GTR::Matrix(p, r);
@@ -115,8 +117,8 @@ int main(int argc, char const *argv[])
     dvec row_sums = switching.rowwise().sum();
     for (llong i = 0; i < n_models; i++) {
         for (llong j = 0; j < n_models; j++) {
-            switching(i, j) /= row_sums(i);
-        }
+	    switching(i, j) /= row_sums(i);
+	}
     }
 
     if(fixation_f) // BEGIN SWITCHING FIXATION {{{
