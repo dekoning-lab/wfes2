@@ -15,3 +15,6 @@ llong positive_min(llong a, llong b);
 bool approx_eq(const dvec& a, const dvec& b, double tol = 1e-10);
 bool approx_eq(const dmat& a, const dmat& b, double tol = 1e-10);
 double total_diff(const dmat& a, const dmat& b);
+
+lvec start_indeces(lvec n);
+lvec range_step(llong a, llong b, llong s);

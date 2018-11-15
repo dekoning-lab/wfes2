@@ -61,3 +61,22 @@ void print_vector(const lvec& src, const char* prefix, const char* postfix, cons
     printf(LPF, src(size-1));
     printf("%s", postfix);
 }
+
+// Pick start indeces for a given vector of population sizes
+// 100, 200 -> 0, 199
+lvec start_indeces(lvec n) {
+    lvec si = lvec::Zero(n.size());
+    for (llong i = 1; i < n.size(); i++) {
+	si[i] = si[i-1] + n[i-1];
+    }
+    return si;
+}
+
+// Like python's strided slice array[a:b:s]
+lvec range_step(llong a, llong b, llong s) {
+    lvec r = lvec::Zero(ceil((b-a)/double(s)));
+    for(llong v = a, i = 0; v < b; v += s, i++) {
+	r[i] = v;
+    }
+    return r;
+}

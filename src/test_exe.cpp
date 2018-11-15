@@ -288,6 +288,31 @@ SCENARIO("Switching non-standard models with large magnitude selection", "[switc
     }
 }
 
+TEST_CASE("start_indeces are computed", "[extra]") {
+    lvec x(3); x << 199, 199, 399;
+    lvec ex(3); ex << 0, 199, 398;
+    REQUIRE(ex == start_indeces(x));
+}
+
+TEST_CASE("start_indeces with arithmetic", "[extra]") {
+    lvec x(3); x << 100, 100, 200;
+    lvec ex(3); ex << 0, 199, 398;
+    REQUIRE(ex == start_indeces(2*x-lvec::Ones(x.size())));
+}
+
+TEST_CASE("boolean subset", "[extra]") {
+    dvec x(6); x << 0.9, 0.8, 0.7, 0.6, 0.5, 0.4;
+    dvec ex(3); ex << 0.9, 0.8, 0.7;
+    REQUIRE((x.array()>0.5).count() == 4);
+}
+
+TEST_CASE("step range works", "[extra]") {
+    lvec ex0(3); ex0 << 0, 2, 4;
+    lvec ex1(3); ex1 << 1, 3, 5;
+    REQUIRE(range_step(0,6,2) == ex0);
+    REQUIRE(range_step(1,6,2) == ex1);
+}
+
 int main( int argc, char* argv[] ) {
 	#ifdef OMP
 		cout << "Using OMP" << endl;
