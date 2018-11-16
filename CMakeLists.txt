@@ -74,7 +74,7 @@ target_link_libraries(wfes_switching wfes)
 add_executable(test_wfes "src/test_exe.cpp")
 target_link_libraries(test_wfes wfes)
 
-#add_executable(dummy "src/dummy_exe.cpp")
-#target_link_libraries(dummy wfes)
+add_executable(phase_type_dist "src/phase_type_dist_exe.cpp")
+target_link_libraries(phase_type_dist wfes)
 
 # install(TARGETS wfafle RUNTIME DESTINATION bin)
