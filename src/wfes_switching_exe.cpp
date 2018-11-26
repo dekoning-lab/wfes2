@@ -227,7 +227,7 @@ int main(int argc, char const *argv[])
             B.col(i) = solver.solve(R_col, false);
         }
 
-	map<llong, Eigen::ArrayXd> N_rows;
+	map<llong, dvec> N_rows;
         dvec id(size);
 	for (llong i_ = 0; i_ < si.size(); i_++) {
 	    llong i = si[i_];
@@ -269,16 +269,16 @@ int main(int argc, char const *argv[])
 		llong idx = i + o_;
 
 		for (llong k_ = 0; k_ < ke.size(); k_++) {
-		    T_ext += ((o * p[i_] / P_ext) * (B.col(ke[k_]).array() * N_rows[idx])).sum();
+		    T_ext += ((o * p[i_] / P_ext) * (B.col(ke[k_]).array() * N_rows[idx].array())).sum();
 		}
 
 		for (llong k_ = 0; k_ < kf.size(); k_++) {
-		    T_fix += ((o * p[i_] / P_fix) * (B.col(kf[k_]).array() * N_rows[idx])).sum();
+		    T_fix += ((o * p[i_] / P_fix) * (B.col(kf[k_]).array() * N_rows[idx].array())).sum();
 		}
 	    }
 	}
 
-        // if(output_N_f) write_matrix_to_file(N, args::get(output_N_f));
+        if(output_N_f) write_vector_map_to_file(N_rows, args::get(output_N_f));
         if(output_B_f) write_matrix_to_file(B, args::get(output_B_f));
 
         if (csv_f) {
