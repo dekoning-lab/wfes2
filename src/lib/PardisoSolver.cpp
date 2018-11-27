@@ -82,7 +82,7 @@ dvec PardisoSolver::get_diagonal()
 
   if(error == 1) throw std::runtime_error("PardisoSolver::get_diagonal(): Diagonal information not turned on before pardiso main loop: " + std::to_string(error));
 
-  return d_initial;
+  return d_factorized;
 }
 
 PardisoSolver::~PardisoSolver()
