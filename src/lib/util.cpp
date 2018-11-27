@@ -35,7 +35,7 @@ void write_vector_map_to_file(const std::map<llong, dvec>& A, std::string path, 
 	for(auto const &item : A) {
 	    llong key = item.first;
 	    dvec value = item.second;
-	    std::cout << key << ": " << value.format(CSVRowFormat) << std::endl;
+	    std::cout << key << ", " << value.format(CSVRowFormat) << std::endl;
 	}
     } else {
 	std::ios_base::openmode mode = append ? std::ios_base::app : std::ios_base::out;
@@ -44,7 +44,7 @@ void write_vector_map_to_file(const std::map<llong, dvec>& A, std::string path, 
 	    for(auto const &item : A) {
 		llong key = item.first;
 		dvec value = item.second;
-		file << key << ": " << value.format(CSVRowFormat) << std::endl;
+		file << key << ", " << value.format(CSVRowFormat) << std::endl;
 	    }
 	}
     }
