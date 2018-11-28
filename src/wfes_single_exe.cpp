@@ -44,6 +44,8 @@ int main(int argc, char const *argv[])
     args::ValueFlag<string> output_Q_f(parser, "path", "Output Q matrix to file", {"output-Q"});
     args::ValueFlag<string> output_R_f(parser, "path", "Output R vectors to file", {"output-R"});
     args::ValueFlag<string> output_N_f(parser, "path", "Output N matrix to file", {"output-N"});
+    args::ValueFlag<string> output_N_ext_f(parser, "path", "Output extinction-conditional sojourn to file", {"output-N-ext"});
+    args::ValueFlag<string> output_N_fix_f(parser, "path", "Output fixation-conditional sojourn to file", {"output-N-fix"});
     args::ValueFlag<string> output_B_f(parser, "path", "Output B vectors to file", {"output-B"});
     args::ValueFlag<string> output_I_f(parser, "path", "Output Initial probability distribution", {"output-I"});
     args::ValueFlag<string> output_E_f(parser, "path", "Output Equilibrium frequencies to file (--equilibrium only)", {"output-E"});
@@ -207,6 +209,8 @@ int main(int argc, char const *argv[])
         // double N_ext = 0;
 
         dmat N_mat(z, size);
+        dmat E_ext_mat(z, size);
+        dmat E_fix_mat(z, size);
         dmat N2_mat(z, size);
         if(!starting_copies_f) {
             for(llong i = 0; i < z; i++) {
@@ -218,16 +222,20 @@ int main(int argc, char const *argv[])
                 N2_mat.row(i) = solver.solve(N1, true);
 
                 P_ext += B_ext(i) * starting_copies_p(i);
-                dvec E_ext = B_ext.transpose() * N_mat.row(i).transpose() / B_ext(i);
+                dvec E_ext = B_ext.array() * N1.array() / B_ext(i);
+                E_ext_mat.row(i) = E_ext;
                 dvec E_ext_var = B_ext.transpose() * N2_mat.row(i).transpose() / B_ext(i);
                 T_ext += E_ext.sum() * starting_copies_p(i);
-                T_ext_var += ((2 * E_ext_var.sum() - E_ext.sum()) - pow(E_ext.sum(), 2)) * starting_copies_p(i);
+                T_ext_var += ((2 * E_ext_var.sum() - E_ext.sum()) - 
+                        pow(E_ext.row(i).sum(), 2)) * starting_copies_p(i);
 
                 P_fix += B_fix(i) * starting_copies_p(i);
-                dvec E_fix = B_fix.transpose() * N_mat.row(i).transpose() / B_fix(i);
+                dvec E_fix = B_fix.array() * N1.array() / B_fix(i);
+                E_fix_mat.row(i) = E_fix;
                 dvec E_fix_var = B_fix.transpose() * N2_mat.row(i).transpose() / B_fix(i);
                 T_fix += E_fix.sum() * starting_copies_p(i);
-                T_fix_var += ((2 * E_fix_var.sum() - E_fix.sum()) - pow(E_fix.sum(), 2)) * starting_copies_p(i);
+                T_fix_var += ((2 * E_fix_var.sum() - E_fix.sum()) - 
+                        pow(E_fix.sum(), 2)) * starting_copies_p(i);
             }    
         } else {
             id.setZero();
@@ -237,13 +245,15 @@ int main(int argc, char const *argv[])
             N2_mat.row(0) = solver.solve(N1, true);
 
             P_ext = B_ext(starting_copies);
-            dvec E_ext = B_ext.transpose() * N_mat.row(0).transpose() / B_ext(starting_copies);
+            dvec E_ext = B_ext.array() * N1.array() / B_ext(starting_copies);
+            E_ext_mat.row(0) = E_ext;
             dvec E_ext_var = B_ext.transpose() * N2_mat.row(0).transpose() / B_ext(starting_copies);
             T_ext = E_ext.sum();
             T_ext_var = (2 * E_ext_var.sum() - E_ext.sum()) - pow(E_ext.sum(), 2);
 
             P_fix = B_fix(starting_copies);
-            dvec E_fix = B_fix.transpose() * N_mat.row(0).transpose() / B_fix(starting_copies);
+            dvec E_fix = B_fix.array() * N1.array() / B_fix(starting_copies);
+            E_fix_mat.row(0) = E_fix;
             dvec E_fix_var = B_fix.transpose() * N2_mat.row(0).transpose() / B_fix(starting_copies);
             T_fix = E_fix.sum();
             T_fix_var = (2 * E_fix_var.sum() - E_fix.sum()) - pow(E_fix.sum(), 2);
@@ -255,6 +265,8 @@ int main(int argc, char const *argv[])
         double T_fix_std = sqrt(T_fix_var);
 
         if(output_N_f) write_matrix_to_file(N_mat, args::get(output_N_f));
+        if(output_N_ext_f) write_matrix_to_file(E_ext_mat, args::get(output_N_ext_f));
+        if(output_N_fix_f) write_matrix_to_file(E_fix_mat, args::get(output_N_fix_f));
         if(output_B_f) {
             dmat B(size, 2);
             B.col(0) = B_ext;
@@ -264,8 +276,8 @@ int main(int argc, char const *argv[])
 
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
-                           DPF ", " DPF ", " DPF ",  " DPF "\n",
-                   population_size, s, h, u, v, a, P_ext, P_fix, T_ext, T_fix);
+                           DPF ", " DPF ", " DPF ", " DPF ", " DPF ",  " DPF "\n",
+                   population_size, s, h, u, v, a, P_ext, P_fix, T_ext, T_ext_std, T_fix, T_fix_std);
 
         } else {
             printf("N = " LPF "\n", population_size);
