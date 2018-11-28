@@ -202,39 +202,57 @@ int main(int argc, char const *argv[])
         double P_fix = 0;
         double T_ext = 0;
         double T_fix = 0;
+        double T_ext_var = 0;
+        double T_fix_var = 0;
         // double N_ext = 0;
 
         dmat N_mat(z, size);
+        dmat N2_mat(z, size);
         if(!starting_copies_f) {
             for(llong i = 0; i < z; i++) {
                 id.setZero();
                 id(i) = 1;
 
                 N_mat.row(i) = solver.solve(id, true);
+                dvec N1 = N_mat.row(i);
+                N2_mat.row(i) = solver.solve(N1, true);
 
                 P_ext += B_ext(i) * starting_copies_p(i);
                 dvec E_ext = B_ext.transpose() * N_mat.row(i).transpose() / B_ext(i);
+                dvec E_ext_var = B_ext.transpose() * N2_mat.row(i).transpose() / B_ext(i);
                 T_ext += E_ext.sum() * starting_copies_p(i);
+                T_ext_var += ((2 * E_ext_var.sum() - E_ext.sum()) - pow(E_ext.sum(), 2)) * starting_copies_p(i);
 
                 P_fix += B_fix(i) * starting_copies_p(i);
                 dvec E_fix = B_fix.transpose() * N_mat.row(i).transpose() / B_fix(i);
+                dvec E_fix_var = B_fix.transpose() * N2_mat.row(i).transpose() / B_fix(i);
                 T_fix += E_fix.sum() * starting_copies_p(i);
+                T_fix_var += ((2 * E_fix_var.sum() - E_fix.sum()) - pow(E_fix.sum(), 2)) * starting_copies_p(i);
             }    
         } else {
             id.setZero();
             id(starting_copies) = 1;
             N_mat.row(0) = solver.solve(id, true);
+            dvec N1 = N_mat.row(0);
+            N2_mat.row(0) = solver.solve(N1, true);
 
             P_ext = B_ext(starting_copies);
             dvec E_ext = B_ext.transpose() * N_mat.row(0).transpose() / B_ext(starting_copies);
+            dvec E_ext_var = B_ext.transpose() * N2_mat.row(0).transpose() / B_ext(starting_copies);
             T_ext = E_ext.sum();
+            T_ext_var = (2 * E_ext_var.sum() - E_ext.sum()) - pow(E_ext.sum(), 2);
 
             P_fix = B_fix(starting_copies);
             dvec E_fix = B_fix.transpose() * N_mat.row(0).transpose() / B_fix(starting_copies);
+            dvec E_fix_var = B_fix.transpose() * N2_mat.row(0).transpose() / B_fix(starting_copies);
             T_fix = E_fix.sum();
+            T_fix_var = (2 * E_fix_var.sum() - E_fix.sum()) - pow(E_fix.sum(), 2);
 
             // N_ext = (N_mat.row(0) * B_ext * dvec::LinSpaced(size, 1, size)).sum() / B_ext(starting_copies);
         }
+
+        double T_ext_std = sqrt(T_ext_var);
+        double T_fix_std = sqrt(T_fix_var);
 
         if(output_N_f) write_matrix_to_file(N_mat, args::get(output_N_f));
         if(output_B_f) {
@@ -259,7 +277,9 @@ int main(int argc, char const *argv[])
             printf("P_ext = " DPF "\n", P_ext);
             printf("P_fix = " DPF "\n", P_fix);
             printf("T_ext = " DPF "\n", T_ext);
+            printf("T_ext_std = " DPF "\n", T_ext_std);
             printf("T_fix = " DPF "\n", T_fix);
+            printf("T_fix_std = " DPF "\n", T_fix_std);
             // printf("N_ext = " DPF "\n", N_ext);
         }
     } // END SINGLE ABSORPTION
