@@ -42,6 +42,8 @@ int main(int argc, char const *argv[])
     args::ValueFlag<string> output_R_f(parser, "path", "Output R vectors to file", {"output-R"});
     args::ValueFlag<string> output_N_f(parser, "path", "Output N matrix to file", {"output-N"});
     args::ValueFlag<string> output_B_f(parser, "path", "Output B vectors to file", {"output-B"});
+    args::ValueFlag<string> output_N_ext_f(parser, "path", "Output extinction-conditional sojourn to file", {"output-N-ext"});
+    args::ValueFlag<string> output_N_fix_f(parser, "path", "Output fixation-conditional sojourn to file", {"output-N-fix"});
     // args::ValueFlag<string> output_E_f(parser, "path", "Output Equilibrium frequencies to file (--equilibrium only)", {"output-E"});
 
     args::Flag csv_f(parser, "csv", "Output results in CSV format", {"csv"});
@@ -198,7 +200,7 @@ int main(int argc, char const *argv[])
     {
         WF::Matrix W = WF::Switching(population_sizes, WF::BOTH_ABSORBING, s, h, u, v, switching, a, verbose_f);
 
-	lvec si = start_indeces(2 * population_sizes - lvec::Ones(n_models));
+        lvec si = start_indeces(2 * population_sizes - lvec::Ones(n_models));
 
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
         if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
@@ -210,15 +212,15 @@ int main(int argc, char const *argv[])
         PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
         solver.analyze();
 
-	// Get initial probabilities of mu within each model
-	lvec nnz_p0(n_models);
-	vector<dvec> p0(n_models);
-	for (llong i = 0; i < n_models; i++) {
-	    llong pop_size = population_sizes(i);
-	    dvec first_row = WF::binom_row(2 * pop_size, WF::psi_diploid(0, pop_size, s(i), h(i), u(i), v(i)), a).Q;
-	    p0[i] = first_row.tail(first_row.size() - 1) / (1 - first_row(0)); // renormalize
-	    nnz_p0[i] = (p0[i].array() > integration_cutoff).count();
-	}
+        // Get initial probabilities of mu within each model
+        lvec nnz_p0(n_models);
+        vector<dvec> p0(n_models);
+        for (llong i = 0; i < n_models; i++) {
+            llong pop_size = population_sizes(i);
+            dvec first_row = WF::binom_row(2 * pop_size, WF::psi_diploid(0, pop_size, s(i), h(i), u(i), v(i)), a).Q;
+            p0[i] = first_row.tail(first_row.size() - 1) / (1 - first_row(0)); // renormalize
+            nnz_p0[i] = (p0[i].array() > integration_cutoff).count();
+        }
 
         // extinction and fixation column for each submodel
         dmat B(size, n_models * 2);
@@ -227,57 +229,65 @@ int main(int argc, char const *argv[])
             B.col(i) = solver.solve(R_col, false);
         }
 
-	map<llong, dvec> N_rows;
+        map<llong, dvec> N_rows;
         dvec id(size);
-	for (llong i_ = 0; i_ < si.size(); i_++) {
-	    llong i = si[i_];
-	    for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
-		llong idx = i + o_;
-		id.setZero();
-		id(idx) = 1;
-		N_rows[idx] = solver.solve(id, true);
-	    }
-	}
+        for (llong i_ = 0; i_ < si.size(); i_++) {
+            llong i = si[i_];
+            for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
+                llong idx = i + o_;
+                id.setZero();
+                id(idx) = 1;
+                N_rows[idx] = solver.solve(id, true);
+            }
+        }
 
-	// absorbing extinction columns of B
-	lvec ke = range_step(0, 2*n_models, 2);
-	// absorbing fixation columns of B
-	lvec kf = range_step(1, 2*n_models, 2);
+        // absorbing extinction columns of B
+        lvec ke = range_step(0, 2*n_models, 2);
+        // absorbing fixation columns of B
+        lvec kf = range_step(1, 2*n_models, 2);
 
-	double P_ext = 0, P_fix = 0;
-	for (llong i_ = 0; i_ < si.size(); i_++) {
-	    llong i = si[i_];
-	    for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
-		double o = p0[i_](o_);
-		llong idx = i + o_;
+        double P_ext = 0, P_fix = 0;
+        for (llong i_ = 0; i_ < si.size(); i_++) {
+            llong i = si[i_];
+            for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
+                double o = p0[i_](o_);
+                llong idx = i + o_;
 
-		for (llong k_ = 0; k_ < ke.size(); k_++) {
-		    P_ext += o * p[i_] * B(idx, ke[k_]);
-		}
+                for (llong k_ = 0; k_ < ke.size(); k_++) {
+                    P_ext += o * p[i_] * B(idx, ke[k_]);
+                }
 
-		for (llong k_ = 0; k_ < kf.size(); k_++) {
-		    P_fix += o * p[i_] * B(idx, kf[k_]);
-		}
-	    }
-	}
+                for (llong k_ = 0; k_ < kf.size(); k_++) {
+                    P_fix += o * p[i_] * B(idx, kf[k_]);
+                }
+            }
+        }
 
-	double T_ext = 0, T_fix = 0;
-	for (llong i_ = 0; i_ < si.size(); i_++) {
-	    llong i = si[i_];
-	    for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
-		double o = p0[i_](o_);
-		llong idx = i + o_;
+	dvec E_ext = dvec::Zero(size);
+	dvec E_fix = dvec::Zero(size);
+        for (llong i_ = 0; i_ < si.size(); i_++) {
+            llong i = si[i_];
+            for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
+                double o = p0[i_](o_);
+                llong idx = i + o_;
 
-		for (llong k_ = 0; k_ < ke.size(); k_++) {
-		    T_ext += ((o * p[i_] / P_ext) * (B.col(ke[k_]).array() * N_rows[idx].array())).sum();
-		}
+                for (llong k_ = 0; k_ < ke.size(); k_++) {
+		    dvec E_ext_tmp = (o * p[i_] / P_ext) * (B.col(ke[k_]).array() * N_rows[idx].array());
+		    E_ext += E_ext_tmp;
+                }
 
-		for (llong k_ = 0; k_ < kf.size(); k_++) {
-		    T_fix += ((o * p[i_] / P_fix) * (B.col(kf[k_]).array() * N_rows[idx].array())).sum();
-		}
-	    }
-	}
+                for (llong k_ = 0; k_ < kf.size(); k_++) {
+		    dvec E_fix_tmp = (o * p[i_] / P_fix) * (B.col(kf[k_]).array() * N_rows[idx].array());
+		    E_fix += E_fix_tmp;
+                }
+            }
+        }
 
+	double T_ext = E_ext.sum();
+	double T_fix = E_fix.sum();
+
+        if(output_N_ext_f) write_vector_to_file(E_ext, args::get(output_N_ext_f));
+        if(output_N_fix_f) write_vector_to_file(E_fix, args::get(output_N_fix_f));
         if(output_N_f) write_vector_map_to_file(N_rows, args::get(output_N_f));
         if(output_B_f) write_matrix_to_file(B, args::get(output_B_f));
 
