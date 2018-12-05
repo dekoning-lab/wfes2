@@ -31,9 +31,9 @@ endif
 
 ALL_FLAGS:=${MKL_FLAGS} ${OPT_FLAGS} ${WARN_FLAGS} ${EXTRA_FLAGS}
 
-EXE:=$(addprefix ${BIND}/, wfes_single wfes_switching wfes_allele_freq wfes_sweep phase_type_dist test)
+EXE:=$(addprefix ${BIND}/, wfes_single wfes_switching wfes_allele_freq wfes_sweep wfes_phase_type_dist wfes_test)
 
-.PHONY: all prep clean
+.PHONY: all prep clean install
 all: prep ${EXE}
 prep:
 	mkdir -p ${LIBD} ${BIND}
@@ -45,3 +45,7 @@ ${LIBD}/libwfes.so: src/lib/*.cpp
 
 ${BIND}/%: src/exe/%.cpp ${LIBD}/libwfes.so
 	${CXX} $< ${ALL_INCD} ${ALL_LIBD} -lwfes ${RPATH} ${ALL_LIBS} ${ALL_FLAGS} -o $@
+
+install: all
+	cp bin/* /usr/local/bin
+	cp lib/* /usr/local/lib
