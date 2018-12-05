@@ -2,15 +2,22 @@ LIBD:=lib
 BIND:=bin
 INCD:=include
 
+uname:=$(shell uname)
+ifeq (${uname},Linux)
+INTEL_LIB_SUFFIX:=/intel64
+endif
+
+pwd:=$(shell pwd)
+
 INTEL_ROOTD:=/opt/intel
 MKL_ROOTD:=${INTEL_ROOTD}/mkl
-MKL_LIBD:=${MKL_ROOTD}/lib
+MKL_LIBD:=${MKL_ROOTD}/lib${INTEL_LIB_SUFFIX}
 MKL_INCD:=${MKL_ROOTD}/include
-INTEL_LIBD:=${INTEL_ROOTD}/lib
+INTEL_LIBD:=${INTEL_ROOTD}/lib${INTEL_LIB_SUFFIX}
 ALL_INCD:=$(addprefix -I, ${INCD} ${MKL_INCD})
 ALL_LIBD:=$(addprefix -L, ${LIBD} ${MKL_LIBD} ${INTEL_LIBD})
 
-RPATH:=-Wl,-rpath,${MKL_LIBD},-rpath,${INTEL_LIBD}
+RPATH:=-Wl,-rpath,${MKL_LIBD},-rpath,${INTEL_LIBD},-rpath,${pwd}/${LIBD}
 
 MKL_LIBS:=mkl_intel_ilp64 mkl_intel_thread mkl_core
 INTEL_LIBS:=iomp5 pthread
@@ -41,7 +48,7 @@ clean:
 	rm -rf ${LIBD} ${BIND}
 
 ${LIBD}/libwfes.so: src/lib/*.cpp
-	${CXX} -shared $^ ${ALL_INCD} ${ALL_LIBD} ${ALL_LIBS} ${ALL_FLAGS} -o $@
+	${CXX} -shared -fPIC $^ ${ALL_INCD} ${ALL_LIBD} ${ALL_LIBS} ${ALL_FLAGS} -o $@
 
 ${BIND}/%: src/exe/%.cpp ${LIBD}/libwfes.so
 	${CXX} $< ${ALL_INCD} ${ALL_LIBD} -lwfes ${RPATH} ${ALL_LIBS} ${ALL_FLAGS} -o $@
