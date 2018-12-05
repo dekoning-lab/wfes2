@@ -20,7 +20,16 @@ ALL_LIBS:=$(addprefix -l, ${MKL_LIBS} ${INTEL_LIBS} ${OTHER_LIBS})
 MKL_FLAGS:=-DMKL_ILP64 -m64
 OPT_FLAGS:=-std=c++11
 WARN_FLAGS:=-Wall -Wformat -Wno-deprecated-declarations
-ALL_FLAGS:=${MKL_FLAGS} ${OPT_FLAGS} ${WARN_FLAGS}
+EXTRA_FLAGS:=
+
+ifeq (${OMP},1)
+EXTRA_FLAGS+=-fopenmp -DOMP
+endif
+ifeq (${DEBUG},1)
+EXTRA_FLAGS+=-g
+endif
+
+ALL_FLAGS:=${MKL_FLAGS} ${OPT_FLAGS} ${WARN_FLAGS} ${EXTRA_FLAGS}
 
 EXE:=$(addprefix ${BIN_DIR}/, wfes_single wfes_switching wfes_sweep)
 
