@@ -47,8 +47,8 @@ ${BIND}/%: src/exe/%.cpp ${LIBD}/libwfes.so
 	${CXX} $< ${ALL_INCD} ${ALL_LIBD} -lwfes ${RPATH} ${ALL_LIBS} ${ALL_FLAGS} -o $@
 
 install: all
-	cp bin/* /usr/local/bin
-	cp lib/* /usr/local/lib
+	cp bin/wfes_* /usr/local/bin
+	cp lib/libwfes.so /usr/local/lib
 
 uninstall:
 	rm -f /usr/local/bin/wfes_*
