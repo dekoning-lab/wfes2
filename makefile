@@ -1,14 +1,14 @@
-LIB_DIR:=lib
-BIN_DIR:=bin
-
+LIBD:=lib
+BIND:=bin
 INCD:=include
+
 INTEL_ROOTD:=/opt/intel
 MKL_ROOTD:=${INTEL_ROOTD}/mkl
 MKL_LIBD:=${MKL_ROOTD}/lib
 MKL_INCD:=${MKL_ROOTD}/include
 INTEL_LIBD:=${INTEL_ROOTD}/lib
 ALL_INCD:=$(addprefix -I, ${INCD} ${MKL_INCD})
-ALL_LIBD:=$(addprefix -L, ${LIB_DIR} ${MKL_LIBD} ${INTEL_LIBD})
+ALL_LIBD:=$(addprefix -L, ${LIBD} ${MKL_LIBD} ${INTEL_LIBD})
 
 RPATH:=-Wl,-rpath,${MKL_LIBD},-rpath,${INTEL_LIBD}
 
@@ -31,17 +31,17 @@ endif
 
 ALL_FLAGS:=${MKL_FLAGS} ${OPT_FLAGS} ${WARN_FLAGS} ${EXTRA_FLAGS}
 
-EXE:=$(addprefix ${BIN_DIR}/, wfes_single wfes_switching wfes_sweep)
+EXE:=$(addprefix ${BIND}/, wfes_single wfes_switching wfes_allele_freq wfes_sweep phase_type_dist test)
 
 .PHONY: all prep clean
 all: prep ${EXE}
 prep:
-	mkdir -p ${LIB_DIR} ${BIN_DIR}
+	mkdir -p ${LIBD} ${BIND}
 clean:
-	rm -rf ${LIB_DIR} ${BIN_DIR}
+	rm -rf ${LIBD} ${BIND}
 
-${LIB_DIR}/libwfes.so: src/lib/*.cpp
+${LIBD}/libwfes.so: src/lib/*.cpp
 	${CXX} -shared $^ ${ALL_INCD} ${ALL_LIBD} ${ALL_LIBS} ${ALL_FLAGS} -o $@
 
-${BIN_DIR}/%: src/%_exe.cpp ${LIB_DIR}/libwfes.so
+${BIND}/%: src/exe/%.cpp ${LIBD}/libwfes.so
 	${CXX} $< ${ALL_INCD} ${ALL_LIBD} -lwfes ${RPATH} ${ALL_LIBS} ${ALL_FLAGS} -o $@
