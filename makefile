@@ -67,10 +67,12 @@ clean:
 
 # build WFES library
 ${LIBD}/libwfes.so: ${SRCD}/lib/*.cpp
+	@echo "> Building library $@"
 	${CXX} -shared -fPIC $^ ${ALL_INCD} ${ALL_LIBD} ${ALL_LIBS} ${ALL_FLAGS} -o $@
 
 # build executables
 ${BIND}/%: ${SRCD}/exe/%.cpp ${LIBD}/libwfes.so
+	@echo "> Building executable $@"
 	${CXX} $< ${ALL_INCD} ${ALL_LIBD} -lwfes ${RPATH} ${ALL_LIBS} ${ALL_FLAGS} -o $@
 
 # copy library and all the executables onto system path
