@@ -230,6 +230,7 @@ int main(int argc, char const *argv[])
         }
 
         map<llong, dvec> N_rows;
+        map<llong, dvec> N2_rows;
         dvec id(size);
         for (llong i_ = 0; i_ < si.size(); i_++) {
             llong i = si[i_];
@@ -238,6 +239,7 @@ int main(int argc, char const *argv[])
                 id.setZero();
                 id(idx) = 1;
                 N_rows[idx] = solver.solve(id, true);
+                N2_rows[idx] = solver.solve(N_rows[idx], true);
             }
         }
 
@@ -265,6 +267,9 @@ int main(int argc, char const *argv[])
 
 	dvec E_ext = dvec::Zero(size);
 	dvec E_fix = dvec::Zero(size);
+	double T_ext_var = 0;
+	double T_fix_var = 0;
+
         for (llong i_ = 0; i_ < si.size(); i_++) {
             llong i = si[i_];
             for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
@@ -272,19 +277,27 @@ int main(int argc, char const *argv[])
                 llong idx = i + o_;
 
                 for (llong k_ = 0; k_ < ke.size(); k_++) {
-		    dvec E_ext_tmp = (o * p[i_] / P_ext) * (B.col(ke[k_]).array() * N_rows[idx].array());
-		    E_ext += E_ext_tmp;
+		    dvec E_ext_i = (o * p[i_] / P_ext) * (B.col(ke[k_]).array() * N_rows[idx].array());
+		    E_ext += E_ext_i;
+		    dvec E_ext_var_i = (o * p[i_] / P_ext) * (B.col(ke[k_]).array() * N2_rows[idx].array());
+		    T_ext_var += (((2 * E_ext_var_i.sum() - E_ext_i.sum()) * p[i_] * o) - 
+				  pow(E_ext_i.sum() * p[i_] * o, 2));
                 }
 
                 for (llong k_ = 0; k_ < kf.size(); k_++) {
-		    dvec E_fix_tmp = (o * p[i_] / P_fix) * (B.col(kf[k_]).array() * N_rows[idx].array());
-		    E_fix += E_fix_tmp;
+		    dvec E_fix_i = (o * p[i_] / P_fix) * (B.col(kf[k_]).array() * N_rows[idx].array());
+		    E_fix += E_fix_i;
+		    dvec E_fix_var_i = (o * p[i_] / P_fix) * (B.col(kf[k_]).array() * N2_rows[idx].array());
+		    T_fix_var += (((2 * E_fix_var_i.sum() - E_fix_i.sum()) * p[i_] * o) - 
+				  pow(E_fix_i.sum() * p[i_] * o, 2));
                 }
             }
         }
 
 	double T_ext = E_ext.sum();
 	double T_fix = E_fix.sum();
+	double T_ext_std = sqrt(T_ext_var);
+	double T_fix_std = sqrt(T_fix_var);
 
         if(output_N_ext_f) write_vector_to_file(E_ext, args::get(output_N_ext_f));
         if(output_N_fix_f) write_vector_to_file(E_fix, args::get(output_N_fix_f));
@@ -303,7 +316,9 @@ int main(int argc, char const *argv[])
             printf(DPF ", ", P_ext);
             printf(DPF ", ", P_fix);
             printf(DPF ", ", T_ext);
+            printf(DPF ", ", T_ext_var);
             printf(DPF "\n", T_fix);
+            printf(DPF ", ", T_fix_var);
         } else {
             print_vector(population_sizes, "N = ", "\n");
             print_vector(s, "s = ", "\n");
@@ -317,7 +332,9 @@ int main(int argc, char const *argv[])
             printf("P_ext = " DPF "\n", P_ext);
             printf("P_fix = " DPF "\n", P_fix);
             printf("T_ext = " DPF "\n", T_ext);
+            printf("T_ext_std = " DPF "\n", T_ext_std);
             printf("T_fix = " DPF "\n", T_fix);
+            printf("T_fix_std = " DPF "\n", T_fix_std);
         }
 
     } // END SWITCHING ABSORPTION

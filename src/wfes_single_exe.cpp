@@ -221,41 +221,44 @@ int main(int argc, char const *argv[])
                 N_mat.row(i) = solver.solve(id, true);
                 dvec N1 = N_mat.row(i);
                 N2_mat.row(i) = solver.solve(N1, true);
+                dvec N2 = N2_mat.row(i);
 
                 P_ext += B_ext(i) * p_i;
                 dvec E_ext = B_ext.array() * N1.array() / B_ext(i);
                 E_ext_mat.row(i) = E_ext;
-                dvec E_ext_var = B_ext.transpose() * N2_mat.row(i).transpose() / B_ext(i);
+                dvec E_ext_var = B_ext.array() * N2.array() / B_ext(i);
                 T_ext += E_ext.sum() * p_i;
                 T_ext_var += (((2 * E_ext_var.sum() - E_ext.sum()) * p_i) - 
-			      pow(E_ext.row(i).sum() * p_i, 2));
+			      pow(E_ext.sum() * p_i, 2));
 
                 P_fix += B_fix(i) * p_i;
                 dvec E_fix = B_fix.array() * N1.array() / B_fix(i);
                 E_fix_mat.row(i) = E_fix;
-                dvec E_fix_var = B_fix.transpose() * N2_mat.row(i).transpose() / B_fix(i);
+                dvec E_fix_var = B_fix.array() * N2.array() / B_fix(i);
                 T_fix += E_fix.sum() * p_i;
                 T_fix_var += (((2 * E_fix_var.sum() - E_fix.sum()) * p_i) - 
 			      pow(E_fix.sum() * p_i, 2));
 	    }    
         } else {
+	    // TODO: combine this with the previous clause
             id.setZero();
             id(starting_copies) = 1;
             N_mat.row(0) = solver.solve(id, true);
             dvec N1 = N_mat.row(0);
             N2_mat.row(0) = solver.solve(N1, true);
+            dvec N2 = N2_mat.row(0);
 
             P_ext = B_ext(starting_copies);
             dvec E_ext = B_ext.array() * N1.array() / B_ext(starting_copies);
             E_ext_mat.row(0) = E_ext;
-            dvec E_ext_var = B_ext.transpose() * N2_mat.row(0).transpose() / B_ext(starting_copies);
+            dvec E_ext_var = B_ext.array() * N2.array() / B_ext(starting_copies);
             T_ext = E_ext.sum();
             T_ext_var = (2 * E_ext_var.sum() - E_ext.sum()) - pow(E_ext.sum(), 2);
 
             P_fix = B_fix(starting_copies);
             dvec E_fix = B_fix.array() * N1.array() / B_fix(starting_copies);
             E_fix_mat.row(0) = E_fix;
-            dvec E_fix_var = B_fix.transpose() * N2_mat.row(0).transpose() / B_fix(starting_copies);
+            dvec E_fix_var = B_fix.array() * N2.array() / B_fix(starting_copies);
             T_fix = E_fix.sum();
             T_fix_var = (2 * E_fix_var.sum() - E_fix.sum()) - pow(E_fix.sum(), 2);
 
