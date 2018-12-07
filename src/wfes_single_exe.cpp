@@ -214,6 +214,7 @@ int main(int argc, char const *argv[])
         dmat N2_mat(z, size);
         if(!starting_copies_f) {
             for(llong i = 0; i < z; i++) {
+		double p_i = starting_copies_p(i);
                 id.setZero();
                 id(i) = 1;
 
@@ -221,22 +222,22 @@ int main(int argc, char const *argv[])
                 dvec N1 = N_mat.row(i);
                 N2_mat.row(i) = solver.solve(N1, true);
 
-                P_ext += B_ext(i) * starting_copies_p(i);
+                P_ext += B_ext(i) * p_i;
                 dvec E_ext = B_ext.array() * N1.array() / B_ext(i);
                 E_ext_mat.row(i) = E_ext;
                 dvec E_ext_var = B_ext.transpose() * N2_mat.row(i).transpose() / B_ext(i);
-                T_ext += E_ext.sum() * starting_copies_p(i);
-                T_ext_var += ((2 * E_ext_var.sum() - E_ext.sum()) - 
-                        pow(E_ext.row(i).sum(), 2)) * starting_copies_p(i);
+                T_ext += E_ext.sum() * p_i;
+                T_ext_var += (((2 * E_ext_var.sum() - E_ext.sum()) * p_i) - 
+			      pow(E_ext.row(i).sum() * p_i, 2));
 
-                P_fix += B_fix(i) * starting_copies_p(i);
+                P_fix += B_fix(i) * p_i;
                 dvec E_fix = B_fix.array() * N1.array() / B_fix(i);
                 E_fix_mat.row(i) = E_fix;
                 dvec E_fix_var = B_fix.transpose() * N2_mat.row(i).transpose() / B_fix(i);
-                T_fix += E_fix.sum() * starting_copies_p(i);
-                T_fix_var += ((2 * E_fix_var.sum() - E_fix.sum()) - 
-                        pow(E_fix.sum(), 2)) * starting_copies_p(i);
-            }    
+                T_fix += E_fix.sum() * p_i;
+                T_fix_var += (((2 * E_fix_var.sum() - E_fix.sum()) * p_i) - 
+			      pow(E_fix.sum() * p_i, 2));
+	    }    
         } else {
             id.setZero();
             id(starting_copies) = 1;
