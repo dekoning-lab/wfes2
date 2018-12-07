@@ -1,4 +1,6 @@
 build/
+lib/
+bin/
 static_build/
 build/CMakeFiles
 .DS_Store
