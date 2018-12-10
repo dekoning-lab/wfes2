@@ -95,10 +95,10 @@ int main(int argc, char const *argv[])
             throw args::Error("Population size is quite large - the computations will take a long time. Use --force to ignore");   
         }
         double max_mu = max(u, v);
-        if (4 * population_size * max_mu > 1) {
+        if ((4 * population_size * max_mu) > 1) {
             throw args::Error("The mutation rate might violate the Wright-Fisher assumptions. Use --force to ignore");
         }
-        if (s <= -1) {
+        if ((2 * population_size * s) <= -100) {
             throw args::Error("The selection coefficient is quite negative. Fixations might be impossible. Use --force to ignore");
         }
         if (a > 1e-5) {
@@ -280,7 +280,7 @@ int main(int argc, char const *argv[])
 
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
-                           DPF ", " DPF ", " DPF ", " DPF ", " DPF ",  " DPF "\n",
+                           DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
                    population_size, s, h, u, v, a, P_ext, P_fix, T_ext, T_ext_std, T_fix, T_fix_std);
 
         } else {
