@@ -317,8 +317,8 @@ int main(int argc, char const *argv[])
             printf(DPF ", ", P_fix);
             printf(DPF ", ", T_ext);
             printf(DPF ", ", T_ext_var);
-            printf(DPF "\n", T_fix);
-            printf(DPF ", ", T_fix_var);
+            printf(DPF ", ", T_fix);
+            printf(DPF "\n", T_fix_var);
         } else {
             print_vector(population_sizes, "N = ", "\n");
             print_vector(s, "s = ", "\n");
