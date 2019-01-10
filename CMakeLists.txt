@@ -77,4 +77,7 @@ target_link_libraries(test_wfes wfes)
 add_executable(phase_type_dist "src/phase_type_dist_exe.cpp")
 target_link_libraries(phase_type_dist wfes)
 
+add_executable(phase_type_moments "src/phase_type_moments_exe.cpp")
+target_link_libraries(phase_type_moments wfes)
+
 # install(TARGETS wfafle RUNTIME DESTINATION bin)
