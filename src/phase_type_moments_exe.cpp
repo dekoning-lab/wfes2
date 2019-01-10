@@ -95,8 +95,13 @@ int main(int argc, char const *argv[])
 	
         
     }
+    double m1 = m(0, 1);
+    double m2 = m(0, 2);
+    std::cout << "Mean: " << m1 << std::endl;
+    std::cout << "Standard deviation: " << sqrt(m2 - (m1 * m1)) << std::endl;
+    std::cout << "Raw moments: " << std::endl;
     for (llong i = 1; i <= k; i++) {
-	std::cout << m(0, i) << std::endl;
+	std::cout << i << "\t" << m(0, i) << std::endl;
     }
 
 
