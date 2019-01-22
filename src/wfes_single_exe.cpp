@@ -196,15 +196,24 @@ int main(int argc, char const *argv[])
         dvec R_ext = W.R.col(0);
         dvec B_ext = solver.solve(R_ext, false);
         dvec B_fix = dvec::Ones(size) - B_ext;
+	dvec id(size);
 
 	// establishment
 	llong est_idx = 0;
 	dvec B_est = B_fix - dvec::Constant(size, 0.5);
 	B_est.array().abs().minCoeff(&est_idx);
-	est_idx++; // Since the B indexes begin at 1
-	double est_freq = (double)est_idx / (2 * population_size);
+	// Since the B indexes begin at 1
+	double est_freq = (double)(est_idx+1) / (2 * population_size);
 
-	dvec id(size);
+	// post-establishment time before absorption
+	id.setZero();
+	id(est_idx)=1;
+	dvec N1_est = solver.solve(id, true);
+	dvec N2_est = solver.solve(N1_est, true);
+	double T_p_est = N1_est.sum();
+	double T_p_est_var = (2 * N2_est.sum() - N1_est.sum()) - pow(N1_est.sum(), 2);
+	double T_p_est_std = sqrt(T_p_est_var);
+
 
         // integrate over starting number of copies
         double P_ext = 0;
@@ -287,8 +296,8 @@ int main(int argc, char const *argv[])
 
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
-                           DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
-                   population_size, s, h, u, v, a, P_ext, P_fix, T_ext, T_ext_std, T_fix, T_fix_std, est_freq);
+                           DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF  ", " DPF "," DPF "\n",
+                   population_size, s, h, u, v, a, P_ext, P_fix, T_ext, T_ext_std, T_fix, T_fix_std, est_freq, T_p_est, T_p_est_std);
 
         } else {
             printf("N = " LPF "\n", population_size);
@@ -304,6 +313,8 @@ int main(int argc, char const *argv[])
             printf("T_fix = " DPF "\n", T_fix);
             printf("T_fix_std = " DPF "\n", T_fix_std);
 	    printf("F_est = " DPF "\n", est_freq);
+	    printf("T_p_est = " DPF "\n", T_p_est);
+	    printf("T_p_est_std = " DPF "\n", T_p_est_std);
             // printf("N_ext = " DPF "\n", N_ext);
         }
     } // END SINGLE ABSORPTION
