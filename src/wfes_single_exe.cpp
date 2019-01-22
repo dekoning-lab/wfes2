@@ -197,7 +197,14 @@ int main(int argc, char const *argv[])
         dvec B_ext = solver.solve(R_ext, false);
         dvec B_fix = dvec::Ones(size) - B_ext;
 
-        dvec id(size);
+	// establishment
+	llong est_idx = 0;
+	dvec B_est = B_fix - dvec::Constant(size, 0.5);
+	B_est.array().abs().minCoeff(&est_idx);
+	est_idx++; // Since the B indexes begin at 1
+	double est_freq = (double)est_idx / (2 * population_size);
+
+	dvec id(size);
 
         // integrate over starting number of copies
         double P_ext = 0;
@@ -280,8 +287,8 @@ int main(int argc, char const *argv[])
 
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
-                           DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
-                   population_size, s, h, u, v, a, P_ext, P_fix, T_ext, T_ext_std, T_fix, T_fix_std);
+                           DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
+                   population_size, s, h, u, v, a, P_ext, P_fix, T_ext, T_ext_std, T_fix, T_fix_std, est_freq);
 
         } else {
             printf("N = " LPF "\n", population_size);
@@ -296,6 +303,7 @@ int main(int argc, char const *argv[])
             printf("T_ext_std = " DPF "\n", T_ext_std);
             printf("T_fix = " DPF "\n", T_fix);
             printf("T_fix_std = " DPF "\n", T_fix_std);
+	    printf("F_est = " DPF "\n", est_freq);
             // printf("N_ext = " DPF "\n", N_ext);
         }
     } // END SINGLE ABSORPTION
