@@ -73,7 +73,9 @@ namespace WrightFisher {
         smat Q;
         dmat R;
 
-        Matrix(llong n_row, llong n_col, llong n_abs): n_row(n_row), n_col(n_col), n_abs(n_abs), Q(n_row, n_col), R(n_row, n_abs) {}
+        Matrix(llong n_row, llong n_col, llong n_abs): n_row(n_row), n_col(n_col), n_abs(n_abs), Q(n_row, n_col), R(n_row, n_abs) {
+	    R.setZero();
+	}
 
         Matrix(const Matrix& m): n_row(m.n_row), n_col(m.n_col), n_abs(m.n_abs), Q(m.Q), R(m.R) {
             m.valid = false;
@@ -91,6 +93,10 @@ namespace WrightFisher {
     // Single - one matrix of a given absorption type
     Matrix Single(const llong Nx, const llong Ny, const absorption_type a_t, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, 
         const bool recurrent_mutation = true, const double alpha = 1e-20, const bool verbose = false, const llong block_size = 100);
+
+    // Single but with entries larger than `t` summed into the fixation state
+    Matrix Truncated(const llong Nx, const llong Ny, const llong t, const double s, const double h, const double u, const double v, 
+		     bool recurrent_mutation, const double alpha, const bool verbose, const llong block_size);
 
     // Switching - each sub-model is of the same absorbing type
     Matrix Switching(const lvec& N, const absorption_type a_t, const dvec& s, const dvec& h, const dvec& u, const dvec& v, 

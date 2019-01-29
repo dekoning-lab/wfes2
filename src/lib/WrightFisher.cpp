@@ -206,6 +206,76 @@ WrightFisher::Matrix WrightFisher::Single(
     return W;
 }
 
+WrightFisher::Matrix WrightFisher::Truncated(const llong Nx, const llong Ny, const llong t, const double s, const double h, const double u, const double v, 
+					     bool recurrent_mutation, const double alpha, const bool verbose, const llong block_size) 
+{
+    time_point t_start, t_end;
+    if (verbose) t_start = std::chrono::system_clock::now();
+    bool verify_diagonal = (Nx == Ny);
+    llong Nx2 = 2 * Nx; 
+    llong Ny2 = 2 * Ny; 
+    llong size = Nx2 + 1;
+
+    Matrix W(t - 1, t - 1, 2);
+    
+    for(llong block_row = 0; block_row <= t; block_row += block_size) {
+        llong block_length = (block_row + block_size) < t ? block_size : t - block_row;
+        std::deque<Row> buffer(block_length);
+
+        #pragma omp parallel for
+        for(llong b = 0; b < block_length; b++) {
+            llong i = b + block_row;
+            if(!recurrent_mutation && i != 0) {
+                buffer[b] = binom_row(2 * Ny, psi_diploid(i, Nx, s, h, 0, 0), alpha);    
+            } else {
+                buffer[b] = binom_row(2 * Ny, psi_diploid(i, Nx, s, h, u, v), alpha);    
+            }
+        }
+
+        for(llong b = 0; b < block_length; b++) {
+            Row& r = buffer[b];
+            llong i = b + block_row;
+            llong r_last = r.size - 1;
+	    llong t_off = t - r.start;
+
+            // diagonal is left of inserted chunk
+            if (verify_diagonal && (i < r.start)) W.Q.append_value(0, i, i);
+	    // Do not include 0th and Nx2th row and column
+	    if (i == 0 || i == t) continue;
+	    else {
+		
+		if (r.start == 0 && r.end >= t) {
+		    W.Q.append_chunk(r.Q, 0, 1, t - 1);
+		    W.R(i - 1, 0) = r.Q(0);
+		    double rest = r.Q.segment(t_off, r.end - t).sum();
+		    W.R(i - 1, 1) = rest;
+		} else if (r.start == 0) {
+		    W.Q.append_chunk(r.Q, 0, 1, r.size - 1);
+		    W.R(i - 1, 0) = r.Q(0);
+		} else if (r.end >= t) {
+		    W.Q.append_chunk(r.Q, r.start - 1, 0, t - r.start);
+		    double rest = r.Q.segment(t_off, r.end - t).sum();
+		    W.R(i - 1, 1) = rest;
+		} else {
+		    W.Q.append_chunk(r.Q, r.start - 1, 0, r.size);
+		}
+	    }
+           
+            // diagonal on the right
+            if (verify_diagonal && (i > r.end)) W.Q.append_value(0, i, i);
+            W.Q.next_row();
+        }
+    }
+
+    
+    if (verbose) {
+        t_end = std::chrono::system_clock::now();
+        time_diff dt = t_end - t_start;
+        std::cout << "Time to build matrix: " << dt.count() << " s" << std::endl;
+    }
+    return W;
+}
+
 std::deque<std::pair<llong, llong>> submatrix_indeces(const lvec& sizes) 
 {
     llong i = 0;

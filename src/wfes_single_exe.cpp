@@ -366,8 +366,7 @@ int main(int argc, char const *argv[])
 
 	WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f, b);
 
-        if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
-        if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
+        
 
         W.Q.subtract_identity();
 
@@ -396,11 +395,41 @@ int main(int argc, char const *argv[])
 	double T_p_est = N1_est.sum();
 	double T_p_est_var = (2 * N2_est.sum() - N1_est.sum()) - pow(N1_est.sum(), 2);
 	double T_p_est_std = sqrt(T_p_est_var);
+        
+	// Truncated model
+	WF::Matrix Wp = WF::Truncated(population_size, population_size, est_idx + 1, s, h, u, v, rem, a, verbose_f, b);
+ 	if(output_Q_f) Wp.Q.save_market(args::get(output_Q_f));
+        if(output_R_f) write_matrix_to_file(Wp.R, args::get(output_R_f));
 
-	 if (csv_f) {
+	// To test
+	//cout << Wp.R.col(0) + Wp.Q.dense().rowwise().sum() + Wp.R.col(1) << endl;
+	//cout << Wp.Q.dense() << endl;
+
+	Wp.Q.subtract_identity();
+	
+	PardisoSolver solver_p(Wp.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+	solver_p.analyze();
+
+	dvec id_b(est_idx);
+	id_b.setZero();
+	id_b[0] = 1;
+	
+	dvec R_est = Wp.R.col(1);
+	dvec Bp_est = solver_p.solve(R_est, false);
+	double P_est = Bp_est[0];
+	dvec N1_b_est = solver_p.solve(id_b, true);
+	dvec E1_b_est = Bp_est.array() * N1_b_est.array() / P_est;
+	dvec N2_b_est = solver_p.solve(N1_b_est, true);
+	dvec E2_b_est = Bp_est.array() * N2_b_est.array() / P_est;
+	double T_b_est = E1_b_est.sum();
+	double T_b_est_var = (2 * E2_b_est.sum() - E1_b_est.sum()) - pow(E1_b_est.sum(), 2);
+	double T_b_est_std = sqrt(T_b_est_var);
+	
+
+	if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
-                            DPF  ", " DPF "," DPF "\n",
-                   population_size, s, h, u, v, a, est_freq, T_p_est, T_p_est_std);
+                            DPF ", " DPF  ", " DPF "," DPF ", " DPF ", " DPF "\n",
+                   population_size, s, h, u, v, a, est_freq, P_est, T_p_est, T_p_est_std, T_b_est, T_b_est_std);
 
         } else {
             printf("N = " LPF "\n", population_size);
@@ -410,9 +439,12 @@ int main(int argc, char const *argv[])
             printf("v = " DPF "\n", v);
             printf("a = " DPF "\n", a);
 	    printf("F_est = " DPF "\n", est_freq);
+	    printf("P_est = " DPF "\n", P_est);
 	    printf("T_p_est = " DPF "\n", T_p_est);
 	    printf("T_p_est_std = " DPF "\n", T_p_est_std);
-            // printf("N_ext = " DPF "\n", N_ext);
+	    printf("T_b_est = " DPF "\n", T_b_est);
+	    printf("T_b_est_std = " DPF "\n", T_b_est_std);
+            
         }
     }
 
