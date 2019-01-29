@@ -55,29 +55,28 @@ lvec closed_range(llong start, llong stop)
     return r;
 }
 
-void SparseMatrix::append_chunk(dvec& row, llong m0, llong m1, llong r0, llong r1) 
-{
-    assert((m1-m0)==(r1-r0));
+void SparseMatrix::append_chunk(dvec& row, llong m0, llong r0, llong size) 
+{    
 
-    llong insert_size = r1 - r0 + 1; 
+    // llong insert_size = r1 - r0 + 1; 
 
-    llong new_size = non_zeros + insert_size;
+    llong new_size = non_zeros + size;
 
     row_index_start = positive_min(row_index_start, non_zeros);
 
     // Columns
     llong* cols_new = (llong*) realloc(cols, new_size * sizeof(llong));
     assert(cols_new != NULL); cols = cols_new;
-    lvec col_idx = closed_range(m0, m1);
+    lvec col_idx = closed_range(m0, m0 + size);
     //lvec col_idx = lvec::LinSpaced(insert_size, m0, m1);
-    memcpy(&cols[non_zeros], col_idx.data(), insert_size * sizeof(llong));
+    memcpy(&cols[non_zeros], col_idx.data(), size * sizeof(llong));
 
     // Data
     double* data_new = (double*) realloc(data, new_size * sizeof(double));
     assert(data_new != NULL); data = data_new;
-    memcpy(&(data[non_zeros]), &(row.data()[r0]), insert_size * sizeof(double));
+    memcpy(&(data[non_zeros]), &(row.data()[r0]), size * sizeof(double));
 
-    non_zeros += insert_size;
+    non_zeros += size;
 }
 
 void SparseMatrix::next_row()
@@ -91,11 +90,10 @@ void SparseMatrix::next_row()
     }
 }
 
-void SparseMatrix::append_row(dvec& row, llong col_start, llong col_end)
+void SparseMatrix::append_row(dvec& row, llong col_start, llong size)
 {
-    // if col_end has default value `-1`, insert whole row
-    col_end = col_end==-1 ? n_col-1 : col_end;
-    append_chunk(row, col_start, col_end, col_start, col_end);
+    
+    append_chunk(row, col_start, col_start, size);
     next_row();
 }
 

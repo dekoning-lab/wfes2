@@ -84,7 +84,7 @@ WrightFisher::Matrix WrightFisher::Equilibrium(
             // update chunk if it contains last column
             if (r.end == N2) r.Q(r.size - 1) = 1;
             // append large chunk
-            W.Q.append_chunk(r.Q, r.start, r.end, 0, r.size - 1);
+	    W.Q.append_chunk(r.Q, r.start, 0, r.size);
             // diagonal is right of chunk - insert new entry after chunk
             if (i > r.end)   W.Q.append_value(1, i, i);
             // add a column of 1s on the end
@@ -142,7 +142,7 @@ WrightFisher::Matrix WrightFisher::Single(
             switch(abs_t) {
                 case NON_ABSORBING:
                     // Include full row
-                    W.Q.append_chunk(r.Q, r.start, r.end, 0, r_last);
+		    W.Q.append_chunk(r.Q, r.start, 0, r.size);
                 break;
 
                 case EXTINCTION_ONLY:
@@ -150,10 +150,10 @@ WrightFisher::Matrix WrightFisher::Single(
                     if (i == 0) continue;
                     else {
                         if (r.start == 0) {
-                            W.Q.append_chunk(r.Q, r.start, r.end - 1, 1, r_last);
+			    W.Q.append_chunk(r.Q, 0, 1, r.size - 1);
                             W.R(i - 1, 0) = r.Q(0);
                         } else {
-                            W.Q.append_chunk(r.Q, r.start - 1, r.end - 1, 0, r_last);
+			    W.Q.append_chunk(r.Q, r.start - 1, 0, r.size);
                         }
                     }
                 break;
@@ -163,10 +163,10 @@ WrightFisher::Matrix WrightFisher::Single(
                     if (i == Nx2) continue;
                     else {
                         if (r.end == Ny2) {
-                            W.Q.append_chunk(r.Q, r.start, r.end - 1, 0, r_last - 1);
+			    W.Q.append_chunk(r.Q, r.start, 0, r.size - 1);
                             W.R(i, 0) = r.Q(r_last);
                         } else {
-                            W.Q.append_chunk(r.Q, r.start, r.end, 0, r_last);
+			    W.Q.append_chunk(r.Q, r.start, 0, r.size);
                         }
                     }
                 break;
@@ -176,17 +176,17 @@ WrightFisher::Matrix WrightFisher::Single(
                     if (i == 0 || i == Nx2) continue;
                     else {
                         if (r.start == 0 && r.end == Ny2) {
-                            W.Q.append_chunk(r.Q, r.start, r.end - 2, 1, r_last - 1);
+			    W.Q.append_chunk(r.Q, 0, 1, r.size - 2);
                             W.R(i - 1, 0) = r.Q(0);
                             W.R(i - 1, 1) = r.Q(r_last);
                         } else if (r.start == 0) {
-                            W.Q.append_chunk(r.Q, r.start, r.end - 1, 1, r_last);
+			    W.Q.append_chunk(r.Q, 0, 1, r.size - 1);
                             W.R(i - 1, 0) = r.Q(0);
                         } else if (r.end == Ny2) {
-                            W.Q.append_chunk(r.Q, r.start - 1, r.end - 2, 0, r_last - 1);
+			    W.Q.append_chunk(r.Q, r.start - 1, 0, r.size - 1);
                             W.R(i - 1, 1) = r.Q(r_last);
                         } else {
-                            W.Q.append_chunk(r.Q, r.start - 1, r.end - 1, 0, r_last);
+			    W.Q.append_chunk(r.Q, r.start - 1, 0, r.size);
                         }
                     }
                 break;
@@ -286,7 +286,7 @@ WrightFisher::Matrix WrightFisher::Switching(
                 Row& r               = buffer[b][j];
                 bool row_complete    = (j == (k - 1));
                 llong m_start        = r.start + offset;
-                llong m_end          = r.end + offset;
+                //llong m_end          = r.end + offset;
                 llong r_last         = r.size - 1;
                 bool verify_diagonal = (i == j);
 
@@ -294,17 +294,17 @@ WrightFisher::Matrix WrightFisher::Switching(
 
                 switch(abs_t) {
                     case NON_ABSORBING:
-                        W.Q.append_chunk(r.Q, m_start, m_end, 0, r_last);
+                        W.Q.append_chunk(r.Q, m_start, 0, r.size);
                     break;
 
                     case EXTINCTION_ONLY:
                         if (im == 0) continue;
                         else {
                             if (r.start == 0) {
-                                W.Q.append_chunk(r.Q, m_start, m_end - 1, 1, r_last);
+                                W.Q.append_chunk(r.Q, m_start, 1, r.size - 1);
                                 W.R(row - (i + 1), j) = r.Q(0);
                             } else {
-                                W.Q.append_chunk(r.Q, m_start - 1, m_end - 1, 0, r_last);
+                                W.Q.append_chunk(r.Q, m_start - 1, 0, r.size);
                             }
                         }
                     break;
@@ -313,10 +313,10 @@ WrightFisher::Matrix WrightFisher::Switching(
                         if (im == N(i) * 2) continue;
                         else {
                             if (r.end == N(j) * 2) {
-                                W.Q.append_chunk(r.Q, m_start, m_end - 1, 0, r_last - 1);
+                                W.Q.append_chunk(r.Q, m_start, 0, r.size - 1);
                                 W.R(row - i, j) = r.Q(r_last);
                             } else {
-                                W.Q.append_chunk(r.Q, m_start, m_end, 0, r_last);
+                                W.Q.append_chunk(r.Q, m_start, 0, r.size);
                             }
                         }
                     break;
@@ -325,18 +325,18 @@ WrightFisher::Matrix WrightFisher::Switching(
                         if (im == 0 || im == N(i) * 2) continue;
                         else {
                             if (r.start == 0 && r.end == N(j) * 2) {
-                                W.Q.append_chunk(r.Q, m_start, m_end - 2, 1, r_last - 1);
+                                W.Q.append_chunk(r.Q, m_start, 1, r.size - 2);
                                 // TODO: why is this not `row` ?
                                 W.R(row - i - i - 1, 2 * j) = r.Q(0);
                                 W.R(row - i - i - 1, (2 * j) + 1) = r.Q(r_last);
                             } else if (r.start == 0) {
-                                W.Q.append_chunk(r.Q, m_start, m_end - 1, 1, r_last);
+                                W.Q.append_chunk(r.Q, m_start, 1, r.size - 1);
                                 W.R(row - i - i - 1, 2 * j) = r.Q(0);
                             } else if (r.end == N(j) * 2) {
-                                W.Q.append_chunk(r.Q, m_start - 1, m_end - 2, 0, r_last - 1);
+                                W.Q.append_chunk(r.Q, m_start - 1, 0, r.size - 1);
                                 W.R(row - i - i - 1, (2 * j) + 1) = r.Q(r_last);
                             } else {
-                                W.Q.append_chunk(r.Q, m_start - 1, m_end - 1, 0, r_last);
+                                W.Q.append_chunk(r.Q, m_start - 1, 0, r.size);
                             }
                         }
                     break;
@@ -400,13 +400,13 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToFixationOnly(
             llong row = block_row + b;
             llong offset = (2 * N) + 1;
 
-            W.Q.append_chunk(b_1[b].Q, b_1[b].start, b_1[b].end, 0, b_1[b].size - 1);
+            W.Q.append_chunk(b_1[b].Q, b_1[b].start, 0, b_1[b].size);
 
             if (b_2[b].end == N * 2) {
-                W.Q.append_chunk(b_2[b].Q, b_2[b].start + offset, b_2[b].end + offset - 1, 0, b_2[b].size - 2);
+                W.Q.append_chunk(b_2[b].Q, b_2[b].start + offset, 0, b_2[b].size - 1);
                 W.R(row, 0) = b_2[b].Q(b_2[b].size - 1);
             } else {
-                W.Q.append_chunk(b_2[b].Q, b_2[b].start + offset, b_2[b].end + offset, 0, b_2[b].size - 1);
+                W.Q.append_chunk(b_2[b].Q, b_2[b].start + offset, 0, b_2[b].size);
             }
             W.Q.next_row();
         }
@@ -462,20 +462,20 @@ WrightFisher::Matrix WrightFisher::NonAbsorbingToBothAbsorbing(
             llong row = block_row + b;
             llong offset = (2 * N) + 1;
 
-            W.Q.append_chunk(buffer_1[b].Q, buffer_1[b].start, buffer_1[b].end, 0, buffer_1[b].size - 1);
+            W.Q.append_chunk(buffer_1[b].Q, buffer_1[b].start, 0, buffer_1[b].size);
 
             if (buffer_2[b].start == 0 && buffer_2[b].end == 2*N) {
                 W.R(row, 0) = buffer_2[b].Q(0);
                 W.R(row, 1) = buffer_2[b].Q(buffer_2[b].size - 1);
-                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset,     buffer_2[b].end + offset - 2, 1, buffer_2[b].size - 2);
+                W.Q.append_chunk(buffer_2[b].Q, 0 + offset,  1, buffer_2[b].size - 2);
             } else if (buffer_2[b].start == 0) {
-                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset,     buffer_2[b].end + offset - 1, 1, buffer_2[b].size - 1);
+                W.Q.append_chunk(buffer_2[b].Q, 0 + offset,  1, buffer_2[b].size - 1);
                 W.R(row, 0) = buffer_2[b].Q(0);
             } else if (buffer_2[b].end == N * 2) {
-                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset - 1, buffer_2[b].end + offset - 2, 0, buffer_2[b].size - 2);
+                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset - 1, 0, buffer_2[b].size - 1);
                 W.R(row, 1) = buffer_2[b].Q(buffer_2[b].size - 1);
             } else {
-                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset - 1, buffer_2[b].end + offset - 1, 0, buffer_2[b].size - 1);
+                W.Q.append_chunk(buffer_2[b].Q, buffer_2[b].start + offset - 1, 0, buffer_2[b].size);
             }
             W.Q.next_row();
         }

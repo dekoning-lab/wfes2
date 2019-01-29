@@ -27,16 +27,16 @@ public:
 
     ~SparseMatrix();
 
-    //       r0 = 1;   r1 = 4;
+    //       r0 = 1;   r1 = r0 + size;
     // r: a  b  c  d  e  f  g  h 
     //      /        /
     //     /        /
     // m: b  c  d  e
-    //    m0 = 0;  m1 = 3;  
+    //    m0 = 0;  m1 = m0 + size;  
     // insert row from r0 to r1 (row index) into matrix from m0 to m1 (matrix index)
 
-    void append_row(dvec& row, llong col_start = 0, llong col_end = -1);
-    void append_chunk(dvec& row, llong m0, llong m1, llong r0, llong r1);
+    void append_row(dvec& row, llong col_start, llong size);
+    void append_chunk(dvec& row, llong m0, llong r0, llong size);
     void next_row();
     void append_value(double value, llong i, llong j);
 

@@ -59,7 +59,7 @@ TEST_CASE("Sparse Matrix in COO format converts to CSR", "[sparse]")
     dmat B(k, k);
     for(llong i = 0; i < k; i++) {
         dvec range = dvec::LinSpaced(k, 1, 100);
-        A.append_row(range, 0, k-1);
+        A.append_row(range, 0, k);
         B.row(i) = range;
     }
 
