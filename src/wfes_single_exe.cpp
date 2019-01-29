@@ -20,6 +20,7 @@ int main(int argc, char const *argv[])
     args::Group model_f(parser, "Model type - specify one", args::Group::Validators::Xor, args::Options::Required);
     args::Flag absorption_f(model_f, "absorption", "Both fixation and extinction states are absorbing", {"absorption"});
     args::Flag fixation_f(model_f, "fixation", "Only fixation state is absorbing", {"fixation"});
+    args::Flag establishment_f(model_f, "establishment", "Calculate establishment properties", {"establishment"});
     args::Flag fundamental_f(model_f, "fundamental", "Calculate the entire fundamental matrix (slow)", {"fundamental"});
     args::Flag equilibrium_f(model_f, "equilibrium", "Calculate the equilibrium distribtion of allele states", {"equilibrium"});
     args::Flag non_absorbing_f(model_f, "non-absorbing", "Build a non-absorbing WF matrix", {"non-absorbing"});
@@ -198,23 +199,6 @@ int main(int argc, char const *argv[])
         dvec B_fix = dvec::Ones(size) - B_ext;
 	dvec id(size);
 
-	// establishment
-	llong est_idx = 0;
-	dvec B_est = B_fix - dvec::Constant(size, 0.5);
-	B_est.array().abs().minCoeff(&est_idx);
-	// Since the B indexes begin at 1
-	double est_freq = (double)(est_idx+1) / (2 * population_size);
-
-	// post-establishment time before absorption
-	id.setZero();
-	id(est_idx)=1;
-	dvec N1_est = solver.solve(id, true);
-	dvec N2_est = solver.solve(N1_est, true);
-	double T_p_est = N1_est.sum();
-	double T_p_est_var = (2 * N2_est.sum() - N1_est.sum()) - pow(N1_est.sum(), 2);
-	double T_p_est_std = sqrt(T_p_est_var);
-
-
         // integrate over starting number of copies
         double P_ext = 0;
         double P_fix = 0;
@@ -296,8 +280,8 @@ int main(int argc, char const *argv[])
 
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
-                           DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF  ", " DPF "," DPF "\n",
-                   population_size, s, h, u, v, a, P_ext, P_fix, T_ext, T_ext_std, T_fix, T_fix_std, est_freq, T_p_est, T_p_est_std);
+                           DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
+                   population_size, s, h, u, v, a, P_ext, P_fix, T_ext, T_ext_std, T_fix, T_fix_std);
 
         } else {
             printf("N = " LPF "\n", population_size);
@@ -312,9 +296,6 @@ int main(int argc, char const *argv[])
             printf("T_ext_std = " DPF "\n", T_ext_std);
             printf("T_fix = " DPF "\n", T_fix);
             printf("T_fix_std = " DPF "\n", T_fix_std);
-	    printf("F_est = " DPF "\n", est_freq);
-	    printf("T_p_est = " DPF "\n", T_p_est);
-	    printf("T_p_est_std = " DPF "\n", T_p_est_std);
             // printf("N_ext = " DPF "\n", N_ext);
         }
     } // END SINGLE ABSORPTION
@@ -379,6 +360,60 @@ int main(int argc, char const *argv[])
             printf("E[freq mut] = " DPF "\n", e_freq);
             printf("E[freq  wt] = " DPF "\n", (1.0 - e_freq) );
 	}
+    }
+
+    if (establishment_f) {
+
+	WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f, b);
+
+        if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
+        if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
+
+        W.Q.subtract_identity();
+
+        llong size = (2 * population_size) - 1;
+
+        PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+        solver.analyze();
+
+        dvec R_ext = W.R.col(0);
+        dvec B_ext = solver.solve(R_ext, false);
+        dvec B_fix = dvec::Ones(size) - B_ext;
+	dvec id(size);
+
+	// establishment
+	llong est_idx = 0;
+	dvec B_est = B_fix - dvec::Constant(size, 0.5);
+	B_est.array().abs().minCoeff(&est_idx);
+	// Since the B indexes begin at 1
+	double est_freq = (double)(est_idx+1) / (2 * population_size);
+
+	// post-establishment time before absorption
+	id.setZero();
+	id(est_idx)=1;
+	dvec N1_est = solver.solve(id, true);
+	dvec N2_est = solver.solve(N1_est, true);
+	double T_p_est = N1_est.sum();
+	double T_p_est_var = (2 * N2_est.sum() - N1_est.sum()) - pow(N1_est.sum(), 2);
+	double T_p_est_std = sqrt(T_p_est_var);
+
+	 if (csv_f) {
+            printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
+                            DPF  ", " DPF "," DPF "\n",
+                   population_size, s, h, u, v, a, est_freq, T_p_est, T_p_est_std);
+
+        } else {
+            printf("N = " LPF "\n", population_size);
+            printf("s = " DPF "\n", s);
+            printf("h = " DPF "\n", h);
+            printf("u = " DPF "\n", u);
+            printf("v = " DPF "\n", v);
+            printf("a = " DPF "\n", a);
+	    printf("F_est = " DPF "\n", est_freq);
+	    printf("T_p_est = " DPF "\n", T_p_est);
+	    printf("T_p_est_std = " DPF "\n", T_p_est_std);
+            // printf("N_ext = " DPF "\n", N_ext);
+        }
     }
 
     if(allele_age_f) // BEGIN SINGLE ALLELE AGE
