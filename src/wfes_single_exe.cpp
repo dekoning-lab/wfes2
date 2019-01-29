@@ -364,72 +364,124 @@ int main(int argc, char const *argv[])
 
     if (establishment_f) {
 
-	WF::Matrix W = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f, b);
+	WF::Matrix W_a = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f, b);
 
-        
-
-        W.Q.subtract_identity();
+        W_a.Q.subtract_identity();
 
         llong size = (2 * population_size) - 1;
 
-        PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
-        solver.analyze();
+        PardisoSolver solver_a(W_a.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+        solver_a.analyze();
 
-        dvec R_ext = W.R.col(0);
-        dvec B_ext = solver.solve(R_ext, false);
-        dvec B_fix = dvec::Ones(size) - B_ext;
-	dvec id(size);
+        dvec R_a_fix = W_a.R.col(1);
+        dvec B_a_fix = solver_a.solve(R_a_fix, false);
+	dvec id_a(size);
 
 	// establishment
 	llong est_idx = 0;
-	dvec B_est = B_fix - dvec::Constant(size, 0.5);
-	B_est.array().abs().minCoeff(&est_idx);
+	dvec B_a_est = B_a_fix - dvec::Constant(size, 0.5);
+	B_a_est.array().abs().minCoeff(&est_idx);
+	
 	// Since the B indexes begin at 1
-	double est_freq = (double)(est_idx+1) / (2 * population_size);
+	double est_freq = (double)(est_idx + 1) / (2 * population_size);
 
 	// post-establishment time before absorption
-	id.setZero();
-	id(est_idx)=1;
-	dvec N1_est = solver.solve(id, true);
-	dvec N2_est = solver.solve(N1_est, true);
-	double T_p_est = N1_est.sum();
-	double T_p_est_var = (2 * N2_est.sum() - N1_est.sum()) - pow(N1_est.sum(), 2);
-	double T_p_est_std = sqrt(T_p_est_var);
+	id_a.setZero();
+	id_a(est_idx)=1;
+	dvec N1_a_est = solver_a.solve(id_a, true);
+	dvec N2_a_est = solver_a.solve(N1_a_est, true);
+	double T_a_est = N1_a_est.sum();
+	double T_a_est_var = (2 * N2_a_est.sum() - N1_a_est.sum()) - pow(N1_a_est.sum(), 2);
+	double T_a_est_std = sqrt(T_a_est_var);
         
 	// Truncated model
-	WF::Matrix Wp = WF::Truncated(population_size, population_size, est_idx + 1, s, h, u, v, rem, a, verbose_f, b);
- 	if(output_Q_f) Wp.Q.save_market(args::get(output_Q_f));
-        if(output_R_f) write_matrix_to_file(Wp.R, args::get(output_R_f));
+	WF::Matrix W = WF::Truncated(population_size, population_size, est_idx, s, h, u, v, rem, a, verbose_f, b);
+ 	if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
+        if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
 
 	// To test
-	//cout << Wp.R.col(0) + Wp.Q.dense().rowwise().sum() + Wp.R.col(1) << endl;
-	//cout << Wp.Q.dense() << endl;
+	//cout << W.R.col(0) + W.Q.dense().rowwise().sum() + W.R.col(1) << endl;
+	//cout << W.Q.dense() << endl;
 
-	Wp.Q.subtract_identity();
+	W.Q.subtract_identity();
 	
-	PardisoSolver solver_p(Wp.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
-	solver_p.analyze();
+	PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+	solver.analyze();
 
-	dvec id_b(est_idx);
-	id_b.setZero();
-	id_b[0] = 1;
-	
-	dvec R_est = Wp.R.col(1);
-	dvec Bp_est = solver_p.solve(R_est, false);
-	double P_est = Bp_est[0];
-	dvec N1_b_est = solver_p.solve(id_b, true);
-	dvec E1_b_est = Bp_est.array() * N1_b_est.array() / P_est;
-	dvec N2_b_est = solver_p.solve(N1_b_est, true);
-	dvec E2_b_est = Bp_est.array() * N2_b_est.array() / P_est;
-	double T_b_est = E1_b_est.sum();
-	double T_b_est_var = (2 * E2_b_est.sum() - E1_b_est.sum()) - pow(E1_b_est.sum(), 2);
-	double T_b_est_std = sqrt(T_b_est_var);
-	
+	dvec R_est = W.R.col(1);
+	dvec B_est = solver.solve(R_est, false);
+	dvec B_ext = dvec::Ones(est_idx - 1) - B_est;
 
+	// integrate over starting number of copies
+        double P_ext = 0;
+        double P_est = 0;
+        double T_ext = 0;
+        double T_est = 0;
+        double T_ext_var = 0;
+        double T_est_var = 0;
+        
+        dmat N_mat(z, est_idx - 1);
+        dmat E_ext_mat(z, est_idx - 1);
+        dmat E_est_mat(z, est_idx - 1);
+        dmat N2_mat(z, est_idx - 1);
+	
+	dvec id(est_idx);	
+	if(!starting_copies_f) {
+            for(llong i = 0; i < z; i++) {
+		double p_i = starting_copies_p(i);
+                id.setZero();
+                id(i) = 1;
+
+                N_mat.row(i) = solver.solve(id, true);
+                dvec N1 = N_mat.row(i);
+                N2_mat.row(i) = solver.solve(N1, true);
+                dvec N2 = N2_mat.row(i);
+
+                P_ext += B_ext(i) * p_i;
+                dvec E_ext = B_ext.array() * N1.array() / B_ext(i);
+                E_ext_mat.row(i) = E_ext;
+                dvec E_ext_var = B_ext.array() * N2.array() / B_ext(i);
+                T_ext += E_ext.sum() * p_i;
+                T_ext_var += (((2 * E_ext_var.sum() - E_ext.sum()) * p_i) - 
+			      pow(E_ext.sum() * p_i, 2));
+
+                P_est += B_est(i) * p_i;
+                dvec E_est = B_est.array() * N1.array() / B_est(i);
+                E_est_mat.row(i) = E_est;
+                dvec E_est_var = B_est.array() * N2.array() / B_est(i);
+                T_est += E_est.sum() * p_i;
+                T_est_var += (((2 * E_est_var.sum() - E_est.sum()) * p_i) - 
+			      pow(E_est.sum() * p_i, 2));
+	    }
+	} else {
+	    // TODO: combine this with the previous clause
+            id.setZero();
+            id(starting_copies) = 1;
+            N_mat.row(0) = solver.solve(id, true);
+            dvec N1 = N_mat.row(0);
+            N2_mat.row(0) = solver.solve(N1, true);
+            dvec N2 = N2_mat.row(0);
+
+            P_ext = B_ext(starting_copies);
+            dvec E_ext = B_ext.array() * N1.array() / B_ext(starting_copies);
+            E_ext_mat.row(0) = E_ext;
+            dvec E_ext_var = B_ext.array() * N2.array() / B_ext(starting_copies);
+            T_ext = E_ext.sum();
+            T_ext_var = (2 * E_ext_var.sum() - E_ext.sum()) - pow(E_ext.sum(), 2);
+
+            P_est = B_est(starting_copies);
+            dvec E_est = B_est.array() * N1.array() / B_est(starting_copies);
+            E_est_mat.row(0) = E_est;
+            dvec E_est_var = B_est.array() * N2.array() / B_est(starting_copies);
+            T_est = E_est.sum();
+            T_est_var = (2 * E_est_var.sum() - E_est.sum()) - pow(E_est.sum(), 2);
+	}
+	double T_est_std = sqrt(T_est_var);
+        
 	if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
                             DPF ", " DPF  ", " DPF "," DPF ", " DPF ", " DPF "\n",
-                   population_size, s, h, u, v, a, est_freq, P_est, T_p_est, T_p_est_std, T_b_est, T_b_est_std);
+                   population_size, s, h, u, v, a, est_freq, P_est, T_a_est, T_a_est_std, T_est, T_est_std);
 
         } else {
             printf("N = " LPF "\n", population_size);
@@ -440,10 +492,10 @@ int main(int argc, char const *argv[])
             printf("a = " DPF "\n", a);
 	    printf("F_est = " DPF "\n", est_freq);
 	    printf("P_est = " DPF "\n", P_est);
-	    printf("T_p_est = " DPF "\n", T_p_est);
-	    printf("T_p_est_std = " DPF "\n", T_p_est_std);
-	    printf("T_b_est = " DPF "\n", T_b_est);
-	    printf("T_b_est_std = " DPF "\n", T_b_est_std);
+	    printf("T_a_est = " DPF "\n", T_a_est);
+	    printf("T_a_est_std = " DPF "\n", T_a_est_std);
+	    printf("T_est = " DPF "\n", T_est);
+	    printf("T_est_std = " DPF "\n", T_est_std);
             
         }
     }
