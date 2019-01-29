@@ -381,9 +381,17 @@ int main(int argc, char const *argv[])
 	llong est_idx = 0;
 	dvec B_a_est = B_a_fix - dvec::Constant(size, 0.5);
 	B_a_est.array().abs().minCoeff(&est_idx);
+
+	if (est_idx == 1) {
+	    throw args::Error("Establishment is near-certain: establishment-count is 1");
+	}
+	if (z >= est_idx) {
+	    throw args::Error("Establishment can be reached by mutation alone");
+	}
 	
 	// Since the B indexes begin at 1
 	double est_freq = (double)(est_idx + 1) / (2 * population_size);
+	
 
 	// post-establishment time before absorption
 	id_a.setZero();
