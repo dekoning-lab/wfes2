@@ -212,9 +212,9 @@ WrightFisher::Matrix WrightFisher::Truncated(const llong Nx, const llong Ny, con
     time_point t_start, t_end;
     if (verbose) t_start = std::chrono::system_clock::now();
     bool verify_diagonal = (Nx == Ny);
-    llong Nx2 = 2 * Nx; 
-    llong Ny2 = 2 * Ny; 
-    llong size = Nx2 + 1;
+    // llong Nx2 = 2 * Nx; 
+    // llong Ny2 = 2 * Ny; 
+    // llong size = Nx2 + 1;
 
     Matrix W(t - 1, t - 1, 2);
     
@@ -235,7 +235,7 @@ WrightFisher::Matrix WrightFisher::Truncated(const llong Nx, const llong Ny, con
         for(llong b = 0; b < block_length; b++) {
             Row& r = buffer[b];
             llong i = b + block_row;
-            llong r_last = r.size - 1;
+            // llong r_last = r.size - 1;
 	    llong t_off = t - r.start;
 
             // diagonal is left of inserted chunk

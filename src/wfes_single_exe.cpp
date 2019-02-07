@@ -390,7 +390,8 @@ int main(int argc, char const *argv[])
 	}
 	
 	// Since the B indexes begin at 1
-	double est_freq = (double)(est_idx + 1) / (2 * population_size);
+	est_idx ++;
+	double est_freq = (double)(est_idx) / (2 * population_size);
 	
 
 	// post-establishment time before absorption
