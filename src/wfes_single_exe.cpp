@@ -364,23 +364,26 @@ int main(int argc, char const *argv[])
 
     if (establishment_f) {
 
-	WF::Matrix W_a = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f, b);
+	// Full Wright-Fisher
+	WF::Matrix W_full = WF::Single(population_size, population_size, WF::BOTH_ABSORBING, s, h, u, v, rem, a, verbose_f, b);
 
-        W_a.Q.subtract_identity();
+        W_full.Q.subtract_identity();
 
         llong size = (2 * population_size) - 1;
 
-        PardisoSolver solver_a(W_a.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
-        solver_a.analyze();
+        PardisoSolver solver_full(W_full.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+        solver_full.analyze();
 
-        dvec R_a_fix = W_a.R.col(1);
-        dvec B_a_fix = solver_a.solve(R_a_fix, false);
-	dvec id_a(size);
+        dvec R_full_fix = W_full.R.col(1);
+        dvec B_full_fix = solver_full.solve(R_full_fix, false);
+	dvec B_full_ext = dvec::Constant(size, 1) - B_full_fix;
+	dvec id_full(size);
 
 	// establishment
 	llong est_idx = 0;
-	dvec B_a_est = B_a_fix - dvec::Constant(size, 0.5);
-	B_a_est.array().abs().minCoeff(&est_idx);
+	// find closest to 0.5
+	dvec B_est_closest = B_full_fix - dvec::Constant(size, 0.5);
+	B_est_closest.array().abs().minCoeff(&est_idx);
 
 	if (est_idx == 1) {
 	    throw args::Error("Establishment is near-certain: establishment-count is 1");
@@ -395,30 +398,44 @@ int main(int argc, char const *argv[])
 	
 
 	// post-establishment time before absorption
-	id_a.setZero();
-	id_a(est_idx)=1;
-	dvec N1_a_est = solver_a.solve(id_a, true);
-	dvec N2_a_est = solver_a.solve(N1_a_est, true);
-	double T_a_est = N1_a_est.sum();
-	double T_a_est_var = (2 * N2_a_est.sum() - N1_a_est.sum()) - pow(N1_a_est.sum(), 2);
-	double T_a_est_std = sqrt(T_a_est_var);
+	id_full.setZero();
+	id_full(est_idx)=1;
+	dvec N1_aft_est = solver_full.solve(id_full, true);
+	dvec N2_aft_est = solver_full.solve(N1_aft_est, true);
+
+	// Segregation
+	double T_seg = N1_aft_est.sum();
+	double T_seg_var = (2 * N2_aft_est.sum() - N1_aft_est.sum()) - pow(N1_aft_est.sum(), 2);
+	double T_seg_std = sqrt(T_seg_var);
+
+	dvec E_seg_ext = B_full_ext.array() * N1_aft_est.array() / B_full_ext(est_idx);
+	dvec E_seg_ext_var = B_full_ext.array() * N2_aft_est.array() / B_full_ext(est_idx);
+	double T_seg_ext = E_seg_ext.sum();
+	double T_seg_ext_var = (2 * E_seg_ext_var.sum() - E_seg_ext.sum()) - pow(E_seg_ext.sum(), 2);
+	double T_seg_ext_std = sqrt(T_seg_ext_var);
+
+	dvec E_seg_fix = B_full_fix.array() * N1_aft_est.array() / B_full_fix(est_idx);
+	dvec E_seg_fix_var = B_full_fix.array() * N2_aft_est.array() / B_full_fix(est_idx);
+	double T_seg_fix = E_seg_fix.sum();
+	double T_seg_fix_var = (2 * E_seg_fix_var.sum() - E_seg_fix.sum()) - pow(E_seg_fix.sum(), 2);
+	double T_seg_fix_std = sqrt(T_seg_fix_var);
         
 	// Truncated model
-	WF::Matrix W = WF::Truncated(population_size, population_size, est_idx, s, h, u, v, rem, a, verbose_f, b);
- 	if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
-        if(output_R_f) write_matrix_to_file(W.R, args::get(output_R_f));
+	WF::Matrix W_tr = WF::Truncated(population_size, population_size, est_idx, s, h, u, v, rem, a, verbose_f, b);
+ 	if(output_Q_f) W_tr.Q.save_market(args::get(output_Q_f));
+        if(output_R_f) write_matrix_to_file(W_tr.R, args::get(output_R_f));
 
 	// To test
 	//cout << W.R.col(0) + W.Q.dense().rowwise().sum() + W.R.col(1) << endl;
 	//cout << W.Q.dense() << endl;
 
-	W.Q.subtract_identity();
+	W_tr.Q.subtract_identity();
 	
-	PardisoSolver solver(W.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
-	solver.analyze();
+	PardisoSolver solver_tr(W_tr.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+	solver_tr.analyze();
 
-	dvec R_est = W.R.col(1);
-	dvec B_est = solver.solve(R_est, false);
+	dvec R_est = W_tr.R.col(1);
+	dvec B_est = solver_tr.solve(R_est, false);
 	dvec B_ext = dvec::Ones(est_idx - 1) - B_est;
 
 	// integrate over starting number of copies
@@ -441,9 +458,9 @@ int main(int argc, char const *argv[])
                 id.setZero();
                 id(i) = 1;
 
-                N_mat.row(i) = solver.solve(id, true);
+                N_mat.row(i) = solver_tr.solve(id, true);
                 dvec N1 = N_mat.row(i);
-                N2_mat.row(i) = solver.solve(N1, true);
+                N2_mat.row(i) = solver_tr.solve(N1, true);
                 dvec N2 = N2_mat.row(i);
 
                 P_ext += B_ext(i) * p_i;
@@ -466,9 +483,9 @@ int main(int argc, char const *argv[])
 	    // TODO: combine this with the previous clause
             id.setZero();
             id(starting_copies) = 1;
-            N_mat.row(0) = solver.solve(id, true);
+            N_mat.row(0) = solver_tr.solve(id, true);
             dvec N1 = N_mat.row(0);
-            N2_mat.row(0) = solver.solve(N1, true);
+            N2_mat.row(0) = solver_tr.solve(N1, true);
             dvec N2 = N2_mat.row(0);
 
             P_ext = B_ext(starting_copies);
@@ -489,8 +506,8 @@ int main(int argc, char const *argv[])
         
 	if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", "
-                            DPF ", " DPF  ", " DPF "," DPF ", " DPF ", " DPF "\n",
-                   population_size, s, h, u, v, a, est_freq, P_est, T_a_est, T_a_est_std, T_est, T_est_std);
+                            DPF ", " DPF  ", " DPF "," DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
+                   population_size, s, h, u, v, a, est_freq, P_est, T_seg, T_seg_std, T_seg_ext, T_seg_ext_std, T_seg_fix, T_seg_fix_std, T_est, T_est_std);
 
         } else {
             printf("N = " LPF "\n", population_size);
@@ -501,8 +518,12 @@ int main(int argc, char const *argv[])
             printf("a = " DPF "\n", a);
 	    printf("F_est = " DPF "\n", est_freq);
 	    printf("P_est = " DPF "\n", P_est);
-	    printf("T_a_est = " DPF "\n", T_a_est);
-	    printf("T_a_est_std = " DPF "\n", T_a_est_std);
+	    printf("T_seg = " DPF "\n", T_seg);
+	    printf("T_seg_std = " DPF "\n", T_seg_std);
+	    printf("T_seg_ext = " DPF "\n", T_seg_ext);
+	    printf("T_seg_ext_std = " DPF "\n", T_seg_ext_std);
+	    printf("T_seg_fix = " DPF "\n", T_seg_fix);
+	    printf("T_seg_fix_std = " DPF "\n", T_seg_fix_std);
 	    printf("T_est = " DPF "\n", T_est);
 	    printf("T_est_std = " DPF "\n", T_est_std);
             
