@@ -4,8 +4,8 @@ double WrightFisher::psi_diploid(const llong i, const llong N, const double s, c
 {
 
     llong j = (2 * N) - i;
-    double w_11 = 1 + s;
-    double w_12 = 1 + (s * h);
+    double w_11 = fmax(1 + s, 1e-30);
+    double w_12 = fmax(1 + (s * h), 1e-30);
     double w_22 = 1;
     double a = w_11 * i * i;
     double b = w_12 * i * j;
@@ -17,13 +17,23 @@ double WrightFisher::psi_diploid(const llong i, const llong N, const double s, c
 WrightFisher::Row WrightFisher::binom_row(const llong size, const double p, const double alpha) 
 {
 
-    // start and end quantiles for covering 1 - alpha weight of the probability mass
-    llong start = (llong)binom_tail_cover(alpha / 2, size, p, true);
-    llong end = (llong)binom_tail_cover(alpha / 2, size, p, false);
-
+    llong start = 0;
+    llong end = size;
+    if (alpha != 0) {
+	// start and end quantiles for covering 1 - alpha weight of the probability mass
+	start = (llong)binom_tail_cover(alpha / 2, size, p, true);
+	end = (llong)binom_tail_cover(alpha / 2, size, p, false);
+    }
+    // patch
+    if (start < 0) start = 0;
+    if (end <= 0) end = size;
+    
     // make sure we didn't mess up
-    assert(start < end);
-
+    #ifndef NDEBUG
+    std::cout << start << " " << end << " " << p << std::endl;
+    #endif // NDEBUG
+    assert((start < end) && (start >=0) && (end > 0));
+    
     // Initialize row
     Row r(start, end);
 

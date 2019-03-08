@@ -107,6 +107,7 @@ int main(int argc, char const *argv[])
         }
     }
 
+
     llong msg_level = verbose_f ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
 
     #ifdef OMP
