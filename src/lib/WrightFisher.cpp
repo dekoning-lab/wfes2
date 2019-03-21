@@ -29,9 +29,9 @@ WrightFisher::Row WrightFisher::binom_row(const llong size, const double p, cons
     if (end <= 0) end = size;
     
     // make sure we didn't mess up
-    #ifndef NDEBUG
-    std::cout << start << " " << end << " " << p << std::endl;
-    #endif // NDEBUG
+    // #ifndef NDEBUG
+    // std::cout << start << " " << end << " " << p << std::endl;
+    // #endif // NDEBUG
     assert((start < end) && (start >=0) && (end > 0));
     
     // Initialize row
