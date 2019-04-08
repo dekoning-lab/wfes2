@@ -11,6 +11,7 @@ using namespace std;
 
 int main(int argc, char const *argv[])
 {
+    // Arguments {{{
     args::ArgumentParser parser("WFES-SWITCHING");
     parser.helpParams.width = 120;
     parser.helpParams.helpindent = 50;
@@ -69,7 +70,9 @@ int main(int argc, char const *argv[])
     if(model_f.MatchedChildren() != 1) {
         throw args::Error("Should have exactly one of the 'Model type' options");
     }
+    // }}}
 
+    // Set defaults {{{
     lvec population_sizes = args::get(population_size_f);
     llong n_models = population_sizes.size();
 
@@ -85,45 +88,46 @@ int main(int argc, char const *argv[])
     double integration_cutoff = integration_cutoff_f ? args::get(integration_cutoff_f) : 1e-10;
     llong n_threads = n_threads_f ? args::get(n_threads_f) : 1;
 
-    #ifdef OMP
-        omp_set_num_threads(n_threads);
-    #endif
+#ifdef OMP
+    omp_set_num_threads(n_threads);
+#endif
     mkl_set_num_threads(n_threads);
 
     llong msg_level = verbose_f ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
 
     if (!force_f) {
-    	if (population_sizes.maxCoeff() > 500000) {
-	    throw args::Error("Population size is quite large - the computations will take a long time. Use --force to ignore");   
-	}
-    	dvec N = population_sizes.cast<double>();
-    	dvec theta_f = dvec::Constant(n_models, 4).array() * N.array() * v.array();
-    	dvec theta_b = dvec::Constant(n_models, 4).array() * N.array() * u.array();
-    	double max_theta = max(theta_b.maxCoeff(), theta_f.maxCoeff());
-    	if (max_theta > 1) {
-	    throw args::Error("The mutation rate might violate the Wright-Fisher assumptions. Use --force to ignore");
-	}
-    	dvec gamma = dvec::Constant(n_models, 2).array() * N.array() * s.array();
-    	if (2 * N.maxCoeff() * s.minCoeff() <= -100) {
-	    throw args::Error("The selection coefficient is quite negative. Fixations might be impossible. Use --force to ignore");
-	}
-    	if (a > 1e-5) {
-	    throw args::Error("Zero cutoff value is quite high. This might produce inaccurate results. Use --force to ignore");   
-	}
+        if (population_sizes.maxCoeff() > 500000) {
+            throw args::Error("Population size is quite large - the computations will take a long time. Use --force to ignore");   
+        }
+        dvec N = population_sizes.cast<double>();
+        dvec theta_f = dvec::Constant(n_models, 4).array() * N.array() * v.array();
+        dvec theta_b = dvec::Constant(n_models, 4).array() * N.array() * u.array();
+        double max_theta = max(theta_b.maxCoeff(), theta_f.maxCoeff());
+        if (max_theta > 1) {
+            throw args::Error("The mutation rate might violate the Wright-Fisher assumptions. Use --force to ignore");
+        }
+        dvec gamma = dvec::Constant(n_models, 2).array() * N.array() * s.array();
+        if (2 * N.maxCoeff() * s.minCoeff() <= -100) {
+            throw args::Error("The selection coefficient is quite negative. Fixations might be impossible. Use --force to ignore");
+        }
+        if (a > 1e-5) {
+            throw args::Error("Zero cutoff value is quite high. This might produce inaccurate results. Use --force to ignore");   
+        }
     }
 
     // dmat switching = GTR::Matrix(p, r);
-    
+
     // switching.diagonal() = dvec::Zero(n_models);
     // switching /= switching.sum();
     dvec row_sums = switching.rowwise().sum();
     for (llong i = 0; i < n_models; i++) {
         for (llong j = 0; j < n_models; j++) {
-	    switching(i, j) /= row_sums(i);
-	}
+            switching(i, j) /= row_sums(i);
+        }
     }
+    //}}}
 
-    if(fixation_f) // BEGIN SWITCHING FIXATION
+    if(fixation_f) // BEGIN SWITCHING FIXATION {{{
     {
         WF::Matrix W = WF::Switching(population_sizes, WF::FIXATION_ONLY, s, h, u, v, switching, a, verbose_f);
 
@@ -194,12 +198,14 @@ int main(int argc, char const *argv[])
             printf("Rate = " DPF "\n", rate);
         }
 
-    } // END SWITCHING FIXATION
+    } // END SWITCHING FIXATION }}}
 
-    if(absorption_f) // BEGIN SWITCHING ABSORPTION
+    if(absorption_f) // BEGIN SWITCHING ABSORPTION {{{
     {
-        WF::Matrix W = WF::Switching(population_sizes, WF::BOTH_ABSORBING, s, h, u, v, switching, a, verbose_f);
+        WF::Matrix W = WF::Switching(population_sizes, WF::BOTH_ABSORBING, 
+                s, h, u, v, switching, a, verbose_f);
 
+        // SI are start indeces - a vector of size n_models
         lvec si = start_indeces(2 * population_sizes - lvec::Ones(n_models));
 
         if(output_Q_f) W.Q.save_market(args::get(output_Q_f));
@@ -249,6 +255,7 @@ int main(int argc, char const *argv[])
         lvec kf = range_step(1, 2*n_models, 2);
 
         double P_ext = 0, P_fix = 0;
+        double P_ext_u = 0, P_fix_u = 0;
         for (llong i_ = 0; i_ < si.size(); i_++) {
             llong i = si[i_];
             for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
@@ -256,19 +263,27 @@ int main(int argc, char const *argv[])
                 llong idx = i + o_;
 
                 for (llong k_ = 0; k_ < ke.size(); k_++) {
+                    P_ext_u += B(idx, ke[k_]);
                     P_ext += o * p[i_] * B(idx, ke[k_]);
                 }
 
                 for (llong k_ = 0; k_ < kf.size(); k_++) {
+                    P_fix_u += B(idx, kf[k_]);
                     P_fix += o * p[i_] * B(idx, kf[k_]);
                 }
             }
         }
 
-	dvec E_ext = dvec::Zero(size);
-	dvec E_fix = dvec::Zero(size);
-	double T_ext_var = 0;
-	double T_fix_var = 0;
+        // Summarize extinction and fixation absorption vectors
+        dvec B_fix = dvec::Zero(size);
+        dvec B_ext = dvec::Zero(size);
+        for(llong k_ = 0; k_ < ke.size(); k_++) { B_ext += B.col(ke[k_]); }
+        for(llong k_ = 0; k_ < kf.size(); k_++) { B_fix += B.col(kf[k_]); }
+
+        double T_ext = 0;
+        double T_fix = 0;
+        double T_ext_var = 0;
+        double T_fix_var = 0;
 
         for (llong i_ = 0; i_ < si.size(); i_++) {
             llong i = si[i_];
@@ -276,31 +291,26 @@ int main(int argc, char const *argv[])
                 double o = p0[i_](o_);
                 llong idx = i + o_;
 
-                for (llong k_ = 0; k_ < ke.size(); k_++) {
-		    dvec E_ext_i = (o * p[i_] / P_ext) * (B.col(ke[k_]).array() * N_rows[idx].array());
-		    E_ext += E_ext_i;
-		    dvec E_ext_var_i = (o * p[i_] / P_ext) * (B.col(ke[k_]).array() * N2_rows[idx].array());
-		    T_ext_var += (((2 * E_ext_var_i.sum() - E_ext_i.sum()) * p[i_] * o) - 
-				  pow(E_ext_i.sum() * p[i_] * o, 2));
-                }
+                dvec E_ext_i = B_ext.array() * N_rows[idx].array() / B_ext[idx];
+                dvec E_ext_var_i = B_ext.array() * N2_rows[idx].array() / B_ext[idx];
+                T_ext += E_ext_i.sum() * o * p[i_];
+                T_ext_var += ((2 * E_ext_var_i.sum()) - E_ext_i.sum() - pow(E_ext_i.sum(), 2)) * o * p[i_];
 
-                for (llong k_ = 0; k_ < kf.size(); k_++) {
-		    dvec E_fix_i = (o * p[i_] / P_fix) * (B.col(kf[k_]).array() * N_rows[idx].array());
-		    E_fix += E_fix_i;
-		    dvec E_fix_var_i = (o * p[i_] / P_fix) * (B.col(kf[k_]).array() * N2_rows[idx].array());
-		    T_fix_var += (((2 * E_fix_var_i.sum() - E_fix_i.sum()) * p[i_] * o) - 
-				  pow(E_fix_i.sum() * p[i_] * o, 2));
-                }
+                dvec E_fix_i = B_fix.array() * N_rows[idx].array() / B_fix[idx];
+                dvec E_fix_var_i = B_fix.array() * N2_rows[idx].array() / B_fix[idx];
+                T_fix += E_fix_i.sum() * o * p[i_];
+                T_fix_var += ((2 * E_fix_var_i.sum()) - E_fix_i.sum() - pow(E_fix_i.sum(), 2)) * o * p[i_];
+
             }
         }
 
-	double T_ext = E_ext.sum();
-	double T_fix = E_fix.sum();
-	double T_ext_std = sqrt(T_ext_var);
-	double T_fix_std = sqrt(T_fix_var);
 
-        if(output_N_ext_f) write_vector_to_file(E_ext, args::get(output_N_ext_f));
-        if(output_N_fix_f) write_vector_to_file(E_fix, args::get(output_N_fix_f));
+        double T_ext_std = sqrt(T_ext_var);
+        double T_fix_std = sqrt(T_fix_var);
+
+        // Output {{{
+        /* if(output_N_ext_f) write_vector_to_file(E_ext, args::get(output_N_ext_f)); */
+        /* if(output_N_fix_f) write_vector_to_file(E_fix, args::get(output_N_fix_f)); */
         if(output_N_f) write_vector_map_to_file(N_rows, args::get(output_N_f));
         if(output_B_f) write_matrix_to_file(B, args::get(output_B_f));
 
@@ -335,9 +345,9 @@ int main(int argc, char const *argv[])
             printf("T_ext_std = " DPF "\n", T_ext_std);
             printf("T_fix = " DPF "\n", T_fix);
             printf("T_fix_std = " DPF "\n", T_fix_std);
-        }
+        } // }}}
 
-    } // END SWITCHING ABSORPTION
+    } // END SWITCHING ABSORPTION }}}
 
     if (verbose_f) {
         t_end = std::chrono::system_clock::now();

@@ -18,4 +18,5 @@ bool approx_eq(const dmat& a, const dmat& b, double tol = 1e-10);
 double total_diff(const dmat& a, const dmat& b);
 
 lvec start_indeces(lvec n);
+lvec end_indeces(lvec n);
 lvec range_step(llong a, llong b, llong s);

@@ -300,6 +300,18 @@ TEST_CASE("start_indeces with arithmetic", "[extra]") {
     REQUIRE(ex == start_indeces(2*x-lvec::Ones(x.size())));
 }
 
+TEST_CASE("start_indeces", "[extra]") {
+    lvec x(3); x << 100, 200, 300;
+    lvec ex(3); ex << 0, 100, 300;
+    REQUIRE(ex == start_indeces(x));
+}
+
+TEST_CASE("end_indeces", "[extra]") {
+    lvec x(3); x << 100, 200, 300;
+    lvec ex(3); ex << 100, 300, 600;
+    REQUIRE(ex == end_indeces(x));
+}
+
 TEST_CASE("boolean subset", "[extra]") {
     dvec x(6); x << 0.9, 0.8, 0.7, 0.6, 0.5, 0.4;
     dvec ex(3); ex << 0.9, 0.8, 0.7;
