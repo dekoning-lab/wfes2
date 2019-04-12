@@ -4,3 +4,4 @@ static_build/
 build/CMakeFiles
 .DS_Store
 *.swp
+tags

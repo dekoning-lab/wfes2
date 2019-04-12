@@ -71,6 +71,9 @@ target_link_libraries(wfes_single wfes)
 add_executable(wfes_switching "src/wfes_switching_exe.cpp")
 target_link_libraries(wfes_switching wfes)
 
+add_executable(wfes_sequential "src/wfes_sequential.cpp")
+target_link_libraries(wfes_sequential wfes)
+
 add_executable(test_wfes "src/test_exe.cpp")
 target_link_libraries(test_wfes wfes)
 
