@@ -285,6 +285,9 @@ int main(int argc, char const *argv[])
         double T_ext_var = 0;
         double T_fix_var = 0;
 
+        dvec E_ext = dvec::Zero(size);
+        dvec E_fix = dvec::Zero(size);
+
         for (llong i_ = 0; i_ < si.size(); i_++) {
             llong i = si[i_];
             for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
@@ -295,11 +298,13 @@ int main(int argc, char const *argv[])
                 dvec E_ext_var_i = B_ext.array() * N2_rows[idx].array() / B_ext[idx];
                 T_ext += E_ext_i.sum() * o * p[i_];
                 T_ext_var += ((2 * E_ext_var_i.sum()) - E_ext_i.sum() - pow(E_ext_i.sum(), 2)) * o * p[i_];
+                E_ext += E_ext_i * o * p[i_];
 
                 dvec E_fix_i = B_fix.array() * N_rows[idx].array() / B_fix[idx];
                 dvec E_fix_var_i = B_fix.array() * N2_rows[idx].array() / B_fix[idx];
                 T_fix += E_fix_i.sum() * o * p[i_];
                 T_fix_var += ((2 * E_fix_var_i.sum()) - E_fix_i.sum() - pow(E_fix_i.sum(), 2)) * o * p[i_];
+                E_fix += E_fix_i * o * p[i_];
 
             }
         }
@@ -309,8 +314,8 @@ int main(int argc, char const *argv[])
         double T_fix_std = sqrt(T_fix_var);
 
         // Output {{{
-        /* if(output_N_ext_f) write_vector_to_file(E_ext, args::get(output_N_ext_f)); */
-        /* if(output_N_fix_f) write_vector_to_file(E_fix, args::get(output_N_fix_f)); */
+        if(output_N_ext_f) write_vector_to_file(E_ext, args::get(output_N_ext_f));
+        if(output_N_fix_f) write_vector_to_file(E_fix, args::get(output_N_fix_f));
         if(output_N_f) write_vector_map_to_file(N_rows, args::get(output_N_f));
         if(output_B_f) write_matrix_to_file(B, args::get(output_B_f));
 
