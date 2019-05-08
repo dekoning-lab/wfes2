@@ -81,7 +81,7 @@ SCENARIO("Runs with large magnitude selection", "[selection]")
             }
 
             WHEN("Building an equilibrium matrix") {
-                WF::Matrix E = WF::Equilibrium(N, sel(i));
+                WF::Matrix E = WF::EquilibriumSolvingMatrix(N, sel(i));
                 REQUIRE(E.Q.get_diag_copy().size() == (2 * N) + 1);
             }
         }
@@ -144,8 +144,8 @@ SCENARIO("Single Narrow matrix are built correctly", "[single]") {
 }
 
 SCENARIO("Equilibrium linear solution matrix is built correctly", "[equilibrium]") {
-	WF::Matrix W1 = WF::Equilibrium(100, 0, 0.5, 1e-9, 1e-9, 0);
-	std::pair<dmat, dmat> W2 = WFE::Equilibrium(100, 0, 0.5, 1e-9, 1e-9);
+	WF::Matrix W1 = WF::EquilibriumSolvingMatrix(100, 0, 0.5, 1e-9, 1e-9, 0);
+	std::pair<dmat, dmat> W2 = WFE::EquilibriumSolvingMatrix(100, 0, 0.5, 1e-9, 1e-9);
 	REQUIRE(approx_eq(W1.Q.dense(), W2.first));
 }
 

@@ -58,7 +58,7 @@ WrightFisher::Row WrightFisher::binom_row(const llong size, const double p, cons
 
 }
 
-WrightFisher::Matrix WrightFisher::Equilibrium(
+WrightFisher::Matrix WrightFisher::EquilibriumSolvingMatrix(
         const llong N, const double s, const double h, const double u, const double v, 
         const double alpha, const bool verbose, const llong block_size) 
 {
@@ -109,6 +109,25 @@ WrightFisher::Matrix WrightFisher::Equilibrium(
         std::cout << "Time to build matrix: " << dt.count() << " s" << std::endl;
     }
     return W;
+}
+
+dmat WrightFisher::Equilibrium(llong N, double s, double h, double u, double v, double alpha, bool verbose) 
+{
+    Matrix wf_eq = EquilibriumSolvingMatrix(N, s, h, u, v, alpha, verbose);
+
+    llong msg_level = verbose ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
+
+    PardisoSolver solver(wf_eq.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
+    solver.analyze();
+
+    dvec id = dvec::Zero(wf_eq.Q.n_row);
+    id(wf_eq.Q.n_row - 1) = 1;
+
+    dvec eq = solver.solve(id, true);
+    eq = eq.array().abs();
+    eq /= eq.sum();
+
+    return eq.matrix();
 }
 
 

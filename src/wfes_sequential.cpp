@@ -12,16 +12,22 @@ using namespace std;
 
 int main(int argc, char const *argv[])
 {
+
     // Arguments {{{
+
+    // Parser setting{{{
     args::ArgumentParser parser("WFES-SWITCHING");
     parser.helpParams.width = 120;
     parser.helpParams.helpindent = 50;
     parser.helpParams.flagindent = 2;
+    // }}}
 
+    // Required args {{{
     args::ValueFlag<Eigen::Matrix<llong, Eigen::Dynamic, 1>, NumericVectorReader<llong>> population_size_f(parser, "int[k]", "Sizes of the populations", {'N', "pop-sizes"}, args::Options::Required);
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> exp_time_f(parser, "float[k]", "Expected time spent in each model", {'t', "exp-time"}, args::Options::Required);
+    // }}}
 
-    // Optional arguments
+    // Optional arguments {{{
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> selection_coefficient_f(parser, "float[k]", "Selection coefficients", {'s', "selection"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> dominance_f(parser, "float[k]", "Dominance coefficients", {'h', "dominance"});
     args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> backward_mutation_f(parser, "float[k]", "Backward mutation rates", {'u', "backward-mu"});
@@ -30,8 +36,9 @@ int main(int argc, char const *argv[])
     args::ValueFlag<double> integration_cutoff_f(parser, "float", "Starting number of copies integration cutoff", {'c', "integration-cutoff"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
     args::ValueFlag<llong>  n_threads_f(parser, "int", "Number of threads", {'t', "num-threads"});
+    // }}}
 
-    // Output options
+    // Output options {{{
     args::ValueFlag<string> output_Q_f(parser, "path", "Output Q matrix to file", {"output-Q"});
     args::ValueFlag<string> output_R_f(parser, "path", "Output R vectors to file", {"output-R"});
     args::ValueFlag<string> output_N_f(parser, "path", "Output N matrix to file", {"output-N"});
@@ -39,12 +46,14 @@ int main(int argc, char const *argv[])
     args::ValueFlag<string> output_N_ext_f(parser, "path", "Output extinction-conditional sojourn to file", {"output-N-ext"});
     args::ValueFlag<string> output_N_fix_f(parser, "path", "Output fixation-conditional sojourn to file", {"output-N-fix"});
     args::ValueFlag<string> output_N_tmo_f(parser, "path", "Output timeout-conditional sojourn to file", {"output-N-tmo"});
+    // }}}
 
+    // Flags{{{
     args::Flag csv_f(parser, "csv", "Output results in CSV format", {"csv"});
     args::Flag force_f(parser, "force", "Do not perform parameter checks", {"force"});
     args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
-
     args::HelpFlag help_f(parser, "help", "Display this help menu", {"help"});
+    // }}}
 
     try {
         parser.ParseCLI(argc, argv);
@@ -56,7 +65,9 @@ int main(int argc, char const *argv[])
         cerr << parser;
         return EXIT_FAILURE;
     }
+    // }}}
 
+    // Start timer{{{
     time_point t_start, t_end;
     if (verbose_f) t_start = std::chrono::system_clock::now();
     // }}}
@@ -71,7 +82,8 @@ int main(int argc, char const *argv[])
     dvec h = dominance_f ? args::get(dominance_f) : dvec::Constant(n_models, 0.5);
     dvec u = backward_mutation_f ? args::get(backward_mutation_f) : dvec::Constant(n_models, 1e-9);
     dvec v = forward_mutation_f ? args::get(forward_mutation_f) : dvec::Constant(n_models, 1e-9);
-    dvec p = starting_prob_f ? args::get(starting_prob_f) : dvec::Constant(n_models, 1.0 / (double)(n_models));
+    dvec p_default = dvec::Zero(n_models); p_default[0] = 1;
+    dvec p = starting_prob_f ? args::get(starting_prob_f) : p_default;
 
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
     double integration_cutoff = integration_cutoff_f ? args::get(integration_cutoff_f) : 1e-10;
@@ -105,7 +117,7 @@ int main(int argc, char const *argv[])
     }
     //}}}
 
-    // {{{ Main calculation
+    // Main calculation {{{ 
     llong size = (2 * population_sizes.sum()) - n_models;
 
     dmat switching = dmat::Zero(n_models, n_models);
@@ -187,6 +199,7 @@ int main(int argc, char const *argv[])
     dvec E_fix = dvec::Zero(size);
     dvec E_tmo = dvec::Zero(size);
 
+    // It doesn't make a lot of sense to integrate over all starting states, since the sequential model should have p= 1,0,0 by definition
     for (llong i_ = 0; i_ < si.size(); i_++) {
         llong i = si[i_];
         for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
@@ -272,11 +285,13 @@ int main(int argc, char const *argv[])
 
 // }}}
 
+    // Print timing {{{ 
     if (verbose_f) {
         t_end = std::chrono::system_clock::now();
         time_diff dt = t_end - t_start;
         std::cout << "Total runtime: " << dt.count() << " s" << std::endl;
     }
+    // }}}
 
     return EXIT_SUCCESS;
 

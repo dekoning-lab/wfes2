@@ -9,10 +9,10 @@ SparseMatrix::SparseMatrix(llong n_row, llong n_col):
 {
     data = (double*)malloc(sizeof(double));
     cols = (llong*) malloc(sizeof(llong));
-    //rows = (llong*) malloc(sizeof(llong));
     row_index = (llong*)malloc((n_row + 1) * sizeof(llong));
 
     row_index[0] = 0;
+
 }
 
 SparseMatrix::SparseMatrix(dmat& dense): 
@@ -38,6 +38,37 @@ SparseMatrix::SparseMatrix(dmat& dense):
     free(j);
 
     if(info != 0) throw std::runtime_error("SparseMatrix::dense(): Error processing row " + std::to_string(info));
+
+    mkl_sparse_d_create_csr(&handle, SPARSE_INDEX_BASE_ZERO, n_row, n_col, row_index, row_index + 1, cols, data);
+}
+
+/* LeftPaddedDiagonal(3, x, 2)
+   |. . x . .|
+   |. . . x .|
+   |. . . . x|
+*/
+SparseMatrix SparseMatrix::LeftPaddedDiagonal(llong dim, double x, llong pad_left)
+{
+    SparseMatrix I(dim, pad_left + dim);
+    I.full = true;
+    I.non_zeros = dim;
+
+    // could probably use a private constructor here
+    double* data_new = (double*)realloc(I.data, I.non_zeros * sizeof(double));
+    assert(data_new != NULL); I.data = data_new;
+
+    llong* cols_new = (llong*)realloc(I.cols, I.n_col * sizeof(llong));
+    assert(cols_new != NULL); I.cols = cols_new;
+
+    for(llong i = 0; i < I.non_zeros; i++) {
+        I.data[i] = x;
+        I.cols[i] = i + pad_left;
+        I.row_index[i] = i;
+    }
+    I.row_index[dim] = I.non_zeros;
+    mkl_sparse_d_create_csr(&I.handle, SPARSE_INDEX_BASE_ZERO, I.n_row, I.n_col, I.row_index, I.row_index + 1, I.cols, I.data);
+
+    return I;
 }
 
 SparseMatrix::~SparseMatrix() 
@@ -45,7 +76,7 @@ SparseMatrix::~SparseMatrix()
     free(data);
     free(cols);
     free(row_index);
-    //if (!compressed) { free(rows); }
+    mkl_sparse_destroy(handle);
 }
 
 lvec closed_range(llong start, llong stop) 
@@ -57,9 +88,7 @@ lvec closed_range(llong start, llong stop)
 
 void SparseMatrix::append_chunk(dvec& row, llong m0, llong r0, llong size) 
 {    
-
-    // llong insert_size = r1 - r0 + 1; 
-
+    assert(!full);
     llong new_size = non_zeros + size;
 
     row_index_start = positive_min(row_index_start, non_zeros);
@@ -68,7 +97,6 @@ void SparseMatrix::append_chunk(dvec& row, llong m0, llong r0, llong size)
     llong* cols_new = (llong*) realloc(cols, new_size * sizeof(llong));
     assert(cols_new != NULL); cols = cols_new;
     lvec col_idx = closed_range(m0, m0 + size);
-    //lvec col_idx = lvec::LinSpaced(insert_size, m0, m1);
     memcpy(&cols[non_zeros], col_idx.data(), size * sizeof(llong));
 
     // Data
@@ -81,12 +109,15 @@ void SparseMatrix::append_chunk(dvec& row, llong m0, llong r0, llong size)
 
 void SparseMatrix::next_row()
 {
+    assert(!full);
     row_index[current_row] = row_index_start;
     current_row += 1;
     row_index_start = -1; // special value - will be reset to min of row_index on next row
     if(current_row == n_row) {
+        // Matrix complete
         full = true;
         row_index[n_row] = non_zeros;
+        mkl_sparse_d_create_csr(&handle, SPARSE_INDEX_BASE_ZERO, n_row, n_col, row_index, row_index + 1, cols, data);
     }
 }
 
@@ -116,37 +147,12 @@ void SparseMatrix::append_value(double v, llong i, llong j)
     non_zeros += 1;
 }
 
-/*void SparseMatrix::compress_csr(bool cleanup)
-{
-    llong c_row = -1;
-    for(llong i = 0; i < non_zeros; i++) {
-        llong r = rows[i];
-        if (r == c_row) { } 
-        else if (r == (c_row + 1)) {
-            row_index[r] = i;
-            c_row += 1;
-        } 
-        else { 
-            throw std::runtime_error(
-                    "SparseMatrix::compress_csr(): Row index is not in-order - error on row " + 
-                    std::to_string(c_row + 1)); 
-        }
-    }
-    row_index[n_row] = non_zeros;
-    if (cleanup) {
-        compressed = true;
-        free(rows);
-    }
-}*/
-
 void SparseMatrix::debug_print()
 {
     std::cout << "data:    " << std::endl;
     print_buffer(data, (size_t)non_zeros);
     std::cout << "cols:   " << std::endl;
     print_buffer(cols, (size_t)non_zeros);
-    //std::cout << "rows:   " << std::endl;
-    //print_buffer(rows, (size_t)non_zeros);
     std::cout << "row_index:  " << std::endl;
     print_buffer(row_index, (size_t)(n_row + 1));
 }
@@ -175,12 +181,10 @@ dvec SparseMatrix::multiply(dvec& x, bool transpose)
     transpose ? assert(x.size() == n_row) : assert(x.size() == n_col);
     dvec y(v_size);
 
-    sparse_matrix_t A;
-    mkl_sparse_d_create_csr(&A, SPARSE_INDEX_BASE_ZERO, n_row, n_col, row_index, row_index + 1, cols, data);
-    struct matrix_descr A_descr = {.type = SPARSE_MATRIX_TYPE_GENERAL};
+    struct matrix_descr descr = {.type = SPARSE_MATRIX_TYPE_GENERAL};
     sparse_operation_t op = transpose ? SPARSE_OPERATION_TRANSPOSE : SPARSE_OPERATION_NON_TRANSPOSE;
 
-    mkl_sparse_d_mv(op, 1, A, A_descr, x.data(), 0, y.data());
+    mkl_sparse_d_mv(op, 1, handle, descr, x.data(), 0, y.data());
     
     return y;
 }
@@ -191,18 +195,28 @@ void SparseMatrix::multiply_inplace_rep(dvec& x, llong times, bool transpose)
     transpose ? assert(x.size() == n_row) : assert(x.size() == n_col);
     dvec workspace(x.size());
 
-    sparse_matrix_t A;
-    mkl_sparse_d_create_csr(&A, SPARSE_INDEX_BASE_ZERO, n_row, n_col, row_index, row_index + 1, cols, data);
-    struct matrix_descr A_descr = {.type = SPARSE_MATRIX_TYPE_GENERAL};
+    struct matrix_descr descr = {.type = SPARSE_MATRIX_TYPE_GENERAL};
     sparse_operation_t op = transpose ? SPARSE_OPERATION_TRANSPOSE : SPARSE_OPERATION_NON_TRANSPOSE;
 
     for(llong i = 0; i < times; i++) {
         // it's not safe to write into the same memory - need to swap
-        mkl_sparse_d_mv(op, 1, A, A_descr, x.data(), 0, workspace.data());
+        mkl_sparse_d_mv(op, 1, handle, descr, x.data(), 0, workspace.data());
         x = workspace;
     }
+}
 
-    mkl_sparse_destroy(A);
+SparseMatrix SparseMatrix::multiply(SparseMatrix& B, bool transpose)
+{
+    sparse_operation_t op = transpose ? SPARSE_OPERATION_TRANSPOSE : SPARSE_OPERATION_NON_TRANSPOSE;
+
+    SparseMatrix C(n_row, B.n_col);
+
+    sparse_status_t info = mkl_sparse_spmm(op, handle, B.handle, &C.handle);
+
+    if(info != SPARSE_STATUS_SUCCESS) throw std::runtime_error("SparseMatrix::multiply(sparse): " + std::to_string(info));
+
+    return C;
+
 }
 
 std::ostream& operator<<(std::ostream& os, const SparseMatrix& M) 

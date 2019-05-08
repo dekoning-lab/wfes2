@@ -8,23 +8,6 @@
 namespace WF = WrightFisher;
 using namespace std;
 
-dvec equilibrium(llong N, double s, double h, double u, double v, double alpha, bool verbose = false) {
-    WF::Matrix wf_eq = WF::Equilibrium(N, s, h, u, v, alpha, verbose);
-
-    llong msg_level = verbose ? MKL_PARDISO_MSG_VERBOSE : MKL_PARDISO_MSG_QUIET;
-
-    PardisoSolver solver(wf_eq.Q, MKL_PARDISO_MATRIX_TYPE_REAL_UNSYMMETRIC, msg_level);
-    solver.analyze();
-
-    dvec id = dvec::Zero(wf_eq.Q.n_row);
-    id(wf_eq.Q.n_row - 1) = 1;
-
-    dvec eq = solver.solve(id, true);
-    eq = eq.array().abs();
-    eq /= eq.sum();
-
-    return eq.matrix();
-}
 
 void iterate_generations(dvec& x, llong N, llong t, double s, double h, double u, double v, double alpha, bool verbose = false) {
     WF::Matrix wf = WF::Single(N, N, WF::NON_ABSORBING, s, h, u, v, true, alpha, verbose);
@@ -46,12 +29,12 @@ int main(int argc, char const *argv[])
     parser.helpParams.helpindent = 50;
     parser.helpParams.flagindent = 2;
 
-    args::ValueFlag<Eigen::Matrix<llong, Eigen::Dynamic, 1>, NumericVectorReader<llong>> population_sizes_f(parser, "k", "Population sizes", {'N', "pop-sizes"}, args::Options::Required);
-    args::ValueFlag<Eigen::Matrix<llong, Eigen::Dynamic, 1>, NumericVectorReader<llong>> epoch_lengths_f(parser, "k", "Number of generations for each epoch", {'G', "generations"}, args::Options::Required);
-    args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> selection_coefficient_f(parser, "float[k]", "Selection coefficients", {'s', "selection"});
-    args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> dominance_f(parser, "float[k]", "Dominance coefficients", {'h', "dominance"});
-    args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> backward_mutation_f(parser, "float[k]", "Backward mutation rates", {'u', "backward-mu"});
-    args::ValueFlag<Eigen::Matrix<double, Eigen::Dynamic, 1>, NumericVectorReader<double>> forward_mutation_f(parser, "float[k]", "Forward mutation rates", {'v', "forward-mu"});
+    args::ValueFlag<lvec, NumericVectorReader<llong>> population_sizes_f(parser, "k", "Population sizes", {'N', "pop-sizes"}, args::Options::Required);
+    args::ValueFlag<lvec, NumericVectorReader<llong>> epoch_lengths_f(parser, "k", "Number of generations for each epoch", {'G', "generations"}, args::Options::Required);
+    args::ValueFlag<dvec, NumericVectorReader<double>> selection_coefficient_f(parser, "float[k]", "Selection coefficients", {'s', "selection"});
+    args::ValueFlag<dvec, NumericVectorReader<double>> dominance_f(parser, "float[k]", "Dominance coefficients", {'h', "dominance"});
+    args::ValueFlag<dvec, NumericVectorReader<double>> backward_mutation_f(parser, "float[k]", "Backward mutation rates", {'u', "backward-mu"});
+    args::ValueFlag<dvec, NumericVectorReader<double>> forward_mutation_f(parser, "float[k]", "Forward mutation rates", {'v', "forward-mu"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
     args::ValueFlag<string> initial_f(parser, "path", "Path to initial probability distribution CSV", {'i', "initial"});
     args::ValueFlag<llong>  initial_count_f(parser, "int", "Initial allele count", {'p', "initial-count"});
@@ -99,7 +82,7 @@ int main(int argc, char const *argv[])
         initial = dvec::Zero(2 * pop_sizes(0) + 1);
         initial[p] = 1;
     } else {
-        initial = equilibrium(pop_sizes(0), s(0), h(0), u(0), v(0), a, verbose_f);
+        initial = WF::Equilibrium(pop_sizes(0), s(0), h(0), u(0), v(0), a, verbose_f);
     }
     d.push_back(initial);
 
@@ -110,7 +93,8 @@ int main(int argc, char const *argv[])
 
     iterate_generations(d[k - 1], pop_sizes(k - 1), epoch_gens(k - 1), s(k - 1), h(k - 1), u(k - 1), v(k - 1), a, verbose_f);
 
-    write_vector_to_file(d[k - 1], "stdout");
+    // write_vector_to_file(d[k - 1], "stdout");
+    std::cout << d[k - 1] << std::endl;
 
     if (verbose_f) {
         t_end = std::chrono::system_clock::now();

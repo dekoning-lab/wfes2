@@ -24,5 +24,6 @@ public:
     ~PardisoSolver();
     void analyze();
     dvec solve(dvec& b, bool transpose = false);
+    dmat solve_multiple(dmat& b, bool transpose = false);
     dvec get_diagonal();
 };

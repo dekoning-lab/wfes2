@@ -3,6 +3,7 @@
 #include "common.hpp"
 #include "rdist.hpp"
 #include "SparseMatrix.hpp"
+#include "PardisoSolver.hpp"
 
 namespace WrightFisher {
 
@@ -87,11 +88,14 @@ namespace WrightFisher {
     Row binom_row(const llong size, const double p, const double alpha = 1e-20);
 
     // Harrod matrix to solve for equilibrium distribution
-    Matrix Equilibrium(const llong N, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, 
-        const double alpha = 1e-20, const bool verbose = false, const llong block_size = 100);
+    Matrix EquilibriumSolvingMatrix(const llong N, const double s = 0, const double h = 0.5, 
+            const double u = 1e-9, const double v = 1e-9, 
+            const double alpha = 1e-20, const bool verbose = false, const llong block_size = 100);
+    dmat Equilibrium(llong N, double s = 0, double h = 0.5, double u = 1e-9, double v = 1e-9, double alpha = 1e-20, bool verbose = false);
 
     // Single - one matrix of a given absorption type
-    Matrix Single(const llong Nx, const llong Ny, const absorption_type a_t, const double s = 0, const double h = 0.5, const double u = 1e-9, const double v = 1e-9, 
+    Matrix Single(const llong Nx, const llong Ny, const absorption_type a_t, const double s = 0, const double h = 0.5, 
+            const double u = 1e-9, const double v = 1e-9, 
         const bool recurrent_mutation = true, const double alpha = 1e-20, const bool verbose = false, const llong block_size = 100);
 
     // Single but with entries larger than `t` summed into the fixation state

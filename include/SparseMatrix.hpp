@@ -17,13 +17,15 @@ public:
 
     double* data;
     llong* cols;
-    //llong* rows;
     llong* row_index;
+    sparse_matrix_t handle;
 
-
+    // Empty constructor
     SparseMatrix(llong n_row, llong n_col);
     // Copy constructor
     SparseMatrix(dmat& dense);
+    // Identity matrix
+    static SparseMatrix LeftPaddedDiagonal(llong dim, double x = 1, llong pad_left = 0);
 
     ~SparseMatrix();
 
@@ -44,6 +46,7 @@ public:
     dmat dense();
     dvec multiply(dvec& x, bool transpose = false);
     void multiply_inplace_rep(dvec& x, llong times, bool transpose = false);
+    SparseMatrix multiply(SparseMatrix& B, bool transpose = false);
 
     // friend ostream& operator<< (ostream& os, const SparseMatrix& M);
     void save_market(std::string path);

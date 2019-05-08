@@ -76,7 +76,7 @@ std::pair<dmat, dmat> WrightFisherElementary::Single(const llong Nx, const llong
    	return std::make_pair(Q, R); 
 }
 
-std::pair<dmat, dmat> WrightFisherElementary::Equilibrium(const llong N, const double s, const double h, const double u, const double v) {
+std::pair<dmat, dmat> WrightFisherElementary::EquilibriumSolvingMatrix(const llong N, const double s, const double h, const double u, const double v) {
 	std::pair<dmat, dmat> W = WrightFisherElementary::Single(N, N, WF::NON_ABSORBING, s, h, u, v);
 	llong N2 = 2 * N;
 	W.first = dmat::Identity(N2 + 1, N2 + 1) - W.first;

@@ -73,6 +73,31 @@ dvec PardisoSolver::solve(dvec& b, bool transpose)
     return x;
 }
 
+dmat PardisoSolver::solve_multiple(dmat& B, bool transpose)
+{
+    assert(B.rows() == n_right_hand_sides);
+    phase = MKL_PARDISO_SOLVER_PHASE_SOLVE_ITERATIVE_REFINEMENT;
+    if(transpose) control(MKL_PARDISO_SOLVE_OPTION) = MKL_PARDISO_SOLVE_TRANSPOSED;
+    else control(MKL_PARDISO_SOLVE_OPTION) = MKL_PARDISO_DEFAULT;
+
+    pardiso_64(internal.data(), &max_factors, &matrix_number,
+               &matrix_type, &phase, &size,
+               m.data, m.row_index, m.cols,
+               nullptr, &n_right_hand_sides, control.data(),
+               &message_level, B.data(), workspace.data(), &error);
+
+    if(error != 0) throw std::runtime_error("PardisoSolver::solve(): Solution error: " + std::to_string(error));
+
+    // rows of B are RHS components
+    dmat X(B.cols(), B.rows());
+    for(llong i = 0; i < n_right_hand_sides; i++) {
+        for(llong j = 0; j < size; j++) {
+            X(j, i) = workspace(i * size + j);
+        }
+    }
+    return X;
+}
+
 dvec PardisoSolver::get_diagonal() 
 {
   dvec d_factorized(size);
