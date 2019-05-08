@@ -24,7 +24,7 @@ int main(int argc, char const *argv[])
     // Required args {{{
     args::ValueFlag<lvec, NumericVectorReader<llong>> population_size_f(parser, "int[k]", "Sizes of the populations", {'N', "pop-sizes"}, args::Options::Required);
     args::ValueFlag<dvec, NumericVectorReader<double>> generations_f(parser, "float[k]", "Expected number of generations spent in each model", {'G', "generations"}, args::Options::Required);
-    args::ValueFlag<double> factor_f(parser, "float", "Matrix approximation factor", {'f', "factor"}, args::Options::Required);
+    args::ValueFlag<dvec, NumericVectorReader<double>> factor_f(parser, "float[k]", "Matrix approximation factors", {'f', "factor"}, args::Options::Required);
     // }}}
 
     // Optional arguments {{{
@@ -77,7 +77,7 @@ int main(int argc, char const *argv[])
     lvec population_sizes = args::get(population_size_f);
     llong n_models = population_sizes.size();
     dvec t = args::get(generations_f);
-    double f = args::get(factor_f);
+    dvec f = args::get(factor_f);
 
     // Set default values
     double gamma = selection_coefficient_f ? args::get(selection_coefficient_f) : 0;
@@ -85,8 +85,10 @@ int main(int argc, char const *argv[])
     double theta_u = backward_mutation_f ? args::get(backward_mutation_f) : 1e-6;
     double theta_v = forward_mutation_f ? args::get(forward_mutation_f) : 1e-6;
 
-    population_sizes /= f;
-    t /= f;
+    dvec ps_tmp = population_sizes.cast<double>().array() / f.array();
+    population_sizes = ps_tmp.cast<llong>();
+    dvec t_tmp = t.array() / f.array();
+    t = t_tmp;
 
     // scale by population size
     dvec M = population_sizes.cast<double>();
@@ -171,10 +173,10 @@ int main(int argc, char const *argv[])
     // dvec d = B.transpose().rightCols(nk).row(0);
 
 
+    llong lt = n_models - 1;
 
-    if (f != 0) {
-        llong lt = n_models - 1;
-        WF::Matrix sw_up = WF::Single(population_sizes(lt), population_sizes(lt) * f, WF::NON_ABSORBING, s(lt), h(lt), u(lt), v(lt), true, a, verbose_f);
+    if (f(lt) != 1) {
+        WF::Matrix sw_up = WF::Single(population_sizes(lt), population_sizes(lt) * f(lt), WF::NON_ABSORBING, s(lt), h(lt), u(lt), v(lt), true, a, verbose_f);
         // WF::Matrix sw_down = WF::Single(population_sizes(lt) * f, population_sizes(lt), WF::NON_ABSORBING, s(0), h(0), u(0), v(0), true, a, verbose_f);
 
         dvec e = sw_up.Q.multiply(d, true);
