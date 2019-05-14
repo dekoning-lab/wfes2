@@ -28,10 +28,10 @@ int main(int argc, char const *argv[])
     // }}}
 
     // Optional arguments {{{
-    args::ValueFlag<double> selection_coefficient_f(parser, "float", "2Ns", {'s', "selection"});
-    args::ValueFlag<double> dominance_f(parser, "float", "Dominance coefficients", {'h', "dominance"});
-    args::ValueFlag<double> backward_mutation_f(parser, "float", "4Nu", {'u', "backward-mu"});
-    args::ValueFlag<double> forward_mutation_f(parser, "float", "4Nv", {'v', "forward-mu"});
+    args::ValueFlag<dvec, NumericVectorReader<double>> selection_coefficient_f(parser, "float", "selection coefficient", {'s', "selection"});
+    args::ValueFlag<dvec, NumericVectorReader<double>> dominance_f(parser, "float", "Dominance coefficients", {'h', "dominance"});
+    args::ValueFlag<dvec, NumericVectorReader<double>> backward_mutation_f(parser, "float", "backward mutation", {'u', "backward-mu"});
+    args::ValueFlag<dvec, NumericVectorReader<double>> forward_mutation_f(parser, "float", "forward mutation", {'v', "forward-mu"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
     args::ValueFlag<llong>  n_threads_f(parser, "int", "Number of threads", {'t', "num-threads"});
 
@@ -80,10 +80,14 @@ int main(int argc, char const *argv[])
     dvec f = args::get(factor_f);
 
     // Set default values
-    double gamma = selection_coefficient_f ? args::get(selection_coefficient_f) : 0;
-    double dom = dominance_f ? args::get(dominance_f) : 0.5;
-    double theta_u = backward_mutation_f ? args::get(backward_mutation_f) : 1e-6;
-    double theta_v = forward_mutation_f ? args::get(forward_mutation_f) : 1e-6;
+    // double selection = selection_coefficient_f ? args::get(selection_coefficient_f) : 0;
+    // double dom = dominance_f ? args::get(dominance_f) : 0.5;
+    // double u_unsc = backward_mutation_f ? args::get(backward_mutation_f) : 1e-9;
+    // double v_unsc = forward_mutation_f ? args::get(forward_mutation_f) : 1e-9;
+    dvec s_unsc = selection_coefficient_f ? args::get(selection_coefficient_f) : dvec::Constant(n_models, 0);
+    dvec h = dominance_f ? args::get(dominance_f) : dvec::Constant(n_models, 0.6);
+    dvec u_unsc = backward_mutation_f ? args::get(backward_mutation_f) : dvec::Constant(n_models, 1e-9);
+    dvec v_unsc = forward_mutation_f ? args::get(forward_mutation_f) : dvec::Constant(n_models, 1e-9);
 
     dvec ps_tmp = population_sizes.cast<double>().array() / f.array();
     population_sizes = ps_tmp.cast<llong>();
@@ -91,20 +95,20 @@ int main(int argc, char const *argv[])
     t = t_tmp;
 
     // scale by population size
-    dvec M = population_sizes.cast<double>();
-    dvec s = gamma / (2 * M.array());
-    dvec h = dvec::Constant(n_models, dom);
-    dvec u = theta_u / (4 * M.array());
-    dvec v = theta_v / (4 * M.array());
+    // dvec M = population_sizes.cast<double>();
+    dvec s = s_unsc.array() * f.array();
+    // dvec h = dvec::Constant(n_models, dom);
+    dvec u = u_unsc.array() * f.array();
+    dvec v = v_unsc.array() * f.array();
 
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
     llong n_threads = n_threads_f ? args::get(n_threads_f) : 1;
 
-    std::cerr << population_sizes.transpose() << std::endl;
-    std::cerr << t.transpose() << std::endl;
-    std::cerr << s.transpose() << std::endl;
-    std::cerr << u.transpose() << std::endl;
-    std::cerr << v.transpose() << std::endl;
+//     std::cerr << population_sizes.transpose() << std::endl;
+//     std::cerr << t.transpose() << std::endl;
+//     std::cerr << s.transpose() << std::endl;
+//     std::cerr << u.transpose() << std::endl;
+//     std::cerr << v.transpose() << std::endl;
 
 
 #ifdef OMP
@@ -176,7 +180,7 @@ int main(int argc, char const *argv[])
     llong lt = n_models - 1;
 
     if (f(lt) != 1) {
-        WF::Matrix sw_up = WF::Single(population_sizes(lt), population_sizes(lt) * f(lt), WF::NON_ABSORBING, s(lt), h(lt), u(lt), v(lt), true, a, verbose_f);
+        WF::Matrix sw_up = WF::Single(population_sizes(lt), population_sizes(lt) * f(lt), WF::NON_ABSORBING, s_unsc(lt), h(lt), u_unsc(lt), v_unsc(lt), true, a, verbose_f);
         // WF::Matrix sw_down = WF::Single(population_sizes(lt) * f, population_sizes(lt), WF::NON_ABSORBING, s(0), h(0), u(0), v(0), true, a, verbose_f);
 
         dvec e = sw_up.Q.multiply(d, true);
