@@ -78,12 +78,11 @@ int main(int argc, char const *argv[])
     llong n_models = population_sizes.size();
     dvec t = args::get(generations_f);
     dvec f = args::get(factor_f);
+    assert(population_sizes.size() == t.size());
+    assert(t.size() == f.size());
+    assert(f.minCoeff() >= 1);
 
     // Set default values
-    // double selection = selection_coefficient_f ? args::get(selection_coefficient_f) : 0;
-    // double dom = dominance_f ? args::get(dominance_f) : 0.5;
-    // double u_unsc = backward_mutation_f ? args::get(backward_mutation_f) : 1e-9;
-    // double v_unsc = forward_mutation_f ? args::get(forward_mutation_f) : 1e-9;
     dvec s_unsc = selection_coefficient_f ? args::get(selection_coefficient_f) : dvec::Constant(n_models, 0);
     dvec h = dominance_f ? args::get(dominance_f) : dvec::Constant(n_models, 0.6);
     dvec u_unsc = backward_mutation_f ? args::get(backward_mutation_f) : dvec::Constant(n_models, 1e-9);
@@ -103,12 +102,6 @@ int main(int argc, char const *argv[])
 
     double a = alpha_f ? args::get(alpha_f) : 1e-20;
     llong n_threads = n_threads_f ? args::get(n_threads_f) : 1;
-
-//     std::cerr << population_sizes.transpose() << std::endl;
-//     std::cerr << t.transpose() << std::endl;
-//     std::cerr << s.transpose() << std::endl;
-//     std::cerr << u.transpose() << std::endl;
-//     std::cerr << v.transpose() << std::endl;
 
 
 #ifdef OMP
@@ -180,34 +173,36 @@ int main(int argc, char const *argv[])
     llong lt = n_models - 1;
 
     if (f(lt) != 1) {
-        WF::Matrix sw_up = WF::Single(population_sizes(lt), population_sizes(lt) * f(lt), WF::NON_ABSORBING, s_unsc(lt), h(lt), u_unsc(lt), v_unsc(lt), true, a, verbose_f);
-        // WF::Matrix sw_down = WF::Single(population_sizes(lt) * f, population_sizes(lt), WF::NON_ABSORBING, s(0), h(0), u(0), v(0), true, a, verbose_f);
+        llong n = 2 * population_sizes(lt) + 1;
+        llong m = 2 * (population_sizes(lt) * f(lt)) + 1;
+        WF::Matrix sw_up = WF::Single(population_sizes(lt), population_sizes(lt) * f(lt), 
+                WF::NON_ABSORBING, s_unsc(lt), h(lt), u_unsc(lt), v_unsc(lt), true, a, verbose_f);
 
-        dvec e = sw_up.Q.multiply(d, true);
-        // dvec f = sw_down.Q.multiply(e, true);
-        d = e;
+        // projected up
+        dvec prj_u = sw_up.Q.multiply(d, true);
+
+        // projected down
+        dvec prj_d = dvec::Zero(n);
+
+        double diag_f = (m-2)/(n-2);
+
+        // how many states are we integrating into each prj_d state
+        dvec row_integral_counts(n);
+        for (llong i = 0; i < m-2; i++) {
+            llong j = int(i / diag_f);
+            row_integral_counts[j + 1] ++;
+        }
+
+        // multiply prj_d by the tall diagonal matrix
+        prj_d[0] = prj_u[0]; prj_d[prj_d.size()-1] = prj_u[prj_u.size()-1];
+        for (llong i = 0; i < m-2; i++) {
+            llong j = int(i / diag_f);
+            prj_d[j + 1] += prj_u[i + 1] / row_integral_counts[j + 1];
+        }
+        d = prj_d;
     }
 
     std::cout << d << std::endl;
-    // write_vector_to_file(d, "stdout");
-    // if(output_B_f) write_matrix_to_file(Nt.transpose().rightCols(nk), args::get(output_B_f));
-
-    // dmat Nt = dmat::Zero(size, n_rhs);
-    // for(llong i = 0; i < n_rhs; i++) {
-    //     dvec id_tmp = id.col(i);
-    //     Nt.col(i) = solver.solve(id_tmp, true);
-    // }
-
-    // SparseMatrix B = R.multiply(Ntt);
-
-
-    // if(output_N_f) write_matrix_to_file(Nt, args::get(output_N_f));
-    // if(output_B_f) B.save_market(args::get(output_B_f));
-    // if(output_B_f) write_matrix_to_file(B.transpose(), args::get(output_B_f));
-
-
-
-
 
 // }}}
 
