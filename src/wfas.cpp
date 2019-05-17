@@ -52,6 +52,7 @@ int main(int argc, char const *argv[])
     // Flags{{{
     args::Flag csv_f(parser, "csv", "Output results in CSV format", {"csv"});
     args::Flag force_f(parser, "force", "Do not perform parameter checks", {"force"});
+    args::Flag no_project_f(parser, "project", "Do not project the distribution down", {"no-poject"});
     args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
     args::HelpFlag help_f(parser, "help", "Display this help menu", {"help"});
     // }}}
@@ -181,25 +182,29 @@ int main(int argc, char const *argv[])
         // projected up
         dvec prj_u = sw_up.Q.multiply(d, true);
 
-        // projected down
-        dvec prj_d = dvec::Zero(n);
+        if (!no_project_f) {
+            // projected down
+            dvec prj_d = dvec::Zero(n);
 
-        double diag_f = (m-2)/(n-2);
+            double diag_f = (m-2)/(n-2);
 
-        // how many states are we integrating into each prj_d state
-        dvec row_integral_counts(n);
-        for (llong i = 0; i < m-2; i++) {
-            llong j = int(i / diag_f);
-            row_integral_counts[j + 1] ++;
+            // how many states are we integrating into each prj_d state
+            dvec row_integral_counts(n);
+            for (llong i = 0; i < m-2; i++) {
+                llong j = int(i / diag_f);
+                row_integral_counts[j + 1] ++;
+            }
+
+            // multiply prj_d by the tall diagonal matrix
+            prj_d[0] = prj_u[0]; prj_d[prj_d.size()-1] = prj_u[prj_u.size()-1];
+            for (llong i = 0; i < m-2; i++) {
+                llong j = int(i / diag_f);
+                prj_d[j + 1] += prj_u[i + 1] / row_integral_counts[j + 1];
+            }
+            d = prj_d;
+        } else {
+            d = prj_u;
         }
-
-        // multiply prj_d by the tall diagonal matrix
-        prj_d[0] = prj_u[0]; prj_d[prj_d.size()-1] = prj_u[prj_u.size()-1];
-        for (llong i = 0; i < m-2; i++) {
-            llong j = int(i / diag_f);
-            prj_d[j + 1] += prj_u[i + 1] / row_integral_counts[j + 1];
-        }
-        d = prj_d;
     }
 
     std::cout << d << std::endl;
