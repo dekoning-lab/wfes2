@@ -35,11 +35,23 @@ const char* string_format<double>() { return DPF; }
 template <>
 const char* string_format<llong>() { return LPF; }
 
-dvec load_csv_vector(const std::string file, llong rows) {
+dvec load_csv_row_vector(const std::string file, llong rows) {
     std::ifstream in(file);
     std::vector<double> numbers;
 
     for (std::string token; std::getline(in, token, ','); ) {
+        numbers.push_back(std::stod(token));
+    }
+    llong row = numbers.size();
+    if (rows > 1 && rows != row) throw std::runtime_error("Read CSV size does not match the requested size"); 
+    return Eigen::Map<dvec>(numbers.data(), numbers.size());
+}
+
+dvec load_csv_col_vector(const std::string file, llong rows) {
+    std::ifstream in(file);
+    std::vector<double> numbers;
+
+    for (std::string token; std::getline(in, token); ) {
         numbers.push_back(std::stod(token));
     }
     llong row = numbers.size();

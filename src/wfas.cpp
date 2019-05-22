@@ -134,7 +134,7 @@ int main(int argc, char const *argv[])
 
     dvec initial;
     if (initial_f) {
-        initial = load_csv_vector(args::get(initial_f));
+        initial = load_csv_col_vector(args::get(initial_f));
     } else if (initial_count_f) {
         llong p = args::get(initial_count_f);
         initial = dvec::Zero(2 * population_sizes(0) + 1);
