@@ -300,7 +300,6 @@ int main(int argc, char const *argv[])
                 dvec E_ext_i = B_ext.array() * N_rows[idx].array() / B_ext[idx];
                 dvec E_ext_var_i = B_ext.array() * N2_rows[idx].array() / B_ext[idx];
                 T_ext += iw * E_ext_i.sum();
-                // T_ext_var += (iw * 2 * E_ext_var_i.sum()) - (iw * E_ext_i.sum()) - pow(iw * E_ext_i.sum(), 2);
                 T_ext_var += (2 * E_ext_var_i.sum() - E_ext_i.sum() - pow(E_ext_i.sum(), 2)) * iw;
                 E_ext += iw * E_ext_i;
 
@@ -308,11 +307,17 @@ int main(int argc, char const *argv[])
                 dvec E_fix_var_i = B_fix.array() * N2_rows[idx].array() / B_fix[idx];
                 T_fix += iw * E_fix_i.sum();
                 T_fix_var += (2 * E_fix_var_i.sum() - E_fix_i.sum() - pow(E_fix_i.sum(), 2)) * iw;
-                // T_fix_var += (iw * 2 * E_fix_var_i.sum()) - (iw * E_fix_i.sum()) - pow(iw * E_fix_i.sum(), 2);
                 E_fix += iw * E_fix_i;
             }
         }
 
+        // time spent in each model conditional on absorbing in a particuar state
+        dvec T_cond_fix = dvec::Zero(n_models);
+        dvec T_cond_ext = dvec::Zero(n_models);
+        for(llong i_ = 0; i_ < si.size(); i_++){
+            T_cond_ext[i_] = E_ext.segment(si[i_], (2 * population_sizes[i_]) - 1).sum();
+            T_cond_fix[i_] = E_fix.segment(si[i_], (2 * population_sizes[i_]) - 1).sum();
+        }
 
         double T_ext_std = sqrt(T_ext_var);
         double T_fix_std = sqrt(T_fix_var);
@@ -337,7 +342,9 @@ int main(int argc, char const *argv[])
             printf(DPF ", ", T_ext);
             printf(DPF ", ", T_ext_std);
             printf(DPF ", ", T_fix);
-            printf(DPF "\n", T_fix_std);
+            printf(DPF ", ", T_fix_std);
+            print_vector(T_cond_ext, "", ", ");
+            print_vector(T_cond_fix, "", "\n");
         } else {
             print_vector(population_sizes, "N = ", "\n");
             print_vector(s, "s = ", "\n");
@@ -354,6 +361,8 @@ int main(int argc, char const *argv[])
             printf("T_ext_std = " DPF "\n", T_ext_std);
             printf("T_fix = " DPF "\n", T_fix);
             printf("T_fix_std = " DPF "\n", T_fix_std);
+            print_vector(T_cond_ext, "T_cond_ext = ", "\n");
+            print_vector(T_cond_fix, "T_cond_fix = ", "\n");
         } // }}}
 
     } // END SWITCHING ABSORPTION }}}
