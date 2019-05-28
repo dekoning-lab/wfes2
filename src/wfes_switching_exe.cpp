@@ -254,23 +254,25 @@ int main(int argc, char const *argv[])
         // absorbing fixation columns of B
         lvec kf = range_step(1, 2*n_models, 2);
 
-        double P_ext = 0, P_fix = 0;
-        double P_ext_u = 0, P_fix_u = 0;
+        double P_ext = 0;
+        double P_fix = 0;
         for (llong i_ = 0; i_ < si.size(); i_++) {
             llong i = si[i_];
             for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
                 double o = p0[i_](o_);
                 llong idx = i + o_;
 
+                double P_ext_i = 0;
                 for (llong k_ = 0; k_ < ke.size(); k_++) {
-                    P_ext_u += B(idx, ke[k_]);
-                    P_ext += o * p[i_] * B(idx, ke[k_]);
+                    P_ext_i += B(idx, ke[k_]);
                 }
+                P_ext += P_ext_i * o * p[i_];
 
+                double P_fix_i = 0;
                 for (llong k_ = 0; k_ < kf.size(); k_++) {
-                    P_fix_u += B(idx, kf[k_]);
-                    P_fix += o * p[i_] * B(idx, kf[k_]);
+                    P_fix_i += B(idx, kf[k_]);
                 }
+                P_fix += P_fix_i * o * p[i_];
             }
         }
 
@@ -293,19 +295,21 @@ int main(int argc, char const *argv[])
             for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
                 double o = p0[i_](o_);
                 llong idx = i + o_;
+                double iw = o * p[i_]; // integration weight
 
                 dvec E_ext_i = B_ext.array() * N_rows[idx].array() / B_ext[idx];
                 dvec E_ext_var_i = B_ext.array() * N2_rows[idx].array() / B_ext[idx];
-                T_ext += E_ext_i.sum() * o * p[i_];
-                T_ext_var += ((2 * E_ext_var_i.sum()) - E_ext_i.sum() - pow(E_ext_i.sum(), 2)) * o * p[i_];
-                E_ext += E_ext_i * o * p[i_];
+                T_ext += iw * E_ext_i.sum();
+                // T_ext_var += (iw * 2 * E_ext_var_i.sum()) - (iw * E_ext_i.sum()) - pow(iw * E_ext_i.sum(), 2);
+                T_ext_var += (2 * E_ext_var_i.sum() - E_ext_i.sum() - pow(E_ext_i.sum(), 2)) * iw;
+                E_ext += iw * E_ext_i;
 
                 dvec E_fix_i = B_fix.array() * N_rows[idx].array() / B_fix[idx];
                 dvec E_fix_var_i = B_fix.array() * N2_rows[idx].array() / B_fix[idx];
-                T_fix += E_fix_i.sum() * o * p[i_];
-                T_fix_var += ((2 * E_fix_var_i.sum()) - E_fix_i.sum() - pow(E_fix_i.sum(), 2)) * o * p[i_];
-                E_fix += E_fix_i * o * p[i_];
-
+                T_fix += iw * E_fix_i.sum();
+                T_fix_var += (2 * E_fix_var_i.sum() - E_fix_i.sum() - pow(E_fix_i.sum(), 2)) * iw;
+                // T_fix_var += (iw * 2 * E_fix_var_i.sum()) - (iw * E_fix_i.sum()) - pow(iw * E_fix_i.sum(), 2);
+                E_fix += iw * E_fix_i;
             }
         }
 

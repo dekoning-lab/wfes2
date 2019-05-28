@@ -205,6 +205,7 @@ int main(int argc, char const *argv[])
         for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
             double o = p0[i_](o_);
             llong idx = i + o_;
+            double iw = o * p[i_]; //integration_weight
 
             P_ext += B_ext[idx] * o * p[i_];
             P_fix += B_fix[idx] * o * p[i_];
@@ -212,21 +213,21 @@ int main(int argc, char const *argv[])
 
             dvec E_ext_i = B_ext.array() * N_rows[idx].array() / B_ext[idx];
             dvec E_ext_var_i = B_ext.array() * N2_rows[idx].array() / B_ext[idx];
-            T_ext += E_ext_i.sum() * o * p[i_];
-            T_ext_var += ((2 * E_ext_var_i.sum()) - E_ext_i.sum() - pow(E_ext_i.sum(), 2)) * o * p[i_];
-            E_ext += E_ext_i * o * p[i_];
+            T_ext += iw * E_ext_i.sum();
+            T_ext_var += (2 * E_ext_var_i.sum() - E_ext_i.sum() - pow(E_ext_i.sum(), 2)) * iw;
+            E_ext += iw * E_ext_i;
 
             dvec E_fix_i = B_fix.array() * N_rows[idx].array() / B_fix[idx];
             dvec E_fix_var_i = B_fix.array() * N2_rows[idx].array() / B_fix[idx];
-            T_fix += E_fix_i.sum() * o * p[i_];
-            T_fix_var += ((2 * E_fix_var_i.sum()) - E_fix_i.sum() - pow(E_fix_i.sum(), 2)) * o * p[i_];
-            E_fix += E_fix_i * o * p[i_];
+            T_fix += iw * E_fix_i.sum();
+            T_fix_var += (2 * E_fix_var_i.sum() - E_fix_i.sum() - pow(E_fix_i.sum(), 2)) * iw;
+            E_fix += iw * E_fix_i;
 
             dvec E_tmo_i = B_tmo.array() * N_rows[idx].array() / B_tmo[idx];
             dvec E_tmo_var_i = B_tmo.array() * N2_rows[idx].array() / B_tmo[idx];
-            T_tmo += E_tmo_i.sum() * o * p[i_];
-            T_tmo_var += ((2 * E_tmo_var_i.sum()) - E_tmo_i.sum() - pow(E_tmo_i.sum(), 2)) * o * p[i_];
-            E_tmo += E_tmo_i * o * p[i_];
+            T_tmo += iw * E_tmo_i.sum();
+            T_tmo_var += (2 * E_tmo_var_i.sum() - E_tmo_i.sum() - pow(E_tmo_i.sum(), 2)) * iw;
+            E_tmo += iw * E_tmo_i;
         }
     }
 

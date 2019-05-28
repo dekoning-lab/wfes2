@@ -229,16 +229,15 @@ int main(int argc, char const *argv[])
                 E_ext_mat.row(i) = E_ext;
                 dvec E_ext_var = B_ext.array() * N2.array() / B_ext(i);
                 T_ext += E_ext.sum() * p_i;
-                T_ext_var += (((2 * E_ext_var.sum() - E_ext.sum()) * p_i) - 
-                        pow(E_ext.sum() * p_i, 2));
+                T_ext_var += ((2 * E_ext_var.sum() - E_ext.sum()) - pow(E_ext.sum(), 2)) * p_i;
 
                 P_fix += B_fix(i) * p_i;
                 dvec E_fix = B_fix.array() * N1.array() / B_fix(i);
                 E_fix_mat.row(i) = E_fix;
                 dvec E_fix_var = B_fix.array() * N2.array() / B_fix(i);
                 T_fix += E_fix.sum() * p_i;
-                T_fix_var += (((2 * E_fix_var.sum() - E_fix.sum()) * p_i) - 
-                        pow(E_fix.sum() * p_i, 2));
+                T_fix_var += ((2 * E_fix_var.sum() - E_fix.sum()) - pow(E_fix.sum(), 2)) * p_i;
+                
             }    
         } else {
             // TODO: combine this with the previous clause
