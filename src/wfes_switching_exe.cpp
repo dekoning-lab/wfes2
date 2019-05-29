@@ -256,6 +256,9 @@ int main(int argc, char const *argv[])
 
         double P_ext = 0;
         double P_fix = 0;
+        dvec P_cond_fix = dvec::Zero(n_models);
+        dvec P_cond_ext = dvec::Zero(n_models);
+
         for (llong i_ = 0; i_ < si.size(); i_++) {
             llong i = si[i_];
             for(llong o_ = 0; o_ < nnz_p0[i_]; o_++) {
@@ -266,13 +269,15 @@ int main(int argc, char const *argv[])
                 for (llong k_ = 0; k_ < ke.size(); k_++) {
                     P_ext_i += B(idx, ke[k_]);
                 }
-                P_ext += P_ext_i * o * p[i_];
+                P_cond_ext[i_] += P_ext_i * o * p[i_];
+                P_ext += P_cond_ext[i_];
 
                 double P_fix_i = 0;
                 for (llong k_ = 0; k_ < kf.size(); k_++) {
                     P_fix_i += B(idx, kf[k_]);
                 }
-                P_fix += P_fix_i * o * p[i_];
+                P_cond_fix[i_] += P_fix_i * o * p[i_];
+                P_fix += P_cond_fix[i_];
             }
         }
 
@@ -343,6 +348,8 @@ int main(int argc, char const *argv[])
             printf(DPF ", ", T_ext_std);
             printf(DPF ", ", T_fix);
             printf(DPF ", ", T_fix_std);
+            print_vector(P_cond_ext, "", ", ");
+            print_vector(P_cond_fix, "", ", ");
             print_vector(T_cond_ext, "", ", ");
             print_vector(T_cond_fix, "", "\n");
         } else {
@@ -363,6 +370,8 @@ int main(int argc, char const *argv[])
             printf("T_fix_std = " DPF "\n", T_fix_std);
             print_vector(T_cond_ext, "T_cond_ext = ", "\n");
             print_vector(T_cond_fix, "T_cond_fix = ", "\n");
+            print_vector(P_cond_ext, "P_cond_ext = ", "\n");
+            print_vector(P_cond_fix, "P_cond_fix = ", "\n");
         } // }}}
 
     } // END SWITCHING ABSORPTION }}}
