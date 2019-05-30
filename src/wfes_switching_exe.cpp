@@ -269,15 +269,15 @@ int main(int argc, char const *argv[])
                 for (llong k_ = 0; k_ < ke.size(); k_++) {
                     P_ext_i += B(idx, ke[k_]);
                 }
-                P_cond_ext[i_] += P_ext_i * o * p[i_];
-                P_ext += P_cond_ext[i_];
+                P_cond_ext[i_] += P_ext_i * o;
+                P_ext += P_ext_i * o * p[i_];
 
                 double P_fix_i = 0;
                 for (llong k_ = 0; k_ < kf.size(); k_++) {
                     P_fix_i += B(idx, kf[k_]);
                 }
-                P_cond_fix[i_] += P_fix_i * o * p[i_];
-                P_fix += P_cond_fix[i_];
+                P_cond_fix[i_] += P_fix_i * o;
+                P_fix += P_fix_i * o * p[i_];
             }
         }
 
