@@ -5,3 +5,5 @@ build/CMakeFiles
 .DS_Store
 *.swp
 tags
+*.sublime-workspace
+*.sublime-project
