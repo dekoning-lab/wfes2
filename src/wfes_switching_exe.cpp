@@ -296,6 +296,7 @@ int main(int argc, char const *argv[])
 
         dvec E_ext = dvec::Zero(size);
         dvec E_fix = dvec::Zero(size);
+        dvec E_uncond = dvec::Zero(size);
 
         for (llong i_ = 0; i_ < si.size(); i_++) {
             llong i = si[i_];
@@ -303,6 +304,8 @@ int main(int argc, char const *argv[])
                 double o = p0[i_](o_);
                 llong idx = i + o_;
                 double iw = o * p[i_]; // integration weight
+
+                E_uncond += iw * N_rows[idx];
 
                 dvec E_ext_i = B_ext.array() * N_rows[idx].array() / B_ext[idx];
                 dvec E_ext_var_i = B_ext.array() * N2_rows[idx].array() / B_ext[idx];
@@ -321,9 +324,11 @@ int main(int argc, char const *argv[])
         // time spent in each model conditional on absorbing in a particuar state
         dvec T_cond_fix = dvec::Zero(n_models);
         dvec T_cond_ext = dvec::Zero(n_models);
+        dvec T_uncond   = dvec::Zero(n_models);
         for(llong i_ = 0; i_ < si.size(); i_++){
             T_cond_ext[i_] = E_ext.segment(si[i_], (2 * population_sizes[i_]) - 1).sum();
             T_cond_fix[i_] = E_fix.segment(si[i_], (2 * population_sizes[i_]) - 1).sum();
+            T_uncond[i_]   = E_uncond.segment(si[i_], (2 * population_sizes[i_]) - 1).sum();
         }
 
         double T_ext_std = sqrt(T_ext_var);
@@ -352,6 +357,7 @@ int main(int argc, char const *argv[])
             printf(DPF ", ", T_fix_std);
             print_vector(P_cond_ext, "", ", ");
             print_vector(P_cond_fix, "", ", ");
+            print_vector(T_uncond, "", ", ");
             print_vector(T_cond_ext, "", ", ");
             print_vector(T_cond_fix, "", "\n");
         } else {
@@ -370,10 +376,11 @@ int main(int argc, char const *argv[])
             printf("T_ext_std = " DPF "\n", T_ext_std);
             printf("T_fix = " DPF "\n", T_fix);
             printf("T_fix_std = " DPF "\n", T_fix_std);
-            print_vector(T_cond_ext, "T_cond_ext = ", "\n");
-            print_vector(T_cond_fix, "T_cond_fix = ", "\n");
             print_vector(P_cond_ext, "P_cond_ext = ", "\n");
             print_vector(P_cond_fix, "P_cond_fix = ", "\n");
+            print_vector(T_uncond, "T_uncond = ", "\n");
+            print_vector(T_cond_ext, "T_cond_ext = ", "\n");
+            print_vector(T_cond_fix, "T_cond_fix = ", "\n");
         } // }}}
 
     } // END SWITCHING ABSORPTION }}}
