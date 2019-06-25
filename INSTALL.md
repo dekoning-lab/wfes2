@@ -42,6 +42,14 @@ conda install mkl mkl-include eigen gxx_linux-64
 conda install mkl mkl-include eigen clangxx_osx-64
 ```
 
+## MacOS caveats
+
+Since MacOS thinks different, you woulb need to install the compiler yourself. In general, this should be sufficient:
+
+```
+xcode-select --install
+```
+
 # Compiling
 
 With the dependencies in place, simply:

@@ -1,3 +1,5 @@
+PLAT:=$(shell uname)
+
 LIB:=-L${CONDA_PREFIX}/lib
 LIB+=-lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lmkl_avx -lmkl_vml_avx
 LIB+=-liomp5 -lpthread
@@ -9,7 +11,13 @@ LIB+=-I${CONDA_PREFIX}/include/eigen3
 
 CXXFLAGS:=-std=c++11 -Wall -Wformat -Wno-deprecated-declarations
 CXXFLAGS+=-DMKL_ILP64 -m64
-CXXFLAGS+=-DOMP -fopenmp
+
+# Platform-specific tweaks
+ifeq (${PLAT},Linux)
+	CXXFLAGS+=-DOMP -fopenmp
+else ifeq (${PLAT},Darwin)
+	LIB+=-rpath ${CONDA_PREFIX}/lib
+endif
 
 LIBFLAGS:=-fPIC -shared
 
