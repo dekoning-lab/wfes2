@@ -30,6 +30,18 @@ conda activate wfes
 
 You would have to repeat this step for every new shell session you open.
 
+## Install all the packages directly into `base`
+
+Alternatively, if you do not want to use a separate conda environment, you can
+install the dependencies into the `base` env:
+
+```
+#linux
+conda install mkl mkl-include eigen gxx_linux-64
+#macos
+conda install mkl mkl-include eigen clangxx_osx-64
+```
+
 # Compiling
 
 With the dependencies in place, simply:
@@ -40,7 +52,7 @@ make all
 
 This creates a `bin` directory, with multiple executables ready to use.
 
-# Run the test
+# Run the tests
 
 The test target will be built by `make all`:
 

@@ -17,7 +17,7 @@ TARGETS:=wfes_single wfes_switching wfafle wfes_sweep wfes_sequential wfas phase
 
 .PHONY: all PRE clean
 
-all: $(addprefix bin/,${TARGETS})
+all: PRE $(addprefix bin/,${TARGETS})
 
 PRE:
 	mkdir -p bin
