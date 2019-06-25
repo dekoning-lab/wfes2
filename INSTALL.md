@@ -2,72 +2,68 @@
 
 # Installation
 
-Currently, `wfes2` is supported on `linux` and `macos` systems.
+Currently, `wfes2` is supported on `linux` and `macos` systems. The
+installation is done trhough `conda`.
 
-## Dependencies
+# Conda setup
 
-### Compilation
+If you do no have `conda` installed, go
+[here](https://docs.conda.io/en/latest/miniconda.html) and follow the
+installation instructions for your platform. Otherwise, proceed to the next
+step.
 
-You will need `cmake` in order to compile the code.
+# Conda environment setup
 
-#### Setting the compiler
+Create a new isolated `conda` environment by using platform-appropriate file:
 
-On some systems, it might be necessary to specify the compiler before running `cmake`. The preferred way to do this is with `CC` and `CXX` variables:
+```
+conda env create -f conda-env-linux.yaml # linux
 
-```bash
-export CC=$(which gcc)
-export CXX=$(which g++)
-cmake ...
+conda env create -f conda-env-macos.yaml # macos
 ```
 
-### Runtime
+This should install the necessary libraries. Now, activate the environment with:
 
-`WFES` depends on the INTEL `MKL` and `omp` libraries. They can be isntalled with the free installer from INTEL, or through the `conda` package manager.
-
-#### `INTEL` installation
-
-The required libraries can be found on the [intel website](https://software.intel.com/en-us/mkl). After download and installation, build the executables:
-
-```bash
-mkdir build && cd build
-cmake -DINTEL=ON ..
-make
+```
+conda activate wfes
 ```
 
-By default, the `INTEL` installed puts the libraries and headers into `/opt/intel`. If the installation is located elsewhere, point to it with:
+You would have to repeat this step for every new shell session you open.
 
-```bash
-cmake -DINTEL=ON -DINTEL_ROOT=<INTEL PATH> ..
+## Install all the packages directly into `base`
+
+Alternatively, if you do not want to use a separate conda environment, you can
+install the dependencies into the `base` env:
+
+```
+#linux
+conda install mkl mkl-include eigen gxx_linux-64
+#macos
+conda install mkl mkl-include eigen clangxx_osx-64
 ```
 
-#### `conda` isntallation
+# Compiling
 
-The `conda` package manager provides the required packages. Note that `miniconda` will suffice for the installation. First, use `conda` to isntall the required packages:
+With the dependencies in place, simply:
 
-```bash
-conda install mkl mkl-include
+```
+make all
 ```
 
-Then, compile the executables with:
+This creates a `bin` directory, with multiple executables ready to use.
 
-```bash
-mkdir build && cd build
-cmake -DCONDA=ON ..
-make
+# Run the tests
+
+The test target will be built by `make all`:
+
+```
+bin/wfes_test
 ```
 
-By default, the build scripts will look for the libraries and headers in `$HOME/miniconda3/`. This setting can be changed:
+If all is well, you should see this:
 
-```bash
-cmake -DCONDA=ON -DCONDA_ROOT=<CONDA PATH> ..
+```
+===============================================================================
+All tests passed (XX assertions in xx test cases)
 ```
 
-#### `OpenMP`
-
-Note that `OpenMP` will always be used for the `MKL` routines, which take care of the bulk of the computation. To use `OpenMP` for the matrix construction routines, it needs to be enabled before compilation:
-
-``` bash
-cmake <...> -DOMP=ON ..
-```
-
-This option is disabled by default.

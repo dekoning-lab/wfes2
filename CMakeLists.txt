@@ -59,28 +59,28 @@ include_directories("include")
 add_library(wfes SHARED ${LIB_SOURCES})
 target_link_libraries(wfes ${MKL_LIBS} ${INTEL_OMP_LIBS} ${OTHER_LIBS})
 
-add_executable(wfafle "src/wfafle_exe.cpp")
+add_executable(wfafle "src/wfafle.cpp")
 target_link_libraries(wfafle wfes)
 
-add_executable(wfes_sweep "src/wfes_sweep_exe.cpp")
+add_executable(wfes_sweep "src/wfes_sweep.cpp")
 target_link_libraries(wfes_sweep wfes)
 
-add_executable(wfes_single "src/wfes_single_exe.cpp")
+add_executable(wfes_single "src/wfes_single.cpp")
 target_link_libraries(wfes_single wfes)
 
-add_executable(wfes_switching "src/wfes_switching_exe.cpp")
+add_executable(wfes_switching "src/wfes_switching.cpp")
 target_link_libraries(wfes_switching wfes)
 
 add_executable(wfes_sequential "src/wfes_sequential.cpp")
 target_link_libraries(wfes_sequential wfes)
 
-add_executable(test_wfes "src/test_exe.cpp")
+add_executable(test_wfes "src/test.cpp")
 target_link_libraries(test_wfes wfes)
 
-add_executable(phase_type_dist "src/phase_type_dist_exe.cpp")
+add_executable(phase_type_dist "src/phase_type_dist.cpp")
 target_link_libraries(phase_type_dist wfes)
 
-add_executable(phase_type_moments "src/phase_type_moments_exe.cpp")
+add_executable(phase_type_moments "src/phase_type_moments.cpp")
 target_link_libraries(phase_type_moments wfes)
 
 add_executable(wfas "src/wfas.cpp")

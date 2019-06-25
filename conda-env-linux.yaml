@@ -1,0 +1,7 @@
+name: wfes
+dependencies:
+  - mkl
+  - mkl-include
+  - eigen
+  - gxx_linux-64
+
