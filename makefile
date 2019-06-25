@@ -13,14 +13,15 @@ CXXFLAGS+=-DOMP -fopenmp
 
 LIBFLAGS:=-fPIC -shared
 
-TARGETS:=wfes_single wfes_switching wfafle wfes_sweep wfes_sequential wfas phase_type_dest phase_type_moments wfes_test
+TARGETS:=wfes_single wfes_switching wfafle wfes_sweep wfes_sequential wfas phase_type_dist phase_type_moments wfes_test
 
 .PHONY: all PRE clean
+
+all: $(addprefix bin/,${TARGETS})
 
 PRE:
 	mkdir -p bin
 
-all: $(addprefix bin/,${TARGETS})
 
 bin/libwfes.so: src/lib/*
 	${CXX} ${CXXFLAGS} ${INC} ${LIB} ${LIBFLAGS} $^ -o $@
