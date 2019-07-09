@@ -442,6 +442,7 @@ int main(int argc, char const *argv[]) {
 
         // Since the B indexes begin at 1
         est_idx++;
+        // cout << est_idx << endl;
         double est_freq = (double)(est_idx) / (2 * population_size);
 
         // post-establishment time before absorption
@@ -478,7 +479,7 @@ int main(int argc, char const *argv[]) {
             write_matrix_to_file(W_tr.R, args::get(output_R_f));
 
         // To test
-        // cout << W.R.col(0) + W.Q.dense().rowwise().sum() + W.R.col(1) << endl;
+        // cout << W_tr.R.col(0) + W_tr.Q.dense().rowwise().sum() + W_tr.R.col(1) << endl;
         // cout << W.Q.dense() << endl;
 
         W_tr.Q.subtract_identity();
@@ -558,9 +559,9 @@ int main(int argc, char const *argv[]) {
 
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF
-                   "," DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
-                   population_size, s, h, u, v, a, est_freq, P_est, T_seg, T_seg_std, T_seg_ext,
-                   T_seg_ext_std, T_seg_fix, T_seg_fix_std, T_est, T_est_std);
+                   "," DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
+                   population_size, s, h, u, v, odds_ratio, a, est_freq, P_est, T_seg, T_seg_std,
+                   T_seg_ext, T_seg_ext_std, T_seg_fix, T_seg_fix_std, T_est, T_est_std);
 
         } else {
             printf("N = " LPF "\n", population_size);
@@ -568,6 +569,7 @@ int main(int argc, char const *argv[]) {
             printf("h = " DPF "\n", h);
             printf("u = " DPF "\n", u);
             printf("v = " DPF "\n", v);
+            printf("odds_ratio = " DPF "\n", odds_ratio);
             printf("a = " DPF "\n", a);
             printf("F_est = " DPF "\n", est_freq);
             printf("P_est = " DPF "\n", P_est);
