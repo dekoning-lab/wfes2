@@ -51,6 +51,8 @@ int main(int argc, char const *argv[]) {
     args::ValueFlag<double> integration_cutoff_f(parser, "float",
                                                  "Starting number of copies integration cutoff",
                                                  {'c', "integration-cutoff"});
+    args::ValueFlag<string> initial_distributon_csv_f(
+        parser, "path", "Path to initial probability distribution CSV", {'i', "initial"});
     args::ValueFlag<llong> starting_copies_f(
         parser, "int", "Starting number of copies - no integration", {'p', "starting-copies"});
     args::ValueFlag<llong> observed_copies_f(
@@ -113,6 +115,7 @@ int main(int argc, char const *argv[]) {
     double b = block_size_f ? args::get(block_size_f) : 100;
     double n_threads = n_threads_f ? args::get(n_threads_f) : 1;
     double integration_cutoff = integration_cutoff_f ? args::get(integration_cutoff_f) : 1e-10;
+
     // translate starting number of copies into model state (p - 1)
     llong starting_copies = starting_copies_f ? (args::get(starting_copies_f) - 1) : 0;
 
@@ -143,22 +146,33 @@ int main(int argc, char const *argv[]) {
 #endif
     mkl_set_num_threads(n_threads);
 
-    dvec first_row =
-        WF::binom_row(2 * population_size, WF::psi_diploid(0, population_size, s, h, u, v), a).Q;
-    dvec starting_copies_p = first_row.tail(first_row.size() - 1); // renormalize
-    starting_copies_p /= 1 - first_row(0);
+    dvec starting_copies_p;
+    if (initial_distributon_csv_f) {
+        // cout << "Reading initial from file" << args::get(initial_distributon_csv_f) << "" <<
+        // endl;
+        starting_copies_p = load_csv_col_vector(args::get(initial_distributon_csv_f));
+    } else {
+        dvec first_row =
+            WF::binom_row(2 * population_size, WF::psi_diploid(0, population_size, s, h, u, v), a)
+                .Q;
+        starting_copies_p = first_row.tail(first_row.size() - 1); // renormalize
+        starting_copies_p /= 1 - first_row(0);
+    }
 
     if (output_I_f)
         write_vector_to_file(starting_copies_p, args::get(output_I_f));
 
     llong z = 0;
 
-    if (integration_cutoff <= 0 || v == 0) { // no integration
+    if (initial_distributon_csv_f) {
+        z = starting_copies_p.size();
+    } else if (integration_cutoff <= 0 || v == 0) { // no integration
         z = 1;
         starting_copies_p[0] = 1;
     } else {
-        for (llong i = 0; starting_copies_p(i) > integration_cutoff; i++, z++)
-            ;
+        for (llong i = 0; starting_copies_p(i) > integration_cutoff; i++) {
+            z++;
+        }
     }
     if (starting_copies_f)
         z = 1;
