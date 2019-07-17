@@ -1,44 +1,53 @@
-#include "common.hpp"
-#include "WrightFisher.hpp"
 #include "PardisoSolver.hpp"
-#include "parsing.hpp"
+#include "WrightFisher.hpp"
 #include "args.hpp"
+#include "common.hpp"
+#include "parsing.hpp"
 #include "util.hpp"
 
 namespace WF = WrightFisher;
 using namespace std;
 
-int main(int argc, char const *argv[])
-{
-    args::ArgumentParser parser("Phase-type distribution - calculate distribution of absorption times for a fixation-only model");
+int main(int argc, char const *argv[]) {
+    args::ArgumentParser parser("Phase-type distribution - calculate distribution of absorption "
+                                "times for a fixation-only model");
     parser.helpParams.width = 120;
     parser.helpParams.helpindent = 50;
     parser.helpParams.flagindent = 2;
-    
-    args::ValueFlag<llong> population_size_f(parser, "int", "Size of the population", {'N', "pop-size"}, args::Options::Required);
+
+    args::ValueFlag<llong> population_size_f(parser, "int", "Size of the population",
+                                             {'N', "pop-size"}, args::Options::Required);
 
     // Optional arguments
-    args::ValueFlag<double> selection_coefficient_f(parser, "float", "Selection coefficient", {'s', "selection"});
-    args::ValueFlag<double> dominance_f(parser, "float", "Dominance coefficient", {'h', "dominance"});
-    args::ValueFlag<double> backward_mutation_f(parser, "float", "Backward mutation rate", {'u', "backward-mu"});
-    args::ValueFlag<double> forward_mutation_f(parser, "float", "Forward mutation rate", {'v', "forward-mu"});
+    args::ValueFlag<double> selection_coefficient_f(parser, "float", "Selection coefficient",
+                                                    {'s', "selection"});
+    args::ValueFlag<double> dominance_f(parser, "float", "Dominance coefficient",
+                                        {'h', "dominance"});
+    args::ValueFlag<double> backward_mutation_f(parser, "float", "Backward mutation rate",
+                                                {'u', "backward-mu"});
+    args::ValueFlag<double> forward_mutation_f(parser, "float", "Forward mutation rate",
+                                               {'v', "forward-mu"});
     args::ValueFlag<double> alpha_f(parser, "float", "Tail truncation weight", {'a', "alpha"});
-    args::ValueFlag<llong>  block_size_f(parser, "int", "Block size", {'b', "block-size"});
-    args::ValueFlag<llong>  n_threads_f(parser, "int", "Number of threads", {'t', "num-threads"});
-    args::ValueFlag<double> integration_cutoff_f(parser, "float", "Stop once this probability mass is reached", {'c', "integration-cutoff"});
-    args::ValueFlag<llong>  max_t_f(parser, "int", "Maximum number of generations", {'m', "max-t"});
+    args::ValueFlag<llong> block_size_f(parser, "int", "Block size", {'b', "block-size"});
+    args::ValueFlag<llong> n_threads_f(parser, "int", "Number of threads", {'t', "num-threads"});
+    args::ValueFlag<double> integration_cutoff_f(
+        parser, "float", "Stop once this probability mass is reached", {'c', "integration-cutoff"});
+    args::ValueFlag<llong> max_t_f(parser, "int", "Maximum number of generations", {'m', "max-t"});
+    args::Flag no_recurrent_mutation_f(parser, "bool", "Exclude recurrent mutation",
+                                       {'r', "no-recurrent-mu"});
 
-    args::ValueFlag<string> output_P_f(parser, "path", "Output phase-type distribution", {"output-P"});
+    args::ValueFlag<string> output_P_f(parser, "path", "Output phase-type distribution",
+                                       {"output-P"});
 
     args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
-    
+
     args::HelpFlag help_f(parser, "help", "Display this help menu", {"help"});
     try {
         parser.ParseCLI(argc, argv);
-    } catch (args::Help&) {
+    } catch (args::Help &) {
         cerr << parser;
         return EXIT_FAILURE;
-    } catch (args::Error& e) {
+    } catch (args::Error &e) {
         cerr << e.what() << endl;
         cerr << parser;
         return EXIT_FAILURE;
@@ -55,36 +64,41 @@ int main(int argc, char const *argv[])
     double n_threads = n_threads_f ? args::get(n_threads_f) : 1;
     llong max_t = max_t_f ? args::get(max_t_f) : 100000;
     double integration_cutoff = integration_cutoff_f ? args::get(integration_cutoff_f) : 1 - 1e-3;
+    bool no_rem = no_recurrent_mutation_f ? args::get(no_recurrent_mutation_f) : false;
+    bool rem = !no_rem;
 
-    #ifdef OMP
-        omp_set_num_threads(n_threads);
-    #endif
+#ifdef OMP
+    omp_set_num_threads(n_threads);
+#endif
     mkl_set_num_threads(n_threads);
 
     time_point t_start, t_end;
-    if (verbose_f) t_start = std::chrono::system_clock::now();
+    if (verbose_f)
+        t_start = std::chrono::system_clock::now();
 
     dvec c = dvec::Zero(2 * population_size);
     c(0) = 1;
 
-    WF::Matrix wf = WF::Single(population_size, population_size, WF::FIXATION_ONLY, s, h, u, v, true, a, verbose_f, b);
+    WF::Matrix wf = WF::Single(population_size, population_size, WF::FIXATION_ONLY, s, h, u, v,
+                               rem, a, verbose_f, b);
     dvec R = wf.R.col(0);
 
     dmat PH(max_t, 2);
 
     double cdf = 0;
     llong i;
-    for(i = 0; cdf <= integration_cutoff && i < max_t; i++) {
-	c = wf.Q.multiply(c, true);
-	double P_abs_t = R.dot(c);
-	cdf += P_abs_t;
+    for (i = 0; cdf <= integration_cutoff && i < max_t; i++) {
+        c = wf.Q.multiply(c, true);
+        double P_abs_t = R.dot(c);
+        cdf += P_abs_t;
 
-	PH(i,0) = P_abs_t;
-	PH(i,1) = cdf;
+        PH(i, 0) = P_abs_t;
+        PH(i, 1) = cdf;
     }
     PH.conservativeResize(i, 2);
 
-    if(output_P_f) write_matrix_to_file(PH, args::get(output_P_f));
+    if (output_P_f)
+        write_matrix_to_file(PH, args::get(output_P_f));
 
     if (verbose_f) {
         t_end = std::chrono::system_clock::now();
