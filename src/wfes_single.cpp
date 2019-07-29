@@ -256,8 +256,10 @@ int main(int argc, char const *argv[]) {
         // integrate over starting number of copies
         double P_ext = 0;
         double P_fix = 0;
+        double T_abs = 0;
         double T_ext = 0;
         double T_fix = 0;
+        double T_abs_var = 0;
         double T_ext_var = 0;
         double T_fix_var = 0;
         // double N_ext = 0;
@@ -276,6 +278,9 @@ int main(int argc, char const *argv[]) {
                 dvec N1 = N_mat.row(i);
                 N2_mat.row(i) = solver.solve(N1, true);
                 dvec N2 = N2_mat.row(i);
+
+                T_abs += N1.sum();
+                T_abs_var += (2 * N2.sum() - N1.sum()) - pow(N1.sum(), 2);
 
                 P_ext += B_ext(i) * p_i;
                 dvec E_ext = B_ext.array() * N1.array() / B_ext(i);
@@ -300,6 +305,9 @@ int main(int argc, char const *argv[]) {
             N2_mat.row(0) = solver.solve(N1, true);
             dvec N2 = N2_mat.row(0);
 
+            T_abs = N1.sum();
+            T_abs_var = (2 * N2.sum() - N1.sum()) - pow(N1.sum(), 2);
+
             P_ext = B_ext(starting_copies);
             dvec E_ext = B_ext.array() * N1.array() / B_ext(starting_copies);
             E_ext_mat.row(0) = E_ext;
@@ -318,6 +326,7 @@ int main(int argc, char const *argv[]) {
             // B_ext(starting_copies);
         }
 
+        double T_abs_std = sqrt(T_abs_var);
         double T_ext_std = sqrt(T_ext_var);
         double T_fix_std = sqrt(T_fix_var);
 
@@ -336,8 +345,8 @@ int main(int argc, char const *argv[]) {
 
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF
-                   ", " DPF ", " DPF ", " DPF "\n",
-                   population_size, s, h, u, v, a, P_ext, P_fix, T_ext, T_ext_std, T_fix,
+                   ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
+                   population_size, s, h, u, v, a, P_ext, P_fix, T_abs, T_abs_std, T_ext, T_ext_std, T_fix,
                    T_fix_std);
 
         } else {
@@ -349,6 +358,8 @@ int main(int argc, char const *argv[]) {
             printf("a = " DPF "\n", a);
             printf("P_ext = " DPF "\n", P_ext);
             printf("P_fix = " DPF "\n", P_fix);
+            printf("T_abs = " DPF "\n", T_abs);
+            printf("T_abs_std = " DPF "\n", T_abs_std);
             printf("T_ext = " DPF "\n", T_ext);
             printf("T_ext_std = " DPF "\n", T_ext_std);
             printf("T_fix = " DPF "\n", T_fix);
