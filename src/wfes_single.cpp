@@ -279,8 +279,8 @@ int main(int argc, char const *argv[]) {
                 N2_mat.row(i) = solver.solve(N1, true);
                 dvec N2 = N2_mat.row(i);
 
-                T_abs += N1.sum();
-                T_abs_var += (2 * N2.sum() - N1.sum()) - pow(N1.sum(), 2);
+                T_abs += N1.sum() * p_i;
+                T_abs_var += (2 * N2.sum() - N1.sum()) - pow(N1.sum(), 2) * p_i;
 
                 P_ext += B_ext(i) * p_i;
                 dvec E_ext = B_ext.array() * N1.array() / B_ext(i);
@@ -346,8 +346,8 @@ int main(int argc, char const *argv[]) {
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF
                    ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
-                   population_size, s, h, u, v, a, P_ext, P_fix, T_abs, T_abs_std, T_ext, T_ext_std, T_fix,
-                   T_fix_std);
+                   population_size, s, h, u, v, a, P_ext, P_fix, T_abs, T_abs_std, T_ext, T_ext_std,
+                   T_fix, T_fix_std);
 
         } else {
             printf("N = " LPF "\n", population_size);
