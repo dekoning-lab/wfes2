@@ -9,7 +9,7 @@ namespace WF = WrightFisher;
 using namespace std;
 
 int main(int argc, char const *argv[]) {
-    args::ArgumentParser parser("Distribution of time to fixation / extinction");
+    args::ArgumentParser parser("Distribution of time to absorption, excluding mutation time");
     parser.helpParams.width = 120;
     parser.helpParams.helpindent = 50;
     parser.helpParams.flagindent = 2;
