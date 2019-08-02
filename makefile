@@ -32,11 +32,11 @@ PRE:
 
 
 bin/libwfes.so: src/lib/*
-	${CXX} ${CXXFLAGS} ${INC} ${LIB} ${LIBFLAGS} $^ -o $@
+	${CXX} ${CXXFLAGS} ${INC} ${LIB} ${LIBFLAGS} $^ -o $@ ${EXTRAFLAGS}
 
 bin/%: src/lib/* src/%.cpp
 	@echo "# Building $(@F)"
-	${CXX} ${CXXFLAGS} ${INC} ${LIB} $^ -o $@
+	${CXX} ${CXXFLAGS} ${INC} ${LIB} $^ -o $@ ${EXTRAFLAGS}
 
 clean:
 	rm -r bin
