@@ -103,6 +103,12 @@ Matrix Bounce(const llong Nx, const llong Ny, const double s = 0, const double h
               const double u = 1e-9, const double v = 1e-9, const bool recurrent_mutation = true,
               const double alpha = 1e-20, const bool verbose = false, const llong block_size = 100);
 
+// Dual mutation - 0 copies only absorbing after the first mutation
+Matrix DualMutation(const llong Nx, const llong Ny, const double s = 0, const double h = 0.5,
+                    const double u = 1e-9, const double v = 1e-9,
+                    const bool recurrent_mutation = true, const double alpha = 1e-20,
+                    const bool verbose = false, const llong block_size = 100);
+
 // Single but with entries larger than `t` summed into the fixation state
 Matrix Truncated(const llong Nx, const llong Ny, const llong t, const double s, const double h,
                  const double u, const double v, bool recurrent_mutation = true,
