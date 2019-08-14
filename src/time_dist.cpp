@@ -84,30 +84,28 @@ int main(int argc, char const *argv[]) {
     if (output_R_f)
         write_matrix_to_file(wf.R, args::get(output_R_f));
 
-    dmat PH(max_t, 4);
+    dmat PH(max_t, 5);
 
     dvec c = dvec::Zero(2 * population_size - 1);
     c(0) = 1;
 
-    PH(0, 0) = wf.R.col(0).dot(c);
-    PH(0, 1) = wf.R.col(1).dot(c);
-    PH(0, 2) = PH(0, 0) + PH(0, 1);
-    PH(0, 3) = PH(0, 2);
-
-    double cdf = PH(0, 3);
+    double cdf = 0;
     llong i;
-    for (i = 1; cdf <= integration_cutoff && i < max_t; i++) {
-        c = wf.Q.multiply(c, true);
+    for (i = 0; cdf < integration_cutoff && i < max_t; i++) {
+
         double P_ext_t = wf.R.col(0).dot(c);
         double P_fix_t = wf.R.col(1).dot(c);
         cdf += P_fix_t + P_ext_t;
 
-        PH(i, 0) = P_ext_t;
-        PH(i, 1) = P_fix_t;
-        PH(i, 2) = P_ext_t + P_fix_t;
-        PH(i, 3) = cdf;
+        PH(i, 0) = i + 1;
+        PH(i, 1) = P_ext_t;
+        PH(i, 2) = P_fix_t;
+        PH(i, 3) = P_ext_t + P_fix_t;
+        PH(i, 4) = cdf;
+
+        c = wf.Q.multiply(c, true);
     }
-    PH.conservativeResize(i, 4);
+    PH.conservativeResize(i, 5);
 
     if (output_P_f) {
         write_matrix_to_file(PH, args::get(output_P_f));

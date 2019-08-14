@@ -83,31 +83,24 @@ int main(int argc, char const *argv[]) {
     if (output_R_f)
         write_matrix_to_file(wf.R, args::get(output_R_f));
 
-    dmat PH(max_t, 2);
-
-    dvec first_row =
-        WF::binom_row(2 * population_size, WF::psi_diploid(0, population_size, s, h, u, v), a).Q;
+    dmat PH(max_t, 3);
     dvec c = dvec::Zero(2 * population_size - 1);
     c(0) = 1;
 
-    // exit(0);
-    // c.head(first_row.size() - 1) = first_row.tail(first_row.size() - 1);
-    // c /= 1 - first_row(0);
-
-    PH(0, 0) = wf.R.col(0).dot(c);
-    double cdf = PH(0, 0);
-    PH(0, 1) = cdf;
+    double cdf = 0;
 
     llong i;
-    for (i = 1; cdf <= integration_cutoff && i < max_t; i++) {
-        c = wf.Q.multiply(c, true);
+    for (i = 0; cdf < integration_cutoff && i < max_t; i++) {
+
         double P_abs_t = wf.R.col(0).dot(c);
         cdf += P_abs_t;
 
-        PH(i, 0) = P_abs_t;
-        PH(i, 1) = cdf;
+        PH(i, 0) = i + 1;
+        PH(i, 1) = P_abs_t;
+        PH(i, 2) = cdf;
+        c = wf.Q.multiply(c, true);
     }
-    PH.conservativeResize(i, 2);
+    PH.conservativeResize(i, 3);
 
     if (output_P_f) {
         write_matrix_to_file(PH, args::get(output_P_f));

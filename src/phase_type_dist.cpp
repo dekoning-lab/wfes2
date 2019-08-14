@@ -75,27 +75,30 @@ int main(int argc, char const *argv[]) {
     time_point t_start, t_end;
     if (verbose_f)
         t_start = std::chrono::system_clock::now();
+    dmat PH(max_t, 3);
 
     dvec c = dvec::Zero(2 * population_size);
     c(0) = 1;
 
-    WF::Matrix wf = WF::Single(population_size, population_size, WF::FIXATION_ONLY, s, h, u, v,
-                               rem, a, verbose_f, b);
-    dvec R = wf.R.col(0);
+    WF::Matrix wf = WF::Single(population_size, population_size, WF::FIXATION_ONLY, s, h, u, v, rem,
+                               a, verbose_f, b);
 
-    dmat PH(max_t, 2);
+    dvec R = wf.R.col(0);
 
     double cdf = 0;
     llong i;
-    for (i = 0; cdf <= integration_cutoff && i < max_t; i++) {
-        c = wf.Q.multiply(c, true);
+    for (i = 0; cdf < integration_cutoff && i < max_t; i++) {
+
         double P_abs_t = R.dot(c);
         cdf += P_abs_t;
 
-        PH(i, 0) = P_abs_t;
-        PH(i, 1) = cdf;
+        PH(i, 0) = i + 1;
+        PH(i, 1) = P_abs_t;
+        PH(i, 2) = cdf;
+
+        c = wf.Q.multiply(c, true);
     }
-    PH.conservativeResize(i, 2);
+    PH.conservativeResize(i, 3);
 
     if (output_P_f)
         write_matrix_to_file(PH, args::get(output_P_f));
