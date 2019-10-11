@@ -72,7 +72,7 @@ int main(int argc, char const *argv[])
     // translate starting number of copies into model state (p - 1)
     llong starting_copies = starting_copies_f ? (args::get(starting_copies_f) - 1) : 0;
 
-    if(selection_coefficient.size() < 2) throw runtime_error("Selection coefficient vector should be longer than 2");
+    if(selection_coefficient.size() != 2) throw runtime_error("Selection coefficient vector should be of length 2");
 
     if (!force_f) {
         if (population_size > 500000) {
