@@ -7,3 +7,4 @@ build/CMakeFiles
 tags
 *.sublime-workspace
 *.sublime-project
+/doc/manual.tex
