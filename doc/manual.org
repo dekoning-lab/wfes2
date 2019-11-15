@@ -140,18 +140,50 @@ calculation]], and details on usage in
 
 =wfas= calculates an approximate allele frequency spectrum by leveraging the Markov-modulated
 Wright-Fisher model. The demography is desrcibed by a non-reversible Markov chain, where the
-transition probabilities are inversely proportional to the expected times in each epochs. The details on usage in [[sec:wfas_usage][=wfas=-usage]].
+transition probabilities are inversely proportional to the expected times in each epoch. The details
+of implementation in [[sec:wfas_approximation][stochastic approximation]], and usage in
+[[sec:wfas_usage][=wfas=-usage]].
 
 ** =time_dist=
 
-=time_dist= iteratively calculates the distribution of time to fixation or extinction. The details on implementation in [[sec:distribution_calculations][Distribution calculations]]on usage in [[sec:time_dist_usage][=time_dist=-usage]].
+=time_dist= iteratively calculates the distribution of time to fixation or extinction. The details
+on implementation in [[sec:distribution_calculations][distribution calculations]] on usage in
+[[sec:time_dist_usage][=time_dist=-usage]].
 
+** =phase_type_dist=
+
+=phase_type_dist= calculates the distribution of time to substitution. It is the fixation-only
+absorbing analog of =time_dist= (the =wfes_single --fixation= model). Implementation details in
+[[sec:distribution_calculations][distribution calculations]], usage in
+[[sec:phase_type_dist_usage][=phase_type_dist=-usage]].
+
+** =time_dist_skip=
+
+Analogue of =phase_type_dist=, but excluding the mutation time. Implementation details in
+[[sec:distribution_calculations][distribution calculations]], usage in
+[[sec:time_dist_skip_usage][=time_dist_skip=-usage]].
+
+** =time_dist_sgv=
+
+Distribution of time to substitution, under a model of standing genetic variation. This is a
+combination of =phase_type_dist= calculation with the =wfes_sweep= model. Implementation details in
+[[sec:distribution_calculations][distribution calculations]], usage in
+[[sec:time_dist_sgv][=time_dist_sgv=-usage]].
+
+** =phase_type_moments=
+
+The calculation of moments of the distribution of time to substitution. =phase_type_moments=
+implements the calculation described in [[Dayar, 2005 (algorithm
+1)][https://www.researchgate.net/publication/227337936_On_Moments_of_Discrete_Phase-Type_Distributions]].
+This calculates an arbitrary number of moments of the phase-type distribution. Usage details in
+[[sec:phase_type_moments][=phase_type_dist=-usage]].
 
 ** =test_wfes=
 
-This is the test harness for =wfes= models. It is based on the [[https://github.com/catchorg/Catch2][catch]] framework. Run with =test_wfes
---list-tests= to see available test. These are mostly end-to-end tests, confirming optimized
-implementations of WF matrix building functions.
+This is the test harness for =wfes= models. It is based on the
+[[https://github.com/catchorg/Catch2][catch]] framework. Run with =test_wfes --list-tests= to see
+available test. These are mostly end-to-end tests, confirming optimized implementations of WF matrix
+building functions.
 
 * Computation
 <<sec:computation>>
@@ -192,8 +224,8 @@ a}$ is the backward mutation rate, $\mu_{a \rightarrow A}$ is the forward mutati
 $p$ and $q$ are allele frequencies of $A$ and $a$ respectively: $p=i/2N$, $q=1-p$. The denominator
 is the average fitness of the population, $\bar{w}$.
 
-Equation [[eqn:2][2]] can be parametrized in an arbitrary manner. We follow Kimura [1964], and assign the
-following selection coefficients to the genotypes:
+Equation [[eqn:2][2]] can be parametrized in an arbitrary manner. We follow Kimura [1964], and
+assign the following selection coefficients to the genotypes:
 
 | Genotype | Fitness |
 |----------+---------|
@@ -271,8 +303,8 @@ T_{ext}&=T_{abs}(0) \\ T_{fix}&=T_{abs}(2N)
 \end{aligned}
 \end{equation}
 
-These are the properties calculated in =wfes_single= in the =--absorption= mode. See [[sec:wfes_single_usage][=wfes_single=
-usage]] for more details.
+These are the properties calculated in =wfes_single= in the =--absorption= mode. See
+[[sec:wfes_single_usage][=wfes_single= usage]] for more details.
 
 *** Example
 
@@ -289,8 +321,8 @@ $i$, we can simplify the calculation by explicitly conditioning on $i$. For exam
 that allele $A$ start with one copy ($i=1$), then only the first row, $\mathbf{N}_{i,\cdot}$ is of
 interest. We can generalize this, by assuming a finite forward mutation rate $v$. In this case, for
 small $4Nv<1$, there is a non-zero probability that with $i\leq1$. However, this probability
-vanishes quickly with increasing $i$, and we then only require several rows of $\mathbf{N}$. See more
-details in [[sec:integration][integration]].
+vanishes quickly with increasing $i$, and we then only require several rows of $\mathbf{N}$. See
+more details in [[sec:integration][integration]].
 
 For a startring number of alleles $i$, we find the $i$^th^ row of $\mathbf{N}$:
 
@@ -301,8 +333,9 @@ For a startring number of alleles $i$, we find the $i$^th^ row of $\mathbf{N}$:
 
 where $\mathbf{I}_{i,\cdot}$ is the $i$^th^ column of a $(2N-1)\times(2N-1)$ identity matrix.
 
-This system can be solved by $LU$ decomposition of $(\mathbf{I}-\mathbf{Q})^T$. Once the decomposition
-is known, we can solve for different right-hand sides of the equation, such as when $i\geq1$.
+This system can be solved by $LU$ decomposition of $(\mathbf{I}-\mathbf{Q})^T$. Once the
+decomposition is known, we can solve for different right-hand sides of the equation, such as when
+$i\geq1$.
 
 To find matrix $\mathbf{B}$, we solve:
 
@@ -320,13 +353,15 @@ B_{\cdot,2N}=\mathbf{1}-\mathbf{B}_{\cdot,0}
 \end{equation}
 
 The $LU$ decomposition and solution is performed with =MKL PARDISO= routines. Parameters and
-settings for the =MKL PARDISO= calls can be found in the [[https://github.com/dekoning-lab/wfes2/blob/master/src/lib/PardisoSolver.cpp][source code]].
+settings for the =MKL PARDISO= calls can be found in the
+[[https://github.com/dekoning-lab/wfes2/blob/master/src/lib/PardisoSolver.cpp][source code]].
 
 ** Entire fundamental matrix
 <<sec:entire_fundamental_matrix>>
 
 If the entire fundamental matrix is required, it can be calculated with =wfes_single= in the
-=--fundamental= mode. See =--output-N= and =--output-V= options in [[sec:wfes_single_usage][=wfes_single= usage]].
+=--fundamental= mode. See =--output-N= and =--output-V= options in
+[[sec:wfes_single_usage][=wfes_single= usage]].
 
 *** Example
 
@@ -352,8 +387,9 @@ the way). More details on this calcualtion an applications can be found in [de K
 2018].
 
 The time between fixations, $T_{b~fix}$ is calculated in a similat way as $T_{fix}$ for the model
-with two absorbing states (eq. [[eqn:6][6]], [[eqn:7][7]], [[eqn:8][8]]). However, since there is only one ansorbing state, no
-re-conditioning is required (eq. [[eqn:7][7]]). Then the $T_{b~fix}$ is simply:
+with two absorbing states (eq. [[eqn:6][6]], [[eqn:7][7]], [[eqn:8][8]]). However, since there is
+only one ansorbing state, no re-conditioning is required (eq. [[eqn:7][7]]). Then the $T_{b~fix}$ is
+simply:
 
 #+NAME: eqn:13
 \begin{equation} 
@@ -469,7 +505,8 @@ observed number of copies in the WF model. The moments are calculated in an appr
 those described above.
 
 The calculation is performed by =wfes_single= in the =--allele-age= mode. The observed number of
-copies is set via the =--observed-copies/-x= parameter. See [[sec:wfes_single_usage][=wfes_single= usage]] for more details.
+copies is set via the =--observed-copies/-x= parameter. See [[sec:wfes_single_usage][=wfes_single=
+usage]] for more details.
 
 *** Example
 
@@ -633,6 +670,23 @@ Detailed usage information is found in [[sec:wfafle_usage][=wfafle= usage]].
 wfafle -N 1000,100,10000 -G 200,50,300
 #+END_SRC
 
+** Stochastic change in parameters and small population size approximation
+<<sec:wfas_approximation>>
+
+=wfas= approximates the calculation in =wfafle= in two ways. First, the exact epoch transitions are
+modeled as stochastic transitions, where the expected time of a jump is the same as the length of the
+epoch. Second, there is an optional approximation of large populations with smaller population
+models, preserving the population-scaled mutation and selection parameters.
+
+*** Stochastic epoch transitions
+
+Instead of modeling epoch transitions exactly, we describe them as random variables with the
+expectation equaling the duration. This allows us to leverage the efficient Markov-modulated
+Wright-Fisher calculations, which in turn means that that computation time is constant with respect
+to epoch duration.
+
+The per-generation switching
+
 ** Distribution of time to event
 <<sec:distribution_calculations>>
 
@@ -654,11 +708,20 @@ This can be calculated in an iterative fashion, in order to avoid matrix exponen
 f(t+1) = f(t)\mathbf{P}
 \end{equation}
 
-Now, consider an absorbing Markov chain, with the transition probability matrix $\mathbf{P}$ partitioned into transient-to-transient probabilities $Q$ and transient-to-absorbing probabilities $R$. Then, the time-dependent distribution of being in an absorbing state $k$ is given by:
+Now, consider an absorbing Markov chain, with the transition probability matrix $\mathbf{P}$
+partitioned into transient-to-transient probabilities $Q$ and transient-to-absorbing probabilities
+$R$. Then, the time-dependent distribution of being in an absorbing state $k$ is given by:
 
 \begin{equation}
 P_k(t) = \sum_i \mathbf{R}_{i,k}(f(0)\mathbf{P}^{t-1}) = \mathbf{R}_k \cdot (f(0)\mathbf{P}^{t-1})
 \end{equation}
+
+Above, $\mathbf{R}_k$ is the $k$\textsuperscript{th} column of $\mathbf{R}$, which contains the
+probabilities of absorption from some transient state $i$ into $k$, within one generation. ($\cdot$)
+is the dot product. As before, the calculation can be performed iteratively.
+
+This calculation is the basis of =time_dist=, =time_dist_skip=, =time_dist_sgv=, and
+=phase_type_dist=.
 
 * Additional features
 <<sec:additional_features>>
@@ -1003,30 +1066,30 @@ printed.
 #+END_EXPORT
 #+CAPTION: Command line arguments for =wfes_sinlge=
 #+ATTR_LATEX: :center nil :environment longtabu :align X[l] >{\scriptsize}l l l X[l] X[2l]
-| Parameter                 | \normalsize{Option}       | Default   | Type    | Range                | Description                                                                     |
-|---------------------------+---------------------------+-----------+---------+----------------------+---------------------------------------------------------------------------------|
-| Population size           | ~-N/--pop-size~           | Required  | =int=   | $[2,5\times10^{5}]$  | Size of the population                                                          |
-| Selection coefficient     | ~-s/--selection~          | =0=       | =float= | $[-1,1]$             | Individual selection coefficient                                                |
-| Dominance coefficient     | ~-h/--dominance~          | =0.5=     | =float= | $[0,1]$              | Dominance coefficient                                                           |
+| Parameter                 | \normalsize{Option}       | Default   | Type    | Range                                          | Description                                                                     |
+|---------------------------+---------------------------+-----------+---------+------------------------------------------------+---------------------------------------------------------------------------------|
+| Population size           | ~-N/--pop-size~           | Required  | =int=   | $[2,5\times10^{5}]$                            | Size of the population                                                          |
+| Selection coefficient     | ~-s/--selection~          | =0=       | =float= | $[-1,1]$                                       | Individual selection coefficient                                                |
+| Dominance coefficient     | ~-h/--dominance~          | =0.5=     | =float= | $[0,1]$                                        | Dominance coefficient                                                           |
 | Backward mutation rate    | ~-u/--backaward-mu~       | =1e-9=    | =float= | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Backward mutation rate ($A\rightarrow a$)                                       |
 | Forward mutation rate     | ~-b/--forward-mu~         | =1e-9=    | =float= | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Forward mutation rate ($a\rightarrow A$)                                        |
-| Recurrent mutation        | ~-m/--no-recurrent-mu~    | =true=    | =bool=  |                      | Exclude [[sec:recurrent_mutation][recurrent mutation]]                                                      |
-| Tail truncation           | ~-a/--alpha~              | =1e-20=   | =float= | $[0,10^{-10}]$       | [[sec:tail_truncation][Tail truncation cutoff]]                                                          |
-| Integration cutoff        | ~-c/--integration-cutoff~ | =1e-10=   | =float= | $[0,10^{-3}]$        | Integration cutoff for [[sec:integration][initial number of copies]]                                 |
-| Initial number of copies  | ~-p/--starting-copies~    |           | =int=   | $[1,N]$              | [[sec:integration][Initial number of copies]]                                                        |
-| Observed number of copies | ~-x/--observed-copies~    |           | =int=   | $[1,N]$              | Observed number of copies for [[sec:allele_age][allele age calculation]]                            |
-| Number of threads         | ~-t/--num-threads~        | =n_cores= | =int=   |                      | Number of cores to be used for matrix construction and linear algebra           |
-| $\mathbf{Q}$ matrix       | ~--output-Q~              |           | =path=  | {=file=, =stdout=}   | Output the transition probability matrix for transient states                   |
-| $\mathbf{R}$ matrix       | ~--output-R~              |           | =path=  | {=file=, =stdout=}   | Output the transition probability matrix between transient and absorbing states |
-| $\mathbf{N}$ matrix       | ~--output-N~              |           | =path=  | {=file=, =stdout=}   | Output the calculated rows of the fundemental matrix                            |
-| $\mathbf{B}$ matrix       | ~--output-B~              |           | =path=  | {=file=, =stdout=}   | Output the conditional absorption probability matrix                            |
-| $\mathbf{I}$ vector       | ~--output-I~              |           | =path=  | {=file=, =stdout=}   | Output [[sec:integration][initial probability distribution]]                                         |
-| $\mathbf{E}$ vector       | ~--output-E~              |           | =path=  | {=file=, =stdout=}   | Output equilibrium distribution (=--equlibrium= only)                           |
-| $\mathbf{V}$ vector       | ~--output-V~              |           | =path=  | {=file=, =stdout=}   | Output variance fundamental matrix (slow)                                       |
-| CSV output                | ~--csv~                   |           | =bool=  |                      | Generate all output in CSV format                                               |
-| Force parameters          | ~--force~                 |           | =bool=  |                      | Do not perform [[sec:parameter_checks][parameter validity checks]]                                        |
-| Verbose out               | ~--verbose~               |           | =bool=  |                      | Output timing and statistical information                                       |
-| Help                      | ~--help~                  |           | =bool=  |                      | Show executable options                                                         |
+| Recurrent mutation        | ~-m/--no-recurrent-mu~    | =true=    | =bool=  |                                                | Exclude [[sec:recurrent_mutation][recurrent mutation]]                          |
+| Tail truncation           | ~-a/--alpha~              | =1e-20=   | =float= | $[0,10^{-10}]$                                 | [[sec:tail_truncation][Tail truncation cutoff]]                                 |
+| Integration cutoff        | ~-c/--integration-cutoff~ | =1e-10=   | =float= | $[0,10^{-3}]$                                  | Integration cutoff for [[sec:integration][initial number of copies]]            |
+| Initial number of copies  | ~-p/--starting-copies~    |           | =int=   | $[1,N]$                                        | [[sec:integration][Initial number of copies]]                                   |
+| Observed number of copies | ~-x/--observed-copies~    |           | =int=   | $[1,N]$                                        | Observed number of copies for [[sec:allele_age][allele age calculation]]        |
+| Number of threads         | ~-t/--num-threads~        | =n_cores= | =int=   |                                                | Number of cores to be used for matrix construction and linear algebra           |
+| $\mathbf{Q}$ matrix       | ~--output-Q~              |           | =path=  | {=file=, =stdout=}                             | Output the transition probability matrix for transient states                   |
+| $\mathbf{R}$ matrix       | ~--output-R~              |           | =path=  | {=file=, =stdout=}                             | Output the transition probability matrix between transient and absorbing states |
+| $\mathbf{N}$ matrix       | ~--output-N~              |           | =path=  | {=file=, =stdout=}                             | Output the calculated rows of the fundemental matrix                            |
+| $\mathbf{B}$ matrix       | ~--output-B~              |           | =path=  | {=file=, =stdout=}                             | Output the conditional absorption probability matrix                            |
+| $\mathbf{I}$ vector       | ~--output-I~              |           | =path=  | {=file=, =stdout=}                             | Output [[sec:integration][initial probability distribution]]                    |
+| $\mathbf{E}$ vector       | ~--output-E~              |           | =path=  | {=file=, =stdout=}                             | Output equilibrium distribution (=--equlibrium= only)                           |
+| $\mathbf{V}$ vector       | ~--output-V~              |           | =path=  | {=file=, =stdout=}                             | Output variance fundamental matrix (slow)                                       |
+| CSV output                | ~--csv~                   |           | =bool=  |                                                | Generate all output in CSV format                                               |
+| Force parameters          | ~--force~                 |           | =bool=  |                                                | Do not perform [[sec:parameter_checks][parameter validity checks]]              |
+| Verbose out               | ~--verbose~               |           | =bool=  |                                                | Output timing and statistical information                                       |
+| Help                      | ~--help~                  |           | =bool=  |                                                | Show executable options                                                         |
 
 
 
@@ -1047,25 +1110,25 @@ printed.
 #+END_EXPORT
 #+CAPTION: Command line arguments for =wfes_switching=
 #+ATTR_LATEX: :center nil :environment longtabu :align X[l] >{\scriptsize}l l l X[l] X[2l]
-| Parameter                         | \normalsize{Option} | Default     | Type          | Range                | Description                                                                     |
-|-----------------------------------+----------------------+-------------+---------------+----------------------+---------------------------------------------------------------------------------|
-| Population sizes                  | ~-N/--pop-sizes~     | Required    | =int[k]=      | $[2,5\times10^{5}]$  | Sizes of each of the populations                                                |
-| Selection coefficients            | ~-s/--selection~     | =[0]*k=     | =float[k]=    | $[-1,1]$             | Individual selection coefficient                                                |
-| Dominance coefficient             | ~-h/--dominance~     | =[0.5]*k=   | =float[k]=    | $[0,1]$              | Dominance coefficient                                                           |
+| Parameter                         | \normalsize{Option}  | Default     | Type          | Range                                          | Description                                                                     |
+|-----------------------------------+----------------------+-------------+---------------+------------------------------------------------+---------------------------------------------------------------------------------|
+| Population sizes                  | ~-N/--pop-sizes~     | Required    | =int[k]=      | $[2,5\times10^{5}]$                            | Sizes of each of the populations                                                |
+| Selection coefficients            | ~-s/--selection~     | =[0]*k=     | =float[k]=    | $[-1,1]$                                       | Individual selection coefficient                                                |
+| Dominance coefficient             | ~-h/--dominance~     | =[0.5]*k=   | =float[k]=    | $[0,1]$                                        | Dominance coefficient                                                           |
 | Backward mutation rate            | ~-u/--backaward-mu~  | =[1e-9]*k=  | =float[k]=    | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Backward mutation rate ($A\rightarrow a$)                                       |
 | Forward mutation rate             | ~-v/--forward-mu~    | =[1e-9]*k=  | =float[k]=    | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Forward mutation rate ($a\rightarrow A$)                                        |
-| Probability of starting           | ~-p/--starting-prob~ | =[1/k]*k=   | =float[k]=    | $[0,1]$              | Probabilty of starting in each of the component models                          |
-| Relative probability of switching | ~-r/--switching~     | =[1]*[k,k]= | =float[k][k]= | $[0,1]$              | Transition probabiluity amtrix between the WF component models                  |
-| Tail truncation                   | ~-a/--alpha~         | =1e-20=     | =float=       | $[0, 10^{-10}]$      | [[sec:tail_truncation][Tail truncation cutoff]])                                                         |
-| Number of threads                 | ~-t/--num-threads~   | =n_cores=   | =int=         |                      | Number of cores to be used for matrix construction and linear algebra           |
-| $\mathbf{Q}$ matrix               | ~--output-Q~         |             | =path=        | {=file=, =stdout=}   | Output the transition probability matrix for transient states                   |
-| $\mathbf{R}$ matrix               | ~--output-R~         |             | =path=        | {=file=, =stdout=}   | Output the transition probability matrix between transient and absorbing states |
-| $\mathbf{N}$ matrix               | ~--output-N~         |             | =path=        | {=file=, =stdout=}   | Output the calculated rows of the fundemental matrix                            |
-| $\mathbf{B}$ matrix               | ~--output-B~         |             | =path=        | {=file=, =stdout=}   | Output the conditional absorption probability matrix                            |
-| CSV output                        | ~--csv~              |             | =bool=        |                      | Generate all output in CSV format                                               |
-| Force parameters                  | ~--force~            |             | =bool=        |                      | Do not perform [[sec:parameter_checks][parameter validity checks]]                                        |
-| Verbose out                       | ~--verbose~          |             | =bool=        |                      | Output timing and statistical information                                       |
-| Help                              | ~--help~             |             | =bool=        |                      | Show executable options                                                         |
+| Probability of starting           | ~-p/--starting-prob~ | =[1/k]*k=   | =float[k]=    | $[0,1]$                                        | Probabilty of starting in each of the component models                          |
+| Relative probability of switching | ~-r/--switching~     | =[1]*[k,k]= | =float[k][k]= | $[0,1]$                                        | Transition probabiluity amtrix between the WF component models                  |
+| Tail truncation                   | ~-a/--alpha~         | =1e-20=     | =float=       | $[0, 10^{-10}]$                                | [[sec:tail_truncation][Tail truncation cutoff]])                                |
+| Number of threads                 | ~-t/--num-threads~   | =n_cores=   | =int=         |                                                | Number of cores to be used for matrix construction and linear algebra           |
+| $\mathbf{Q}$ matrix               | ~--output-Q~         |             | =path=        | {=file=, =stdout=}                             | Output the transition probability matrix for transient states                   |
+| $\mathbf{R}$ matrix               | ~--output-R~         |             | =path=        | {=file=, =stdout=}                             | Output the transition probability matrix between transient and absorbing states |
+| $\mathbf{N}$ matrix               | ~--output-N~         |             | =path=        | {=file=, =stdout=}                             | Output the calculated rows of the fundemental matrix                            |
+| $\mathbf{B}$ matrix               | ~--output-B~         |             | =path=        | {=file=, =stdout=}                             | Output the conditional absorption probability matrix                            |
+| CSV output                        | ~--csv~              |             | =bool=        |                                                | Generate all output in CSV format                                               |
+| Force parameters                  | ~--force~            |             | =bool=        |                                                | Do not perform [[sec:parameter_checks][parameter validity checks]]              |
+| Verbose out                       | ~--verbose~          |             | =bool=        |                                                | Output timing and statistical information                                       |
+| Help                              | ~--help~             |             | =bool=        |                                                | Show executable options                                                         |
 
 
 For vector argument defaults, =[z]*k= notation means a vector of length =k=, where each element is
@@ -1087,27 +1150,27 @@ For vector argument defaults, =[z]*k= notation means a vector of length =k=, whe
 #+END_EXPORT
 #+CAPTION: Command line arguments for =wfes_sweep=
 #+ATTR_LATEX: :center nil :environment longtabu :align X[l] >{\scriptsize}l l l X[l] X[2l]
-| Parameter                | \normalsize{Option}      | Default    | Type       | Range                | Description                                                                     |
-|--------------------------+---------------------------+------------+------------+----------------------+---------------------------------------------------------------------------------|
-| Population size          | ~-N/--pop-size~           | Required   | =int=      | $[2,5\times10^{5}]$  | Size of the population                                                          |
-| Selection coefficients   | ~-s/--selection~          | Required   | =float[2]= | $[-1,1]$             | Individual selection coefficient                                                |
-| Rate of switching        | ~-l/--lambda~             | Required   | =float=    | $[1e-20,1]$          | Rate of switching from pre-adaptive regime into the adaptive regime             |
-| Dominance coefficient    | ~-h/--dominance~          | =[0.5]*2=  | =float[2]= | $[0,1]$              | Dominance coefficient                                                           |
+| Parameter                | \normalsize{Option}       | Default    | Type       | Range                                          | Description                                                                     |
+|--------------------------+---------------------------+------------+------------+------------------------------------------------+---------------------------------------------------------------------------------|
+| Population size          | ~-N/--pop-size~           | Required   | =int=      | $[2,5\times10^{5}]$                            | Size of the population                                                          |
+| Selection coefficients   | ~-s/--selection~          | Required   | =float[2]= | $[-1,1]$                                       | Individual selection coefficient                                                |
+| Rate of switching        | ~-l/--lambda~             | Required   | =float=    | $[1e-20,1]$                                    | Rate of switching from pre-adaptive regime into the adaptive regime             |
+| Dominance coefficient    | ~-h/--dominance~          | =[0.5]*2=  | =float[2]= | $[0,1]$                                        | Dominance coefficient                                                           |
 | Backward mutation rate   | ~-u/--backaward-mu~       | =[1e-9]*2= | =float[2]= | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Backward mutation rate ($A\rightarrow a$)                                       |
 | Forward mutation rate    | ~-v/--forward-mu~         | =[1e-9]*2= | =float[2]= | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Forward mutation rate ($a\rightarrow A$)                                        |
-| Tail truncation          | ~-a/--alpha~              | =1e-20=    | =float=    | $[0, 10^{-10}]$      | [[sec:tail_truncation][Tail truncation cutoff]]                                                          |
-| Number of threads        | ~-t/--num-threads~        | =n_cores_  | =int=      |                      | Number of cores to be used for matrix construction and linear algebra           |
-| Integration cutoff       | ~-c/--integration-cutoff~ | =1e-10=    | =float=    | $[0,10^{-3}]$        | Integration cutoff for [[sec:integration][initial number of copies]]                                 |
-| Initial number of copies | ~-p/--starting-copies~    |            | =int=      | $[1,N]$              | [[sec:integration][Initial number of copies]]                                                        |
-| $\mathbf{Q}$ matrix      | ~--output-Q~              |            | =path=     | {=file=, =stdout=}   | Output the transition probability matrix for transient states                   |
-| $\mathbf{R}$ matrix      | ~--output-R~              |            | =path=     | {=file=, =stdout=}   | Output the transition probability matrix between transient and absorbing states |
-| $\mathbf{N}$ matrix      | ~--output-N~              |            | =path=     | {=file=, =stdout=}   | Output the calculated rows of the fundemental matrix                            |
-| $\mathbf{B}$ matrix      | ~--output-B~              |            | =path=     | {=file=, =stdout=}   | Output the conditional absorption probability matrix                            |
-| $\mathbf{I}$ vector      | ~--output-I~              |            | =path=     | {=file=, =stdout=}   | Output [[sec:integration][initial probability distribution]]                                         |
-| CSV output               | ~--csv~                   |            | =bool=     |                      | Generate all output in CSV format                                               |
-| Force parameters         | ~--force~                 |            | =bool=     |                      | Do not perform [[sec:parameter_checks][parameter validity checks]]                                        |
-| Verbose out              | ~--verbose~               |            | =bool=     |                      | Output timing and statistical information                                       |
-| Help                     | ~--help~                  |            | =bool=     |                      | Show executable options                                                         |
+| Tail truncation          | ~-a/--alpha~              | =1e-20=    | =float=    | $[0, 10^{-10}]$                                | [[sec:tail_truncation][Tail truncation cutoff]]                                 |
+| Number of threads        | ~-t/--num-threads~        | =n_cores_  | =int=      |                                                | Number of cores to be used for matrix construction and linear algebra           |
+| Integration cutoff       | ~-c/--integration-cutoff~ | =1e-10=    | =float=    | $[0,10^{-3}]$                                  | Integration cutoff for [[sec:integration][initial number of copies]]            |
+| Initial number of copies | ~-p/--starting-copies~    |            | =int=      | $[1,N]$                                        | [[sec:integration][Initial number of copies]]                                   |
+| $\mathbf{Q}$ matrix      | ~--output-Q~              |            | =path=     | {=file=, =stdout=}                             | Output the transition probability matrix for transient states                   |
+| $\mathbf{R}$ matrix      | ~--output-R~              |            | =path=     | {=file=, =stdout=}                             | Output the transition probability matrix between transient and absorbing states |
+| $\mathbf{N}$ matrix      | ~--output-N~              |            | =path=     | {=file=, =stdout=}                             | Output the calculated rows of the fundemental matrix                            |
+| $\mathbf{B}$ matrix      | ~--output-B~              |            | =path=     | {=file=, =stdout=}                             | Output the conditional absorption probability matrix                            |
+| $\mathbf{I}$ vector      | ~--output-I~              |            | =path=     | {=file=, =stdout=}                             | Output [[sec:integration][initial probability distribution]]                    |
+| CSV output               | ~--csv~                   |            | =bool=     |                                                | Generate all output in CSV format                                               |
+| Force parameters         | ~--force~                 |            | =bool=     |                                                | Do not perform [[sec:parameter_checks][parameter validity checks]]              |
+| Verbose out              | ~--verbose~               |            | =bool=     |                                                | Output timing and statistical information                                       |
+| Help                     | ~--help~                  |            | =bool=     |                                                | Show executable options                                                         |
 
 For vector argument defaults, =[z]*k= notation means a vector of length =k=, where each element is
 =z=. For example, =[z]*3= is =[z,z,z]=.
@@ -1171,21 +1234,24 @@ The output is put directly into =stdin=. The output is formatted as a single-lin
 #+END_EXPORT
 #+CAPTION: Command line arguments for =wfafle=
 #+ATTR_LATEX: :center nil :environment longtabu :align X[l] >{\scriptsize}l l l X[l] X[2l]
-| Parameter                             | \normalsize{Option} | Default     | Type          | Range                 | Description                                                           |
-|---------------------------------------+----------------------+-------------+---------------+-----------------------+-----------------------------------------------------------------------|
-| Population sizes                      | ~-N/--pop-sizes~     | Required    | =int[k]=      | $[2,5\times10^{5}]$   | Population size for each of the $k$ epochs                            |
-| Generations                           | ~-G/--generations~   | Required    | =int[k]=      | $[0,\infty]$          | Number of generations each of the $k$ epochs last                     |
-| Selection coefficient                 | ~-s/--selection~     | =0=         | =float[k]=    | $[-1,1]$              | Individial selection coefficient                                      |
-| Backward mutation rate                | ~-u/--backaward-mu~  | =1e-9=      | =float[k]=    | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]]  | Backward mutation rate ($A\rightarrow a$)                             |
-| Forward mutation rate                 | ~-v/--forward-mu~    | =1e-9=      | =float[k]=    | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]]  | Forward mutation rate ($a\rightarrow A$)                              |
-| Tail truncation                       | ~-a/--alpha~         | =1e-20=     | =float=       | $[0,1\times 10^{-5}]$ | [[sec:tail_truncation][Tail truncation cutoff]]                                                |
-| Initial allele frequency distribution | ~-i/--initial~       | Equilibrium | =float[2N+1]= |                       | Allele frequency distribution at the start of epoch 1                 |
-| Number of threads                     | ~-t/--num-threads~   | =n_cores=   | =int=         |                       | Number of cores to be used for matrix construction and linear algebra |
-| Verbose output                        | ~--verbose~          |             | =bool=        |                       | Output timing and statistical information                             |
-| Help                                  | ~--help~             |             | =bool=        |                       | Show executable options                                               |
+| Parameter                             | \normalsize{Option} | Default     | Type          | Range                                          | Description                                                           |
+|---------------------------------------+---------------------+-------------+---------------+------------------------------------------------+-----------------------------------------------------------------------|
+| Population sizes                      | ~-N/--pop-sizes~    | Required    | =int[k]=      | $[2,5\times10^{5}]$                            | Population size for each of the $k$ epochs                            |
+| Generations                           | ~-G/--generations~  | Required    | =int[k]=      | $[0,\infty]$                                   | Number of generations each of the $k$ epochs last                     |
+| Selection coefficient                 | ~-s/--selection~    | =0=         | =float[k]=    | $[-1,1]$                                       | Individial selection coefficient                                      |
+| Backward mutation rate                | ~-u/--backaward-mu~ | =1e-9=      | =float[k]=    | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Backward mutation rate ($A\rightarrow a$)                             |
+| Forward mutation rate                 | ~-v/--forward-mu~   | =1e-9=      | =float[k]=    | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Forward mutation rate ($a\rightarrow A$)                              |
+| Tail truncation                       | ~-a/--alpha~        | =1e-20=     | =float=       | $[0,1\times 10^{-5}]$                          | [[sec:tail_truncation][Tail truncation cutoff]]                       |
+| Initial allele frequency distribution | ~-i/--initial~      | Equilibrium | =float[2N+1]= |                                                | Allele frequency distribution at the start of epoch 1                 |
+| Number of threads                     | ~-t/--num-threads~  | =n_cores=   | =int=         |                                                | Number of cores to be used for matrix construction and linear algebra |
+| Verbose output                        | ~--verbose~         |             | =bool=        |                                                | Output timing and statistical information                             |
+| Help                                  | ~--help~            |             | =bool=        |                                                | Show executable options                                               |
  
 ** =wfas= usage
 <<sec:wfas_usage>>
+
+=wfas= approximates the calculation of =wfafle= using the Markov-modulated Wright-Fisher model. The 
+
 
 ** =time_dist= usage
 <<sec:time_dist_usage>>
