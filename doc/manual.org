@@ -1,11 +1,15 @@
+#+TITLE: Wright-Fisher Exact Solver 2
+#+AUTHOR: Ivan Krukov, Jason de Koning, Bianca de Sanctis
+#+DATE: 
 #+LATEX_HEADER: \usepackage[margin=1in]{geometry}
-# #+LATEX_HEADER: \usepackage[colorlinks]{hyperref}
-# #+LATEX_HEADER: \usepackage[table]{xcolor}
-# #+LATEX_HEADER: \hypersetup{colorlinks, linkcolor={red!50!black}, citecolor={blue!50!black}, urlcolor={blue!80!black}}
+#+LATEX_HEADER: \usepackage{hyperref}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LATEX_HEADER: \hypersetup{colorlinks, linkcolor={blue!50!black}, citecolor={blue!50!black}, urlcolor={blue!80!black}}
 #+LATEX_HEADER: \usepackage{tabu}
 #+STARTUP: showall
+#+OPTIONS: prefer-user-labels:t toc:nil
 
-* Wright-Fisher Exact Solver
+* Wright-Fisher Exact Solver 2
 
 Wright-Fisher Exact Solver (=WFES=) implements a variety of exact calculations with the
 Wright-Fisher model. Unlike other approaches, =WFES= does not use simulations or strong simplifying
@@ -25,6 +29,10 @@ and implementation of models.
 - [[sec:output_format][Output format]] explains the output format used by the applications.
 
 - [[sec:usage][Usage]] provides detailed parameter tables and usage information.
+  
+#+BEGIN_EXPORT latex
+\tableofcontents
+#+END_EXPORT
 
 * Executables
 <<sec:exec>>
@@ -82,13 +90,14 @@ following flags:
 
 ** =wfes_switching=
 
-=wfes_switching= implements a time-heterogeneous extension of the Wright-Fisher model. It is
-possible to switch between different parameter regimes - for example different population sizes,
-selection parameters, or mutation rates. We refer to each parameter regime as "component". For
-example, an absorbing model of oscialting population size ($N_1=1000, N_2=2000)$ has two components
-(corresponding to each population) and $(2N_1-1) + (2N_2-1) = 7998$ states. The switching between
-components is parametrized with the initial probability distribution ($p$), and the rate of
-switching from one component to the next ($r$). The following modes are implemented:
+=wfes_switching= implements a time-heterogeneous extension of the Wright-Fisher model - the
+Markov-modulated Wright-Fisher model. It is possible to switch between different parameter regimes - for
+example different population sizes, selection parameters, or mutation rates. We refer to each
+parameter regime as "component". For example, an absorbing model of oscialting population size
+($N_1=1000, N_2=2000)$ has two components (corresponding to each population) and $(2N_1-1) +
+(2N_2-1) = 7998$ states. The switching between components is parametrized with the initial
+probability distribution ($p$), and the rate of switching from one component to the next ($r$). The
+following modes are implemented:
 
 - =--absorption= mode allows both extinction and fixation boundaries to be absorbing. The following
   satistics are calculated:
@@ -123,9 +132,20 @@ There is currently one mode:
 =wfafle= calculates the expected allele frequency distribution for a given piece-wise demographic
 history. It uses an equilibrium distribution to initiate the calculation, and then iterates forward
 in time by fast matrix-vector multiplications. It is also possible to start from a given allele
-frequency distribution. Details on calculation in [section
-2](#expected-allele-frequencies-with-a-demographic), and details on usage in [section
-6](#=wfafle=-usage).
+frequency distribution. Details on calculation in [[sec:expected_allele_frequencies_with_a_demographic][allele frequency
+calculation]], and details on usage in
+[[sec:wfafle_usage][=wfafle=-usage]].
+
+** =wfas=
+
+=wfas= calculates an approximate allele frequency spectrum by leveraging the Markov-modulated
+Wright-Fisher model. The demography is desrcibed by a non-reversible Markov chain, where the
+transition probabilities are inversely proportional to the expected times in each epochs. The details on usage in [[sec:wfas_usage][=wfas=-usage]].
+
+** =time_dist=
+
+=time_dist= iteratively calculates the distribution of time to fixation or extinction. The details on implementation in [[sec:distribution_calculations][Distribution calculations]]on usage in [[sec:time_dist_usage][=time_dist=-usage]].
+
 
 ** =test_wfes=
 
@@ -300,7 +320,7 @@ B_{\cdot,2N}=\mathbf{1}-\mathbf{B}_{\cdot,0}
 \end{equation}
 
 The $LU$ decomposition and solution is performed with =MKL PARDISO= routines. Parameters and
-settings for the =MKL PARDISO= calls can be found in the [[https://github.com/dekoning-lab/wfes2/blob/master/src/PardisoSolver.cpp][source code]].
+settings for the =MKL PARDISO= calls can be found in the [[https://github.com/dekoning-lab/wfes2/blob/master/src/lib/PardisoSolver.cpp][source code]].
 
 ** Entire fundamental matrix
 <<sec:entire_fundamental_matrix>>
@@ -612,6 +632,33 @@ Detailed usage information is found in [[sec:wfafle_usage][=wfafle= usage]].
 #+BEGIN_SRC bash
 wfafle -N 1000,100,10000 -G 200,50,300
 #+END_SRC
+
+** Distribution of time to event
+<<sec:distribution_calculations>>
+
+=time_*= executables calculate the probability distribution of times to various events in the
+Wright-Fisher models. While the other programs are concerned with calculation of means or higher
+moments, here we iteratively calculate the entire distributions.
+
+In general, the probability distribution over the states of a Markov chain with the probability
+transition matrix $\mathbf{P}$, at time $t$ ($f(t)$), starting at some initial state $f(0)$, is
+given by:
+
+\begin{equation}
+f(t) = f(0)\mathbf{P}^{t}
+\end{equation}
+
+This can be calculated in an iterative fashion, in order to avoid matrix exponentiation:
+
+\begin{equation}
+f(t+1) = f(t)\mathbf{P}
+\end{equation}
+
+Now, consider an absorbing Markov chain, with the transition probability matrix $\mathbf{P}$ partitioned into transient-to-transient probabilities $Q$ and transient-to-absorbing probabilities $R$. Then, the time-dependent distribution of being in an absorbing state $k$ is given by:
+
+\begin{equation}
+P_k(t) = \sum_i \mathbf{R}_{i,k}(f(0)\mathbf{P}^{t-1}) = \mathbf{R}_k \cdot (f(0)\mathbf{P}^{t-1})
+\end{equation}
 
 * Additional features
 <<sec:additional_features>>
@@ -1137,3 +1184,8 @@ The output is put directly into =stdin=. The output is formatted as a single-lin
 | Verbose output                        | ~--verbose~          |             | =bool=        |                       | Output timing and statistical information                             |
 | Help                                  | ~--help~             |             | =bool=        |                       | Show executable options                                               |
  
+** =wfas= usage
+<<sec:wfas_usage>>
+
+** =time_dist= usage
+<<sec:time_dist_usage>>
