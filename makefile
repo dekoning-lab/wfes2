@@ -32,9 +32,11 @@ PRE:
 
 
 bin/libwfes.so: src/lib/*
+	mkdir -p bin
 	${CXX} ${CXXFLAGS} ${INC} ${LIB} ${LIBFLAGS} $^ -o $@ ${EXTRAFLAGS}
 
 bin/%: src/lib/* src/%.cpp
+	mkdir -p bin
 	@echo "# Building $(@F)"
 	${CXX} ${CXXFLAGS} ${INC} ${LIB} $^ -o $@ ${EXTRAFLAGS}
 

@@ -15,7 +15,7 @@ int main(int argc, char const *argv[])
     // Arguments {{{
 
     // Parser setting{{{
-    args::ArgumentParser parser("WFES-SWITCHING");
+    args::ArgumentParser parser("WF approximate spectrum");
     parser.helpParams.width = 120;
     parser.helpParams.helpindent = 50;
     parser.helpParams.flagindent = 2;
