@@ -1080,6 +1080,7 @@ printed.
 - =--equilibrium= mode calculates the equilibrium distribution of allele frequencies.
 - =--allele-age= mode calculates moments of the allele age given a current allele frequency. 
 
+*** Options
 
 #+BEGIN_EXPORT latex
 \tabulinesep=2mm
@@ -1124,6 +1125,8 @@ printed.
 
 - =--absorption= - both extinction and fixation boundaries are absorbing for all component models
 - =--fixation= - only fixation boundary is absorbing for all component models
+  
+*** Options
 
 #+BEGIN_EXPORT latex
 \tabulinesep=2mm
@@ -1164,6 +1167,8 @@ For vector argument defaults, =[z]*k= notation means a vector of length =k=, whe
 =wfes_sweep= supports one mode:
 
 - =--fixation= - only fixation boundary is absorbing for the adaptive component
+
+*** Options
 
 #+BEGIN_EXPORT latex
 \tabulinesep=2mm
@@ -1249,6 +1254,8 @@ $N$.
 Unlike other applications, =wfafle= only has one type of output - the allele frequency distribution.
 The output is put directly into =stdin=. The output is formatted as a single-line =.csv= table.
 
+*** Options
+
 #+BEGIN_EXPORT latex
 \tabulinesep=2mm
 #+END_EXPORT
@@ -1272,6 +1279,8 @@ The output is put directly into =stdin=. The output is formatted as a single-lin
 <<sec:wfas_usage>>
 
 =wfas= approximates the calculation of /AFS/ =wfafle= using the Markov-modulated Wright-Fisher model, with optional small population size. 
+
+*** Options
 
 #+BEGIN_EXPORT latex
 \tabulinesep=2mm
@@ -1301,27 +1310,101 @@ The output is put directly into =stdin=. The output is formatted as a single-lin
 | Verbose output                        | ~--verbose~          |             | =bool=        |                                                | Output timing and statistical information                                       |
 | Help                                  | ~--help~             |             | =bool=        |                                                | Show executable options                                                         |
 
-** =time_dist= usage
+** =time_dist_*= usage
 <<sec:time_dist_usage>>
-
-*TODO*
-
-** =time_dist_sgv= usage
 <<sec:time_dist_sgv_usage>>
-
-*TODO*
-
-** =phase_type_dist= usage
 <<sec:phase_type_dist_usage>>
-
-*TODO*
-
-** =time_dist_skip= usage
 <<sec:time_dist_skip_usage>>
 
-*TODO*
+The following executables have a similar command line interface. They might be merged into a single
+executable with options in the future.
+
+All the executables require the =--output-P= argument to produce output.
+
+*** =time_dist= 
+This calculates the distribution of time to fixation, extinction.
+
+Output columns:
+- Time, generations
+- Probability of extinction at a given time
+- Probability of fixation at a given time
+- Probability of absorption (either) at a given time
+- Cumulative probability of absorption
+  
+*** =phase_type_dist=
+This calculates the distribution of time to substitution.
+
+Output columns:
+- Time, generations
+- Probability of substitution at a given time
+- Cumulative probability of substitution
+  
+*** =time_dist_sgv=
+This calculates the distribution of time to substitution under a two-step adaptive model
+[[sec:wfes_sweep][=wfes sweep=]]. Note that the parameters are interpreted in the same way (/i.e./
+=--selection= is a vector of size 2).
+
+Output columns:
+- Time, generations
+- Probability of substitution at a given time
+- Cumulative probability of substitution
+  
+*** =time_dist_skip=
+
+This calculates the distribution of time to substitution, but ignores the time spent waiting for mutation.
+
+Output columns:
+- Time, generations
+- Probability of substitution at a given time
+- Cumulative probability of substitution
+
+*** Options
+
+#+BEGIN_EXPORT latex
+\tabulinesep=2mm
+#+END_EXPORT
+#+CAPTION: Command line arguments for =wfafle=
+#+ATTR_LATEX: :center nil :environment longtabu :align X[l] >{\scriptsize}l l l X[l] X[2l]
+| Parameter                               | \normalsize{Option}       | Default   | Type                  | Range                                          | Description                                                                                |
+|-----------------------------------------+---------------------------+-----------+-----------------------+------------------------------------------------+--------------------------------------------------------------------------------------------|
+| Population size                         | ~-N/--pop-size~           | Required  | =int=                 | $[2,5\times10^{5}]$                            | Size of the population                                                                     |
+| Selection coefficient                   | ~-s/--selection~          | =0=       | =float= or =float[2]= | $[-1,1]$                                       | Individual selection coefficient, or phase selection for =time_dist_sgv=                   |
+| Dominance coefficient                   | ~-h/--dominance~          | =0.5=     | =float=               | $[0,1]$                                        | Dominance coefficient                                                                      |
+| Backward mutation rate                  | ~-u/--backaward-mu~       | =1e-9=    | =float=               | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Backward mutation rate ($A\rightarrow a$)                                                  |
+| Forward mutation rate                   | ~-b/--forward-mu~         | =1e-9=    | =float=               | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Forward mutation rate ($a\rightarrow A$)                                                   |
+| Recurrent mutation                      | ~-r/--no-recurrent-mu~    | =true=    | =bool=                |                                                | Exclude [[sec:recurrent_mutation][recurrent mutation]]                                     |
+| Rate of switching to pre-adaptive phase | ~-l/--lambda~             | =true=    | =float=               | $[1e-20,1]$                                    | Rate of switching from pre-adaptive regime into the adaptive regime (=time_dist_sgv= only) |
+| Tail truncation                         | ~-a/--alpha~              | =1e-20=   | =float=               | $[0,10^{-10}]$                                 | [[sec:tail_truncation][Tail truncation cutoff]]                                            |
+| Integration cutoff                      | ~-c/--integration-cutoff~ | =1e-10=   | =float=               | $[0,10^{-3}]$                                  | Stop once this probability mass is reached                                                 |
+| Maximum number of generations           | ~-m/--max-t~              | =1e5=     | =int=                 |                                                | Maximum number of generations to compute the distribution up to                            |
+| Number of threads                       | ~-t/--num-threads~        | =n_cores= | =int=                 |                                                | Number of cores to be used for matrix construction and linear algebra                      |
+| $\mathbf{Q}$ matrix                     | ~--output-Q~              |           | =path=                | {=file=, =stdout=}                             | Output the transition probability matrix for transient states                              |
+| $\mathbf{R}$ matrix                     | ~--output-R~              |           | =path=                | {=file=, =stdout=}                             | Output the transition probability matrix between transient and absorbing states            |
+| $\mathbf{P}$ matrix                     | ~--output-P~              |           | =path=                | {=file=, =stdout=}                             | Output phase type distribution                                                             |
+| Verbose out                             | ~--verbose~               |           | =bool=                |                                                | Output timing and statistical information                                                  |
+| Help                                    | ~--help~                  |           | =bool=                |                                                | Show executable options                                                                    |
 
 ** =phase_type_moments= usage
 <<sec:phase_type_moments_usage>>
 
-*TODO*
+This calculates arbitrary number of raw moments of the distribution of time to substitution.
+
+*** Options
+
+#+BEGIN_EXPORT latex
+\tabulinesep=2mm
+#+END_EXPORT
+#+CAPTION: Command line arguments for =wfafle=
+#+ATTR_LATEX: :center nil :environment longtabu :align X[l] >{\scriptsize}l l l X[l] X[2l]
+| Parameter              | \normalsize{Option} | Default   | Type                  | Range                                          | Description                                                              |
+|------------------------+---------------------+-----------+-----------------------+------------------------------------------------+--------------------------------------------------------------------------|
+| Number of moments      | ~-k/--n-moments~    | =20=      | =int=                 |                                                | Number of moments to output                                              |
+| Population size        | ~-N/--pop-size~     | Required  | =int=                 | $[2,5\times10^{5}]$                            | Size of the population                                                   |
+| Selection coefficient  | ~-s/--selection~    | =0=       | =float= or =float[2]= | $[-1,1]$                                       | Individual selection coefficient, or phase selection for =time_dist_sgv= |
+| Dominance coefficient  | ~-h/--dominance~    | =0.5=     | =float=               | $[0,1]$                                        | Dominance coefficient                                                    |
+| Backward mutation rate | ~-u/--backaward-mu~ | =1e-9=    | =float=               | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Backward mutation rate ($A\rightarrow a$)                                |
+| Forward mutation rate  | ~-b/--forward-mu~   | =1e-9=    | =float=               | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Forward mutation rate ($a\rightarrow A$)                                 |
+| Tail truncation        | ~-a/--alpha~        | =1e-20=   | =float=               | $[0,10^{-10}]$                                 | [[sec:tail_truncation][Tail truncation cutoff]]                          |
+| Number of threads      | ~-t/--num-threads~  | =n_cores= | =int=                 |                                                | Number of cores to be used for matrix construction and linear algebra    |
+| Verbose out            | ~--verbose~         |           | =bool=                |                                                | Output timing and statistical information                                |
+| Help                   | ~--help~            |           | =bool=                |                                                | Show executable options                                                  |
