@@ -52,7 +52,7 @@ int main(int argc, char const *argv[])
     // Flags{{{
     args::Flag csv_f(parser, "csv", "Output results in CSV format", {"csv"});
     args::Flag force_f(parser, "force", "Do not perform parameter checks", {"force"});
-    args::Flag no_project_f(parser, "project", "Do not project the distribution down", {"no-poject"});
+    args::Flag no_project_f(parser, "project", "Do not project the distribution down", {"no-project"});
     args::Flag verbose_f(parser, "verbose", "Verbose solver output", {"verbose"});
     args::HelpFlag help_f(parser, "help", "Display this help menu", {"help"});
     // }}}

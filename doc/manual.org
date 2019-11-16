@@ -168,15 +168,15 @@ Analogue of =phase_type_dist=, but excluding the mutation time. Implementation d
 Distribution of time to substitution, under a model of standing genetic variation. This is a
 combination of =phase_type_dist= calculation with the =wfes_sweep= model. Implementation details in
 [[sec:distribution_calculations][distribution calculations]], usage in
-[[sec:time_dist_sgv][=time_dist_sgv=-usage]].
+[[sec:time_dist_sgv_usage][=time_dist_sgv=-usage]].
 
 ** =phase_type_moments=
 
 The calculation of moments of the distribution of time to substitution. =phase_type_moments=
-implements the calculation described in [[Dayar, 2005 (algorithm
-1)][https://www.researchgate.net/publication/227337936_On_Moments_of_Discrete_Phase-Type_Distributions]].
-This calculates an arbitrary number of moments of the phase-type distribution. Usage details in
-[[sec:phase_type_moments][=phase_type_dist=-usage]].
+implements the calculation described in
+[[https://www.researchgate.net/publication/227337936_On_Moments_of_Discrete_Phase-Type_Distributions][Dayar,
+2005 (algorithm 1)]]. This calculates an arbitrary number of moments of the phase-type distribution.
+Usage details in [[sec:phase_type_moments_usage][=phase_type_dist=-usage]].
 
 ** =test_wfes=
 
@@ -638,8 +638,8 @@ wfes_sweep --fixation -N 1000 -s 0,0.001 -l 1e-3
 ** Expected allele frequencies with a demographic
 <<sec:expected_allele_frequencies_with_a_demographic>>
 
-=wfafle= calculates the expected allele distribution given a piece-wise constant demographic
-history.
+=wfafle= calculates the expected allele distribution (allele frequency spectrum, /AFS/) given a
+piece-wise constant demographic history.
 
 The calculation is performed according to the following procedure. Consider a piecewise constant
 demographic history with population sizes $N_1,N_2,\dots,N_k$, where each population size epoch
@@ -673,10 +673,11 @@ wfafle -N 1000,100,10000 -G 200,50,300
 ** Stochastic change in parameters and small population size approximation
 <<sec:wfas_approximation>>
 
-=wfas= approximates the calculation in =wfafle= in two ways. First, the exact epoch transitions are
-modeled as stochastic transitions, where the expected time of a jump is the same as the length of the
-epoch. Second, there is an optional approximation of large populations with smaller population
-models, preserving the population-scaled mutation and selection parameters.
+=wfas= approximates the calculation of the allele frequency spectrum in =wfafle= in two ways. First,
+the exact epoch transitions are modeled as stochastic transitions, where the expected time of a jump
+is the same as the length of the epoch. Second, there is an optional approximation of large
+populations with smaller population models, preserving the population-scaled mutation and selection
+parameters.
 
 *** Stochastic epoch transitions
 
@@ -685,7 +686,26 @@ expectation equaling the duration. This allows us to leverage the efficient Mark
 Wright-Fisher calculations, which in turn means that that computation time is constant with respect
 to epoch duration.
 
-The per-generation switching
+The per-generation switching is governed by a Markov chain with transition probability $1/g_i$ from
+each state to the next, where $g_i$ is the expected number of generations spent in each epoch. Note
+that each subordinate state is a full Wright-Fisher model with a population size $N_i$. The
+probability of staying in the same epoch is then $1-1/g_i$, which results in a series of
+geometrically distributed times. The last state of this Markov chain is absorbing, which is
+represented by a set of absorbing states, corresponding to an allele count in the final epoch. The
+allele frequency spectrum is then calculated by finding the absorption probabilities in the final
+epoch [[eqn:11][equation 11]].
+
+*** Small population size approximation
+
+We can further approximate the allele frequency spectrum by using epochs of smaller population
+sizes, while preserving the population-scaled values of selection $2Ns$ and mutation $4N\mu$. This
+corresponds to tracking allele frequencies as opposed to allele counts, as we do in the full model.
+For example, instead of using a population size of $N=10,000$, we can use a population of
+$N_{approx}=1,000$, with appropriate scaling. This corresponds to an approximating factor of $10$.
+
+To improve the behavior of the scaling we can use switching matrix from $N_{approx}=1,000$, to
+$N=10,000$, with dimensions $2N_{approx} \times 2N$, to multiply the /AFS/ we calculate under the
+approximation. This has the effect of setting the correct support to the resulting distribution.
 
 ** Distribution of time to event
 <<sec:distribution_calculations>>
@@ -1234,24 +1254,74 @@ The output is put directly into =stdin=. The output is formatted as a single-lin
 #+END_EXPORT
 #+CAPTION: Command line arguments for =wfafle=
 #+ATTR_LATEX: :center nil :environment longtabu :align X[l] >{\scriptsize}l l l X[l] X[2l]
-| Parameter                             | \normalsize{Option} | Default     | Type          | Range                                          | Description                                                           |
-|---------------------------------------+---------------------+-------------+---------------+------------------------------------------------+-----------------------------------------------------------------------|
-| Population sizes                      | ~-N/--pop-sizes~    | Required    | =int[k]=      | $[2,5\times10^{5}]$                            | Population size for each of the $k$ epochs                            |
-| Generations                           | ~-G/--generations~  | Required    | =int[k]=      | $[0,\infty]$                                   | Number of generations each of the $k$ epochs last                     |
-| Selection coefficient                 | ~-s/--selection~    | =0=         | =float[k]=    | $[-1,1]$                                       | Individial selection coefficient                                      |
-| Backward mutation rate                | ~-u/--backaward-mu~ | =1e-9=      | =float[k]=    | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Backward mutation rate ($A\rightarrow a$)                             |
-| Forward mutation rate                 | ~-v/--forward-mu~   | =1e-9=      | =float[k]=    | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Forward mutation rate ($a\rightarrow A$)                              |
-| Tail truncation                       | ~-a/--alpha~        | =1e-20=     | =float=       | $[0,1\times 10^{-5}]$                          | [[sec:tail_truncation][Tail truncation cutoff]]                       |
-| Initial allele frequency distribution | ~-i/--initial~      | Equilibrium | =float[2N+1]= |                                                | Allele frequency distribution at the start of epoch 1                 |
-| Number of threads                     | ~-t/--num-threads~  | =n_cores=   | =int=         |                                                | Number of cores to be used for matrix construction and linear algebra |
-| Verbose output                        | ~--verbose~         |             | =bool=        |                                                | Output timing and statistical information                             |
-| Help                                  | ~--help~            |             | =bool=        |                                                | Show executable options                                               |
+| Parameter                             | \normalsize{Option}  | Default     | Type          | Range                                          | Description                                                           |
+|---------------------------------------+----------------------+-------------+---------------+------------------------------------------------+-----------------------------------------------------------------------|
+| Population sizes                      | ~-N/--pop-sizes~     | Required    | =int[k]=      | $[2,5\times10^{5}]$                            | Population size for each of the $k$ epochs                            |
+| Generations                           | ~-G/--generations~   | Required    | =int[k]=      | $[0,\infty]$                                   | Number of generations each of the $k$ epochs last                     |
+| Selection coefficient                 | ~-s/--selection~     | =0=         | =float[k]=    | $[-1,1]$                                       | Individial selection coefficient                                      |
+| Backward mutation rate                | ~-u/--backaward-mu~  | =1e-9=      | =float[k]=    | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Backward mutation rate ($A\rightarrow a$)                             |
+| Forward mutation rate                 | ~-v/--forward-mu~    | =1e-9=      | =float[k]=    | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Forward mutation rate ($a\rightarrow A$)                              |
+| Tail truncation                       | ~-a/--alpha~         | =1e-20=     | =float=       | $[0,1\times 10^{-5}]$                          | [[sec:tail_truncation][Tail truncation cutoff]]                       |
+| Initial allele frequency distribution | ~-i/--initial~       | Equilibrium | =float[2N+1]= |                                                | Allele frequency distribution at the start of epoch 1                 |
+| Initial allele count                  | ~-p/--initial-count~ |             | =int=         | $1,2N$                                         | Initial number of alleles (=--initial= will be ignored)               |
+| Number of threads                     | ~-t/--num-threads~   | =n_cores=   | =int=         |                                                | Number of cores to be used for matrix construction and linear algebra |
+| Verbose output                        | ~--verbose~          |             | =bool=        |                                                | Output timing and statistical information                             |
+| Help                                  | ~--help~             |             | =bool=        |                                                | Show executable options                                               |
  
 ** =wfas= usage
 <<sec:wfas_usage>>
 
-=wfas= approximates the calculation of =wfafle= using the Markov-modulated Wright-Fisher model. The 
+=wfas= approximates the calculation of /AFS/ =wfafle= using the Markov-modulated Wright-Fisher model, with optional small population size. 
 
+#+BEGIN_EXPORT latex
+\tabulinesep=2mm
+#+END_EXPORT
+#+CAPTION: Command line arguments for =wfafle=
+#+ATTR_LATEX: :center nil :environment longtabu :align X[l] >{\scriptsize}l l l X[l] X[2l]
+| Parameter                             | \normalsize{Option}  | Default     | Type          | Range                                          | Description                                                                     |
+|---------------------------------------+----------------------+-------------+---------------+------------------------------------------------+---------------------------------------------------------------------------------|
+| Population sizes                      | ~-N/--pop-sizes~     | Required    | =int[k]=      | $[2,5\times10^{5}]$                            | Population size for each of the $k$ epochs                                      |
+| Generations                           | ~-G/--generations~   | Required    | =int[k]=      | $[0,\infty]$                                   | Number of generations each of the $k$ epochs last                               |
+| Approximating factors                 | ~-f/--factor~        | Required    | =float[k]=    |                                                | Approximating (down) factor for each population size                            |
+| Selection coefficient                 | ~-s/--selection~     | =0=         | =float[k]=    | $[-1,1]$                                       | Individial selection coefficient                                                |
+| Backward mutation rate                | ~-u/--backaward-mu~  | =1e-9=      | =float[k]=    | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Backward mutation rate ($A\rightarrow a$)                                       |
+| Forward mutation rate                 | ~-v/--forward-mu~    | =1e-9=      | =float[k]=    | $(0,\frac{1}{4N}]$ [[sec:parameter_checks][*]] | Forward mutation rate ($a\rightarrow A$)                                        |
+| Tail truncation                       | ~-a/--alpha~         | =1e-20=     | =float=       | $[0,1\times 10^{-5}]$                          | [[sec:tail_truncation][Tail truncation cutoff]]                                 |
+| Initial allele frequency distribution | ~-i/--initial~       | Equilibrium | =float[2N+1]= |                                                | Allele frequency distribution at the start of epoch 1                           |
+| Initial allele count                  | ~-p/--initial-count~ |             | =int=         | $1,2N$                                         | Initial number of alleles (=--initial= will be ignored)                         |
+| Number of threads                     | ~-t/--num-threads~   | =n_cores=   | =int=         |                                                | Number of cores to be used for matrix construction and linear algebra           |
+| $\mathbf{Q}$ matrix                   | ~--output-Q~         |             | =path=        | {=file=, =stdout=}                             | Output the transition probability matrix for transient states                   |
+| $\mathbf{R}$ matrix                   | ~--output-R~         |             | =path=        | {=file=, =stdout=}                             | Output the transition probability matrix between transient and absorbing states |
+| $\mathbf{N}$ matrix                   | ~--output-N~         |             | =path=        | {=file=, =stdout=}                             | Output the calculated rows of the fundemental matrix                            |
+| $\mathbf{B}$ matrix                   | ~--output-B~         |             | =path=        | {=file=, =stdout=}                             | Output the conditional absorption probability matrix                            |
+| $\mathbf{N}_{ext}$ vector             | ~--output-N-ext~     |             | =path=        | {=file=, =stdout=}                             | Output extinction-conditional sojourn to file                                   |
+| $\mathbf{N}_{fix}$ vector             | ~--output-N-fix~     |             | =path=        | {=file=, =stdout=}                             | Output fixation-conditional sojourn to file                                     |
+| $\mathbf{N}_{tmo}$ vector             | ~--output-N-tmo~     |             | =path=        | {=file=, =stdout=}                             | Output timeout-conditional sojourn to file                                      |
+| No projection                         | ~--no-project~       |             | =bool=        |                                                | Do not project the distribution down                                            |
+| Verbose output                        | ~--verbose~          |             | =bool=        |                                                | Output timing and statistical information                                       |
+| Help                                  | ~--help~             |             | =bool=        |                                                | Show executable options                                                         |
 
 ** =time_dist= usage
 <<sec:time_dist_usage>>
+
+*TODO*
+
+** =time_dist_sgv= usage
+<<sec:time_dist_sgv_usage>>
+
+*TODO*
+
+** =phase_type_dist= usage
+<<sec:phase_type_dist_usage>>
+
+*TODO*
+
+** =time_dist_skip= usage
+<<sec:time_dist_skip_usage>>
+
+*TODO*
+
+** =phase_type_moments= usage
+<<sec:phase_type_moments_usage>>
+
+*TODO*
