@@ -1285,7 +1285,7 @@ The output is put directly into =stdin=. The output is formatted as a single-lin
 #+BEGIN_EXPORT latex
 \tabulinesep=2mm
 #+END_EXPORT
-#+CAPTION: Command line arguments for =wfafle=
+#+CAPTION: Command line arguments for =wfas=
 #+ATTR_LATEX: :center nil :environment longtabu :align X[l] >{\scriptsize}l l l X[l] X[2l]
 | Parameter                             | \normalsize{Option}  | Default     | Type          | Range                                          | Description                                                                     |
 |---------------------------------------+----------------------+-------------+---------------+------------------------------------------------+---------------------------------------------------------------------------------|
@@ -1363,7 +1363,7 @@ Output columns:
 #+BEGIN_EXPORT latex
 \tabulinesep=2mm
 #+END_EXPORT
-#+CAPTION: Command line arguments for =wfafle=
+#+CAPTION: Command line arguments for =time_*= executables
 #+ATTR_LATEX: :center nil :environment longtabu :align X[l] >{\scriptsize}l l l X[l] X[2l]
 | Parameter                               | \normalsize{Option}       | Default   | Type                  | Range                                          | Description                                                                                |
 |-----------------------------------------+---------------------------+-----------+-----------------------+------------------------------------------------+--------------------------------------------------------------------------------------------|
@@ -1394,7 +1394,7 @@ This calculates arbitrary number of raw moments of the distribution of time to s
 #+BEGIN_EXPORT latex
 \tabulinesep=2mm
 #+END_EXPORT
-#+CAPTION: Command line arguments for =wfafle=
+#+CAPTION: Command line arguments for =phase_type_moments=
 #+ATTR_LATEX: :center nil :environment longtabu :align X[l] >{\scriptsize}l l l X[l] X[2l]
 | Parameter              | \normalsize{Option} | Default   | Type                  | Range                                          | Description                                                              |
 |------------------------+---------------------+-----------+-----------------------+------------------------------------------------+--------------------------------------------------------------------------|
