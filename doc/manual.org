@@ -1341,7 +1341,7 @@ Output columns:
   
 *** =time_dist_sgv=
 This calculates the distribution of time to substitution under a two-step adaptive model
-[[sec:wfes_sweep][=wfes sweep=]]. Note that the parameters are interpreted in the same way (/i.e./
+[[sec:wfes_sweep_usage][=wfes sweep=]]. Note that the parameters are interpreted in the same way (/i.e./
 =--selection= is a vector of size 2).
 
 Output columns:
