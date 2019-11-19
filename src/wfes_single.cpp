@@ -262,7 +262,7 @@ int main(int argc, char const *argv[]) {
         double T_abs_var = 0;
         double T_ext_var = 0;
         double T_fix_var = 0;
-        // double N_ext = 0;
+        double N_ext = 0;
 
         dmat N_mat(z, size);
         dmat E_ext_mat(z, size);
@@ -289,12 +289,16 @@ int main(int argc, char const *argv[]) {
                 T_ext += E_ext.sum() * p_i;
                 T_ext_var += ((2 * E_ext_var.sum() - E_ext.sum()) - pow(E_ext.sum(), 2)) * p_i;
 
+                dvec C_ext = E_ext.array() * dvec::LinSpaced(size, 1, size).array();
+                N_ext += p_i * C_ext.sum();
+
                 P_fix += B_fix(i) * p_i;
                 dvec E_fix = B_fix.array() * N1.array() / B_fix(i);
                 E_fix_mat.row(i) = E_fix;
                 dvec E_fix_var = B_fix.array() * N2.array() / B_fix(i);
                 T_fix += E_fix.sum() * p_i;
                 T_fix_var += ((2 * E_fix_var.sum() - E_fix.sum()) - pow(E_fix.sum(), 2)) * p_i;
+
             }
         } else {
             // TODO: combine this with the previous clause
@@ -322,6 +326,8 @@ int main(int argc, char const *argv[]) {
             T_fix = E_fix.sum();
             T_fix_var = (2 * E_fix_var.sum() - E_fix.sum()) - pow(E_fix.sum(), 2);
 
+            dvec C_ext = E_ext.array() * dvec::LinSpaced(size, 1, size).array();
+            N_ext = C_ext.sum();
             // N_ext = (N_mat.row(0) * B_ext * dvec::LinSpaced(size, 1, size)).sum() /
             // B_ext(starting_copies);
         }
@@ -329,6 +335,8 @@ int main(int argc, char const *argv[]) {
         double T_abs_std = sqrt(T_abs_var);
         double T_ext_std = sqrt(T_ext_var);
         double T_fix_std = sqrt(T_fix_var);
+
+        N_ext /= (1 / (2 * population_size * v)) + T_ext;
 
         if (output_N_f)
             write_matrix_to_file(N_mat, args::get(output_N_f));
@@ -345,8 +353,8 @@ int main(int argc, char const *argv[]) {
 
         if (csv_f) {
             printf("%lld, " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF
-                   ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
-                   population_size, s, h, u, v, a, P_ext, P_fix, T_abs, T_abs_std, T_ext, T_ext_std,
+                   ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF ", " DPF "\n",
+                   population_size, s, h, u, v, a, P_ext, P_fix, T_abs, T_abs_std, T_ext, T_ext_std, N_ext,
                    T_fix, T_fix_std);
 
         } else {
@@ -362,6 +370,7 @@ int main(int argc, char const *argv[]) {
             printf("T_abs_std = " DPF "\n", T_abs_std);
             printf("T_ext = " DPF "\n", T_ext);
             printf("T_ext_std = " DPF "\n", T_ext_std);
+            printf("N_ext = " DPF "\n", N_ext);
             printf("T_fix = " DPF "\n", T_fix);
             printf("T_fix_std = " DPF "\n", T_fix_std);
             // printf("N_ext = " DPF "\n", N_ext);
