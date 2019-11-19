@@ -63,7 +63,7 @@ int main(int argc, char const *argv[]) {
     double b = block_size_f ? args::get(block_size_f) : 100;
     double n_threads = n_threads_f ? args::get(n_threads_f) : 1;
     llong max_t = max_t_f ? args::get(max_t_f) : 100000;
-    double integration_cutoff = integration_cutoff_f ? args::get(integration_cutoff_f) : 1 - 1e-3;
+    double integration_cutoff = integration_cutoff_f ? args::get(integration_cutoff_f) : 1 - 1e-8;
     bool no_rem = no_recurrent_mutation_f ? args::get(no_recurrent_mutation_f) : false;
     bool rem = !no_rem;
 
