@@ -59,8 +59,8 @@ include_directories("include")
 add_library(wfes SHARED ${LIB_SOURCES})
 target_link_libraries(wfes ${MKL_LIBS} ${INTEL_OMP_LIBS} ${OTHER_LIBS})
 
-add_executable(wfafle "src/wfafle.cpp")
-target_link_libraries(wfafle wfes)
+add_executable(wfafs_deterministic "src/wfafle.cpp")
+target_link_libraries(wfafs_deterministic wfes)
 
 add_executable(wfes_sweep "src/wfes_sweep.cpp")
 target_link_libraries(wfes_sweep wfes)
@@ -83,7 +83,7 @@ target_link_libraries(phase_type_dist wfes)
 add_executable(phase_type_moments "src/phase_type_moments.cpp")
 target_link_libraries(phase_type_moments wfes)
 
-add_executable(wfas "src/wfas.cpp")
-target_link_libraries(wfas wfes)
+add_executable(wfafs_stochastic "src/wfas.cpp")
+target_link_libraries(wfafs_stochastic wfes)
 
 # install(TARGETS wfafle RUNTIME DESTINATION bin)
