@@ -21,7 +21,7 @@ endif
 
 LIBFLAGS:=-fPIC -shared
 
-TARGETS:=wfes_single wfes_switching wfafle wfes_sweep wfes_sequential wfas phase_type_dist phase_type_moments wfes_test
+TARGETS:=wfes_single wfes_switching wfes_sweep wfes_sequential wfafs_deterministic wfafs_stochastic phase_type_dist phase_type_moments time_dist time_dist_sgv wfes_test
 
 .PHONY: all PRE clean
 
