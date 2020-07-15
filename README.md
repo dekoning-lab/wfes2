@@ -12,3 +12,5 @@ Please see [INSTALL.md](INSTALL.md) for installation instructions.
 
 Please consult the [manual](https://github.com/dekoning-lab/wfes2/blob/master/doc/manual.pdf) for information on usage and models.
 
+Also note that for clarity, the allele frequency spectrum calculators have been renamed. `wfafle` is now known as `wfafs_deterministic` and `wfas` has been renamed `wfafs_stochastic`. The manual needs to be updated to reflect this change.
+
