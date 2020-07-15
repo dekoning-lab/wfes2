@@ -24,7 +24,7 @@ dvec switch_population_size(dvec& x, llong Nx, llong Ny, double s, double h, dou
 
 int main(int argc, char const *argv[])
 {
-    args::ArgumentParser parser("WFAFLE - Wright-Fisher Allele Frequency calculation");
+    args::ArgumentParser parser("Wright-Fisher Allele Frequency Spectrum (AFS) calculation - deterministic");
     parser.helpParams.width = 120;
     parser.helpParams.helpindent = 50;
     parser.helpParams.flagindent = 2;
