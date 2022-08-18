@@ -6,6 +6,8 @@ Wright-Fisher Exact Solver (`WFES`) implements a variety of exact calculations w
 
 # Installation
 
+*Note:* We are in the process of developing a version of WFES2 that fully takes advantage of Apple Silicon. In the meantime, the make system has been updated to compile on Apple Silicon using Rosetta2. The binary is automatically generated for Mac OS 10.4 x86_64
+
 Please see [INSTALL.md](INSTALL.md) for installation instructions.
 
 # Usage
