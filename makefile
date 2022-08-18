@@ -9,7 +9,7 @@ INC:=-Iinclude
 INC+=-I${CONDA_PREFIX}/include
 LIB+=-I${CONDA_PREFIX}/include/eigen3
 
-CXXFLAGS:=-std=c++11 -Wall -Wformat -Wno-deprecated-declarations
+CXXFLAGS:=-std=c++11 -Wall -Wformat -Wno-deprecated-declarations -fpermissive -target x86_64-apple-macos10.14
 CXXFLAGS+=-DMKL_ILP64 -m64
 
 # Platform-specific tweaks

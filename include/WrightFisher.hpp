@@ -52,7 +52,7 @@ class Row {
 
     Row(llong start, llong end)
         : start(start), end(end), size(end - start + 1), weight(1), Q(end - start + 1) {}
-    Row() : start(0), end(0), size(0), weight(0), Q(0) {}
+    Row() : start(0), end(0), size(0), weight(0), Q((llong)0) {}
 
     Row(const Row &r) : start(r.start), end(r.end), size(r.size), weight(r.weight), Q(r.Q) {
         r.valid = false;

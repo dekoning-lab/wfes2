@@ -3,4 +3,4 @@ dependencies:
   - mkl
   - mkl-include
   - eigen
-
+  - mkl-dnn
