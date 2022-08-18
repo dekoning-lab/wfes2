@@ -4,4 +4,4 @@ dependencies:
   - mkl-include
   - eigen
   - gxx_linux-64
-
+  - mkl-dnn

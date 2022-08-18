@@ -1,7 +1,7 @@
 PLAT:=$(shell uname)
 
 LIB:=-L${CONDA_PREFIX}/lib
-LIB+=-lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lmkl_avx -lmkl_vml_avx
+LIB+=-lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core 
 LIB+=-liomp5 -lpthread
 LIB+=-lm -ldl
 
@@ -9,14 +9,16 @@ INC:=-Iinclude
 INC+=-I${CONDA_PREFIX}/include
 LIB+=-I${CONDA_PREFIX}/include/eigen3
 
-CXXFLAGS:=-std=c++11 -Wall -Wformat -Wno-deprecated-declarations -fpermissive -target x86_64-apple-macos10.14
+CXXFLAGS:=-std=c++11 -Wall -Wformat -Wno-deprecated-declarations -fpermissive
 CXXFLAGS+=-DMKL_ILP64 -m64
 
 # Platform-specific tweaks
 ifeq (${PLAT},Linux)
 	CXXFLAGS+=-DOMP -fopenmp
 else ifeq (${PLAT},Darwin)
+	LIB+=-lmkl_avx -lmkl_vml_avx
 	LIB+=-rpath ${CONDA_PREFIX}/lib
+	CXXFLAGS+=-target x86_64-apple-macos10.14
 endif
 
 LIBFLAGS:=-fPIC -shared
